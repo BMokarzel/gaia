@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gaia — Global Graph View</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green:   #39FF6E;
+  --pink:    #FF3C8E;
+  --orange:  #FF7A1A;
+  --blue:    #00BFFF;
+  --purple:  #B47AFF;
+  --amber:   #FFD166;
+  --white:   #F2F2F0;
+  --black:   #0A0A0C;
+  --surface: #111115;
+  --surf2:   #18181E;
+  --border:  #2A2A35;
+  --muted:   #6B6B78;
+}
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--black);
+  color: var(--white);
+  display: flex;
+}
+
+/* ── SIDEBAR ─────────────────────────────────────────────────── */
+.sidebar {
+  width: 64px;
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0 20px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.logo-mark {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 20px;
+}
+
+.nav-btn {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--muted);
+  border: none; background: transparent;
+  transition: background 180ms, color 180ms;
+  position: relative;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+.nav-btn.active { background: rgba(57,255,110,0.12); color: var(--green); }
+.nav-btn + .nav-btn { margin-top: 4px; }
+
+.sidebar-bottom { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--green), var(--blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--black);
+}
+
+/* ── MAIN ────────────────────────────────────────────────────── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+.topbar {
+  height: 48px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 24px; gap: 8px; flex-shrink: 0;
+}
+.crumb { font-size: 13px; color: var(--muted); }
+.crumb.cur { color: var(--white); font-weight: 500; }
+.sep { color: var(--border); margin: 0 2px; }
+
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; box-shadow: 0 0 6px var(--green); }
+  50% { opacity: 0.6; box-shadow: 0 0 14px var(--green); }
+}
+
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+.badge {
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.04em;
+}
+.b-green  { background: rgba(57,255,110,0.12);  color: var(--green);  }
+.b-blue   { background: rgba(0,191,255,0.12);   color: var(--blue);   }
+.b-orange { background: rgba(255,122,26,0.12);  color: var(--orange); }
+.b-purple { background: rgba(180,122,255,0.12); color: var(--purple); }
+.b-gray   { background: rgba(242,242,240,0.08); color: var(--muted);  }
+
+.btn-ghost {
+  height: 30px; padding: 0 12px;
+  border-radius: 7px; border: 1px solid var(--border);
+  background: transparent; color: var(--muted);
+  font-family: inherit; font-size: 12px; font-weight: 500;
+  cursor: pointer;
+  transition: border-color 180ms, color 180ms;
+}
+.btn-ghost:hover { border-color: var(--green); color: var(--green); }
+
+/* ── CANVAS ──────────────────────────────────────────────────── */
+.canvas-wrap {
+  flex: 1; position: relative; overflow: hidden;
+  background: var(--black);
+  background-image: radial-gradient(circle, rgba(255,255,255,0.028) 1px, transparent 1px);
+  background-size: 24px 24px;
+  cursor: grab;
+}
+.canvas-wrap:active { cursor: grabbing; }
+
+#svg {
+  width: 100%; height: 100%;
+  overflow: visible;
+}
+
+.hint-bar {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 20px;
+  font-size: 11px; color: var(--muted); pointer-events: none;
+  background: rgba(17,17,21,0.8); padding: 8px 16px; border-radius: 999px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+}
+.hint-item { display: flex; align-items: center; gap: 6px; }
+.h-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* ── RIGHT PANEL ─────────────────────────────────────────────── */
+.panel {
+  position: absolute; right: 0; top: 0; bottom: 0; width: 360px;
+  background: var(--surf2);
+  border-left: 1px solid var(--border);
+  transform: translateX(100%);
+  transition: transform 300ms cubic-bezier(0.25,0.46,0.45,0.94);
+  z-index: 20;
+  display: flex; flex-direction: column;
+}
+.panel.open { transform: translateX(0); }
+
+.ph {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.ph-dot {
+  width: 13px; height: 13px; border-radius: 50%;
+  margin-top: 4px; flex-shrink: 0;
+}
+.ph-info { flex: 1; }
+.ph-name { font-size: 16px; font-weight: 600; }
+.ph-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.ph-close {
+  width: 28px; height: 28px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); font-size: 18px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 180ms, color 180ms; font-family: inherit;
+}
+.ph-close:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+
+.p-badges { padding: 12px 20px; display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+.p-stats  { padding: 16px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-bottom: 1px solid var(--border); }
+.stat {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px;
+}
+.stat-val  { font-size: 26px; font-weight: 700; line-height: 1; }
+.stat-lbl  { font-size: 10px; color: var(--muted); margin-top: 4px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+
+.p-sec { padding: 14px 20px; border-bottom: 1px solid var(--border); }
+.p-sec-title { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+
+.dep-row {
+  display: flex; align-items: center; gap: 8px; padding: 7px 0;
+  border-bottom: 1px solid rgba(42,42,53,0.5);
+}
+.dep-row:last-child { border-bottom: none; }
+.dep-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dep-name { font-size: 13px; flex: 1; }
+.dep-kind { font-size: 11px; color: var(--muted); }
+.dep-dash { font-size: 11px; color: var(--border); font-family: 'JetBrains Mono', monospace; }
+
+.p-actions { margin-top: auto; padding: 16px 20px; display: flex; gap: 8px; }
+.btn-primary {
+  flex: 1; height: 36px; border-radius: 8px; border: none;
+  background: var(--green); color: var(--black);
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: box-shadow 200ms;
+}
+.btn-primary:hover { box-shadow: 0 0 20px rgba(57,255,110,0.4); }
+.btn-danger {
+  height: 36px; padding: 0 14px; border-radius: 8px;
+  border: 1px solid var(--border); background: transparent; color: var(--muted);
+  font-family: inherit; font-size: 13px; cursor: pointer;
+  transition: border-color 180ms, color 180ms;
+}
+.btn-danger:hover { border-color: var(--pink); color: var(--pink); }
+
+/* ── TOOLTIP ─────────────────────────────────────────────────── */
+.tip {
+  position: fixed; pointer-events: none;
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px;
+  font-size: 12px; white-space: nowrap;
+  opacity: 0; transition: opacity 150ms;
+  z-index: 99;
+}
+.tip.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <svg class="logo-mark" viewBox="0 0 36 36" fill="none">
+    <circle cx="18" cy="18" r="6" fill="#39FF6E"/>
+    <circle cx="18" cy="18" r="10" fill="none" stroke="#39FF6E" stroke-width="1" opacity="0.3"/>
+    <ellipse cx="18" cy="18" rx="16" ry="7" stroke="rgba(57,255,110,0.55)" stroke-width="1.3" fill="none" transform="rotate(-35 18 18)"/>
+    <ellipse cx="18" cy="18" rx="16" ry="7" stroke="rgba(57,255,110,0.3)" stroke-width="1" fill="none" transform="rotate(55 18 18)"/>
+  </svg>
+
+  <button class="nav-btn active" title="Global Graph">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="6" r="2"/>
+      <circle cx="4" cy="18" r="2"/><circle cx="20" cy="18" r="2"/>
+      <line x1="6" y1="7" x2="10" y2="11"/><line x1="14" y1="11" x2="18" y2="7"/>
+      <line x1="6" y1="17" x2="10" y2="13"/><line x1="14" y1="13" x2="18" y2="17"/>
+    </svg>
+  </button>
+
+  <button class="nav-btn" title="Extract">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/>
+      <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/>
+    </svg>
+  </button>
+
+  <button class="nav-btn" title="Debug">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22c1.1 0 2-.9 2-2H10c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+    </svg>
+  </button>
+
+  <button class="nav-btn" title="Search">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+
+  <button class="nav-btn" title="Whiteboard">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
+    </svg>
+  </button>
+
+  <div class="sidebar-bottom">
+    <button class="nav-btn" title="Settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+    <div class="avatar">G</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <span class="crumb">Gaia</span>
+    <span class="sep">›</span>
+    <span class="crumb cur">Global Graph</span>
+    <div class="live-dot" style="margin-left: 8px;"></div>
+    <span style="font-size:11px;color:var(--muted);margin-left:4px;">live</span>
+
+    <div class="topbar-right">
+      <span class="badge b-green">5 services</span>
+      <span class="badge b-blue">2 databases</span>
+      <span class="badge b-orange">1 broker</span>
+      <span class="badge b-purple">1 frontend</span>
+      <button class="btn-ghost" onclick="relayout()">↻ Re-layout</button>
+    </div>
+  </div>
+
+  <div class="canvas-wrap" id="canvas">
+    <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="fg" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="fb" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="fo" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="fp" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="fpu" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- wave dot glow -->
+        <filter id="wg" x="-150%" y="-150%" width="400%" height="400%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+
+        <!-- arrowheads -->
+        <marker id="ar-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,1 L10,5 L0,9 z" fill="#2A2A35"/>
+        </marker>
+        <marker id="ar-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,1 L10,5 L0,9 z" fill="#39FF6E"/>
+        </marker>
+        <marker id="ar-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,1 L10,5 L0,9 z" fill="#00BFFF"/>
+        </marker>
+        <marker id="ar-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,1 L10,5 L0,9 z" fill="#FF7A1A"/>
+        </marker>
+        <marker id="ar-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,1 L10,5 L0,9 z" fill="#FF3C8E"/>
+        </marker>
+      </defs>
+
+      <g id="el"></g>  <!-- edges -->
+      <g id="nl"></g>  <!-- nodes -->
+      <g id="wl"></g>  <!-- waves -->
+    </svg>
+
+    <div class="hint-bar">
+      <div class="hint-item"><div class="h-dot" style="background:var(--green)"></div>click — select & wave</div>
+      <div class="hint-item"><div class="h-dot" style="background:var(--pink)"></div>double-click — details</div>
+      <div class="hint-item"><div class="h-dot" style="background:var(--border);border:1px solid #4A4A5A"></div>drag — pan</div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="panel" id="panel">
+  <div class="ph">
+    <div class="ph-dot" id="ph-dot"></div>
+    <div class="ph-info">
+      <div class="ph-name" id="ph-name">—</div>
+      <div class="ph-sub"  id="ph-sub">—</div>
+    </div>
+    <button class="ph-close" onclick="closePanel()">×</button>
+  </div>
+  <div class="p-badges" id="p-badges"></div>
+  <div class="p-stats"  id="p-stats"></div>
+  <div class="p-sec"   id="p-deps-sec">
+    <div class="p-sec-title">Dependencies</div>
+    <div id="p-deps-list"></div>
+  </div>
+  <div class="p-actions">
+    <button class="btn-primary">Individual View →</button>
+    <button class="btn-danger">Delete</button>
+  </div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────
+const NODES = [
+  {
+    id: 'web-app',
+    label: 'web-app',
+    type: 'screen',
+    color: '#B47AFF',
+    filter: 'fpu',
+    arrow: 'ar-p',
+    rx: 0.14, ry: 0.30, r: 28,
+    tech: ['React', 'Next.js', 'TypeScript'],
+    stats: { screens: 8, components: 42 },
+    deps: [{ id:'api-gateway', color:'#39FF6E', kind:'sync' }],
+  },
+  {
+    id: 'api-gateway',
+    label: 'api-gateway',
+    type: 'service',
+    color: '#39FF6E',
+    filter: 'fg',
+    arrow: 'ar-g',
+    rx: 0.30, ry: 0.50, r: 54,
+    tech: ['NodeJS', 'Express', 'v18'],
+    stats: { endpoints: 24, functions: 89, globals: 12 },
+    deps: [
+      { id:'user-service',  color:'#39FF6E', kind:'sync'  },
+      { id:'order-service', color:'#39FF6E', kind:'sync'  },
+    ],
+  },
+  {
+    id: 'user-service',
+    label: 'user-service',
+    type: 'service',
+    color: '#39FF6E',
+    filter: 'fg',
+    arrow: 'ar-g',
+    rx: 0.56, ry: 0.22, r: 40,
+    tech: ['NodeJS', 'NestJS', 'Prisma'],
+    stats: { endpoints: 14, functions: 52, globals: 8 },
+    deps: [{ id:'users-db', color:'#00BFFF', kind:'sync' }],
+  },
+  {
+    id: 'order-service',
+    label: 'order-service',
+    type: 'service',
+    color: '#39FF6E',
+    filter: 'fg',
+    arrow: 'ar-g',
+    rx: 0.56, ry: 0.72, r: 44,
+    tech: ['NodeJS', 'NestJS', 'TypeORM'],
+    stats: { endpoints: 18, functions: 71, globals: 10 },
+    deps: [
+      { id:'orders-db', color:'#00BFFF', kind:'sync'  },
+      { id:'kafka',     color:'#FF7A1A', kind:'async' },
+    ],
+  },
+  {
+    id: 'payment-service',
+    label: 'payment',
+    type: 'service',
+    color: '#FF3C8E',
+    filter: 'fp',
+    arrow: 'ar-p',
+    rx: 0.76, ry: 0.38, r: 34,
+    tech: ['NodeJS', 'Fastify', 'Stripe'],
+    stats: { endpoints: 8, functions: 34, globals: 5 },
+    deps: [{ id:'orders-db', color:'#00BFFF', kind:'sync' }],
+  },
+  {
+    id: 'notif-service',
+    label: 'notification',
+    type: 'service',
+    color: '#39FF6E',
+    filter: 'fg',
+    arrow: 'ar-g',
+    rx: 0.80, ry: 0.72, r: 27,
+    tech: ['Python', 'FastAPI'],
+    stats: { endpoints: 4, functions: 18, globals: 3 },
+    deps: [{ id:'kafka', color:'#FF7A1A', kind:'async' }],
+  },
+  {
+    id: 'users-db',
+    label: 'users-db',
+    type: 'database',
+    color: '#00BFFF',
+    filter: 'fb',
+    arrow: 'ar-b',
+    rx: 0.70, ry: 0.12, r: 30,
+    tech: ['PostgreSQL', 'v15'],
+    stats: { tables: 7, connections: 2 },
+    deps: [],
+  },
+  {
+    id: 'orders-db',
+    label: 'orders-db',
+    type: 'database',
+    color: '#00BFFF',
+    filter: 'fb',
+    arrow: 'ar-b',
+    rx: 0.70, ry: 0.88, r: 30,
+    tech: ['PostgreSQL', 'v15'],
+    stats: { tables: 12, connections: 3 },
+    deps: [],
+  },
+  {
+    id: 'kafka',
+    label: 'kafka',
+    type: 'broker',
+    color: '#FF7A1A',
+    filter: 'fo',
+    arrow: 'ar-o',
+    rx: 0.88, ry: 0.55, r: 32,
+    tech: ['Kafka', 'v3.4'],
+    stats: { topics: 5, producers: 2, consumers: 3 },
+    deps: [],
+  },
+];
+
+const EDGES = [
+  { s:'web-app',        t:'api-gateway',     kind:'sync'  },
+  { s:'api-gateway',    t:'user-service',    kind:'sync'  },
+  { s:'api-gateway',    t:'order-service',   kind:'sync'  },
+  { s:'user-service',   t:'users-db',        kind:'db'    },
+  { s:'order-service',  t:'orders-db',       kind:'db'    },
+  { s:'order-service',  t:'payment-service', kind:'sync'  },
+  { s:'order-service',  t:'kafka',           kind:'async' },
+  { s:'payment-service',t:'orders-db',       kind:'db'    },
+  { s:'kafka',          t:'notif-service',   kind:'async' },
+];
+
+const EDGE_CLR  = { sync:'#2A2A35',  db:'#0E2E3A',  async:'#2A1A0A' };
+const EDGE_ACLR = { sync:'#39FF6E',  db:'#00BFFF',  async:'#FF7A1A' };
+const EDGE_ARW  = { sync:'ar-g',     db:'ar-b',     async:'ar-o'    };
+
+// ── STATE ─────────────────────────────────────────────────────────
+const nodeMap = {};
+NODES.forEach(n => nodeMap[n.id] = n);
+
+let W = 0, H = 0;
+let selected = null;
+let panX = 0, panY = 0, panStart = null;
+
+const elMap = {}; // id → { path, hit }
+const nEl   = {}; // id → { g, circle, ring }
+
+// ── INIT ──────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const canvas = document.getElementById('canvas');
+  W = canvas.clientWidth;
+  H = canvas.clientHeight;
+
+  computePos();
+  drawEdges();
+  drawNodes();
+
+  // Pan
+  canvas.addEventListener('mousedown', e => {
+    if (e.target.closest('[data-node]')) return;
+    panStart = { x: e.clientX - panX, y: e.clientY - panY };
+  });
+  window.addEventListener('mousemove', e => {
+    if (!panStart) return;
+    panX = e.clientX - panStart.x;
+    panY = e.clientY - panStart.y;
+    document.getElementById('svg').style.transform = `translate(${panX}px,${panY}px)`;
+  });
+  window.addEventListener('mouseup', () => { panStart = null; });
+
+  // Deselect on canvas click
+  canvas.addEventListener('click', e => {
+    if (e.target === canvas || e.target.id === 'svg') {
+      deselect(); closePanel();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    computePos(); redraw();
+  });
+});
+
+function computePos() {
+  NODES.forEach(n => { n.ax = n.rx * W; n.ay = n.ry * H; });
+}
+
+// ── DRAW ──────────────────────────────────────────────────────────
+function drawEdges() {
+  const el = document.getElementById('el');
+  EDGES.forEach(edge => {
+    const s = nodeMap[edge.s], t = nodeMap[edge.t];
+    if (!s || !t) return;
+    const id = `e-${edge.s}-${edge.t}`;
+    const d = bezier(s, t);
+
+    const path = makeSVG('path');
+    path.id = id;
+    path.setAttribute('d', d);
+    path.setAttribute('stroke', EDGE_CLR[edge.kind]);
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('marker-end', `url(#ar-d)`);
+    if (edge.kind === 'async') path.setAttribute('stroke-dasharray', '6 4');
+
+    const hit = makeSVG('path');
+    hit.setAttribute('d', d);
+    hit.setAttribute('stroke', 'transparent');
+    hit.setAttribute('stroke-width', '18');
+    hit.setAttribute('fill', 'none');
+    hit.style.cursor = 'pointer';
+
+    hit.addEventListener('mouseenter', () => {
+      if (selected) return;
+      activateEdge(path, edge);
+      fireWave(id, d, EDGE_ACLR[edge.kind], edge.kind === 'async' ? 1100 : 750);
+    });
+    hit.addEventListener('mouseleave', () => {
+      if (selected) return;
+      resetEdge(path, edge);
+    });
+
+    el.appendChild(path);
+    el.appendChild(hit);
+    elMap[id] = { path, hit, edge };
+  });
+}
+
+function drawNodes() {
+  const nl = document.getElementById('nl');
+  NODES.forEach((node, idx) => {
+    const g = makeSVG('g');
+    g.setAttribute('data-node', node.id);
+    g.style.cursor = 'pointer';
+
+    // Outer ring
+    const ring = makeSVG('circle');
+    ring.setAttribute('cx', node.ax); ring.setAttribute('cy', node.ay);
+    ring.setAttribute('r', node.r + 7);
+    ring.setAttribute('fill', 'none');
+    ring.setAttribute('stroke', node.color);
+    ring.setAttribute('stroke-width', '1.5');
+    ring.setAttribute('opacity', '0.22');
+
+    // Main circle
+    const circ = makeSVG('circle');
+    circ.setAttribute('cx', node.ax); circ.setAttribute('cy', node.ay);
+    circ.setAttribute('r', node.r);
+    circ.setAttribute('fill', hexA(node.color, 0.12));
+    circ.setAttribute('stroke', node.color);
+    circ.setAttribute('stroke-width', '1.8');
+    circ.setAttribute('filter', `url(#${node.filter})`);
+
+    // Center dot
+    const cdot = makeSVG('circle');
+    cdot.setAttribute('cx', node.ax); cdot.setAttribute('cy', node.ay);
+    cdot.setAttribute('r', '3.5');
+    cdot.setAttribute('fill', node.color);
+
+    // Label
+    const lbl = makeSVG('text');
+    lbl.setAttribute('x', node.ax); lbl.setAttribute('y', node.ay + node.r + 17);
+    lbl.setAttribute('text-anchor', 'middle');
+    lbl.setAttribute('fill', '#F2F2F0');
+    lbl.setAttribute('font-family', 'Space Grotesk, sans-serif');
+    lbl.setAttribute('font-size', '12');
+    lbl.setAttribute('font-weight', '500');
+    lbl.textContent = node.label;
+
+    const tlbl = makeSVG('text');
+    tlbl.setAttribute('x', node.ax); tlbl.setAttribute('y', node.ay + node.r + 30);
+    tlbl.setAttribute('text-anchor', 'middle');
+    tlbl.setAttribute('fill', node.color);
+    tlbl.setAttribute('font-family', 'Space Grotesk, sans-serif');
+    tlbl.setAttribute('font-size', '9.5');
+    tlbl.setAttribute('font-weight', '600');
+    tlbl.setAttribute('letter-spacing', '0.09em');
+    tlbl.setAttribute('opacity', '0.65');
+    tlbl.textContent = node.type.toUpperCase();
+
+    g.appendChild(ring); g.appendChild(circ); g.appendChild(cdot);
+    g.appendChild(lbl);  g.appendChild(tlbl);
+    nl.appendChild(g);
+
+    nEl[node.id] = { g, circ, ring };
+
+    // Entry animation (staggered)
+    g.style.opacity = '0';
+    setTimeout(() => {
+      g.style.transition = 'opacity 500ms ease';
+      g.style.opacity = '1';
+    }, 100 + idx * 70);
+
+    // Hover
+    g.addEventListener('mouseenter', e => {
+      if (selected === node.id) return;
+      circ.setAttribute('r', String(node.r + 4));
+      ring.setAttribute('opacity', '0.5');
+      showTip(node, e.clientX, e.clientY);
+    });
+    g.addEventListener('mouseleave', () => {
+      if (selected === node.id) return;
+      circ.setAttribute('r', String(node.r));
+      ring.setAttribute('opacity', '0.22');
+      hideTip();
+    });
+
+    // Click = select
+    g.addEventListener('click', e => {
+      e.stopPropagation(); hideTip();
+      if (selected === node.id) deselect();
+      else selectNode(node.id);
+    });
+
+    // Double-click = panel
+    g.addEventListener('dblclick', e => {
+      e.stopPropagation(); hideTip();
+      selectNode(node.id);
+      openPanel(node.id);
+    });
+  });
+}
+
+function redraw() {
+  document.getElementById('el').innerHTML = '';
+  document.getElementById('nl').innerHTML = '';
+  document.getElementById('wl').innerHTML = '';
+  Object.keys(elMap).forEach(k => delete elMap[k]);
+  Object.keys(nEl).forEach(k => delete nEl[k]);
+  drawEdges(); drawNodes();
+}
+
+// ── SELECTION ─────────────────────────────────────────────────────
+function selectNode(id) {
+  selected = id;
+  const connected = connectedTo(id);
+  connected.add(id);
+
+  NODES.forEach(n => {
+    const e = nEl[n.id]; if (!e) return;
+    e.g.style.transition = 'opacity 300ms ease';
+    e.g.style.opacity = connected.has(n.id) ? '1' : '0.12';
+  });
+
+  Object.values(elMap).forEach(({ path, edge }) => {
+    const active = edge.s === id || edge.t === id;
+    if (active) activateEdge(path, edge);
+    else dimEdge(path);
+  });
+
+  const me = nEl[id];
+  const node = nodeMap[id];
+  if (me) {
+    me.circ.setAttribute('r', String(node.r + 5));
+    me.ring.setAttribute('r', String(node.r + 11));
+    me.ring.setAttribute('stroke-width', '2');
+    me.ring.setAttribute('opacity', '0.75');
+  }
+
+  fireWavesFrom(id);
+}
+
+function deselect() {
+  selected = null;
+  NODES.forEach(n => {
+    const e = nEl[n.id]; if (!e) return;
+    e.g.style.opacity = '1';
+    e.circ.setAttribute('r', String(n.r));
+    e.ring.setAttribute('r', String(n.r + 7));
+    e.ring.setAttribute('stroke-width', '1.5');
+    e.ring.setAttribute('opacity', '0.22');
+  });
+  Object.values(elMap).forEach(({ path, edge }) => resetEdge(path, edge));
+}
+
+function connectedTo(id) {
+  const s = new Set();
+  EDGES.forEach(e => { if (e.s === id) s.add(e.t); if (e.t === id) s.add(e.s); });
+  return s;
+}
+
+// ── EDGE HELPERS ──────────────────────────────────────────────────
+function activateEdge(path, edge) {
+  path.setAttribute('stroke', EDGE_ACLR[edge.kind]);
+  path.setAttribute('stroke-width', '2');
+  path.setAttribute('marker-end', `url(#${EDGE_ARW[edge.kind]})`);
+  if (edge.kind === 'async') path.setAttribute('stroke-dasharray', '6 4');
+  else path.removeAttribute('stroke-dasharray');
+}
+function resetEdge(path, edge) {
+  path.setAttribute('stroke', EDGE_CLR[edge.kind]);
+  path.setAttribute('stroke-width', '1.5');
+  path.setAttribute('marker-end', 'url(#ar-d)');
+  if (edge.kind === 'async') path.setAttribute('stroke-dasharray', '6 4');
+  else path.removeAttribute('stroke-dasharray');
+}
+function dimEdge(path) {
+  path.setAttribute('stroke', 'rgba(42,42,53,0.25)');
+  path.setAttribute('stroke-width', '1');
+  path.setAttribute('marker-end', 'url(#ar-d)');
+}
+
+// ── WAVE ANIMATION ────────────────────────────────────────────────
+function fireWavesFrom(srcId) {
+  const outs = EDGES.filter(e => e.s === srcId);
+  outs.forEach((edge, i) => {
+    const eid = `e-${edge.s}-${edge.t}`;
+    const d = document.getElementById(eid)?.getAttribute('d');
+    if (!d) return;
+    const dur = edge.kind === 'async' ? 1100 : 750;
+    const clr = EDGE_ACLR[edge.kind];
+
+    setTimeout(() => {
+      fireWave(eid, d, clr, dur);
+      setTimeout(() => fireWave(eid, d, clr, dur), dur * 0.55);
+    }, i * 130);
+  });
+}
+
+function fireWave(edgeId, d, color, dur) {
+  const wl = document.getElementById('wl');
+
+  const dot = makeSVG('circle');
+  dot.setAttribute('r', '4');
+  dot.setAttribute('fill', color);
+  dot.setAttribute('filter', 'url(#wg)');
+
+  const motion = makeSVG('animateMotion');
+  motion.setAttribute('dur', `${dur}ms`);
+  motion.setAttribute('fill', 'remove');
+  motion.setAttribute('calcMode', 'spline');
+  motion.setAttribute('keyTimes', '0;1');
+  motion.setAttribute('keySplines', '0.4 0 0.6 1');
+
+  const mpath = makeSVG('mpath');
+  mpath.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#${edgeId}`);
+  motion.appendChild(mpath);
+
+  const fadeAnim = makeSVG('animate');
+  fadeAnim.setAttribute('attributeName', 'opacity');
+  fadeAnim.setAttribute('dur', `${dur}ms`);
+  fadeAnim.setAttribute('values', '0;0.9;0.9;0');
+  fadeAnim.setAttribute('keyTimes', '0;0.06;0.88;1');
+  fadeAnim.setAttribute('fill', 'remove');
+
+  dot.appendChild(motion);
+  dot.appendChild(fadeAnim);
+  wl.appendChild(dot);
+
+  setTimeout(() => { if (dot.parentNode) dot.parentNode.removeChild(dot); }, dur + 80);
+}
+
+// ── PANEL ─────────────────────────────────────────────────────────
+function openPanel(id) {
+  const n = nodeMap[id]; if (!n) return;
+  const c = n.color;
+
+  const dot = document.getElementById('ph-dot');
+  dot.style.background = c;
+  dot.style.boxShadow = `0 0 8px ${c}99`;
+
+  document.getElementById('ph-name').textContent = n.label;
+  document.getElementById('ph-sub').textContent = n.type + ' · ' + (n.tech[0] || '');
+
+  // Badges
+  const bEl = document.getElementById('p-badges');
+  bEl.innerHTML = '';
+  n.tech.forEach(t => {
+    const s = document.createElement('span');
+    s.className = 'badge ' + { service:'b-green', database:'b-blue', broker:'b-orange', screen:'b-purple' }[n.type];
+    s.textContent = t; bEl.appendChild(s);
+  });
+
+  // Stats
+  const sEl = document.getElementById('p-stats');
+  sEl.innerHTML = '';
+  Object.entries(n.stats).forEach(([k, v]) => {
+    const d = document.createElement('div');
+    d.className = 'stat';
+    d.innerHTML = `<div class="stat-val" style="color:${c}">${v}</div><div class="stat-lbl">${k}</div>`;
+    sEl.appendChild(d);
+  });
+
+  // Deps
+  const dSec = document.getElementById('p-deps-sec');
+  const dList = document.getElementById('p-deps-list');
+  dList.innerHTML = '';
+  if (n.deps.length) {
+    dSec.style.display = 'block';
+    n.deps.forEach(dep => {
+      const r = document.createElement('div');
+      r.className = 'dep-row';
+      r.innerHTML = `
+        <div class="dep-dot" style="background:${dep.color};box-shadow:0 0 5px ${dep.color}88"></div>
+        <span class="dep-name">${dep.id}</span>
+        <span class="dep-kind">${dep.kind}</span>
+        <span class="dep-dash">${dep.kind === 'async' ? '─ ─ ─ ─' : '────────'}</span>`;
+      dList.appendChild(r);
+    });
+  } else {
+    dSec.style.display = 'none';
+  }
+
+  document.getElementById('panel').classList.add('open');
+}
+
+function closePanel() { document.getElementById('panel').classList.remove('open'); }
+
+// ── TOOLTIP ───────────────────────────────────────────────────────
+let tipTimer;
+function showTip(node, mx, my) {
+  clearTimeout(tipTimer);
+  const tip = document.getElementById('tip');
+  const lines = Object.entries(node.stats).map(([k,v]) => `${v} ${k}`).join(' · ');
+  tip.textContent = `${node.label}  —  ${lines}`;
+  tip.style.left = (mx + 14) + 'px';
+  tip.style.top  = (my - 32) + 'px';
+  tip.classList.add('show');
+}
+function hideTip() {
+  tipTimer = setTimeout(() => document.getElementById('tip').classList.remove('show'), 80);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function makeSVG(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+
+function bezier(s, t) {
+  const dx = t.ax - s.ax, dy = t.ay - s.ay;
+  const cx = (s.ax + t.ax) / 2 + dy * 0.22;
+  const cy = (s.ay + t.ay) / 2 - dx * 0.22;
+  // offset endpoints to node edge
+  const dist = Math.hypot(dx, dy) || 1;
+  const sx = s.ax + (dx / dist) * s.r;
+  const sy = s.ay + (dy / dist) * s.r;
+  const tx = t.ax - (dx / dist) * t.r;
+  const ty = t.ay - (dy / dist) * t.r;
+  return `M ${sx} ${sy} Q ${cx} ${cy} ${tx} ${ty}`;
+}
+
+function hexA(hex, a) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function relayout() {
+  deselect(); closePanel();
+  NODES.forEach(n => {
+    n.rx = Math.max(0.10, Math.min(0.90, n.rx + (Math.random()-0.5)*0.06));
+    n.ry = Math.max(0.10, Math.min(0.90, n.ry + (Math.random()-0.5)*0.06));
+  });
+  computePos(); redraw();
+}
+</script>
+</body>
+</html>

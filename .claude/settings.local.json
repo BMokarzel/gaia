@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/User/Desktop/graph ref/**)",
+      "Read(//c/Users/User/Desktop/**)"
+    ]
+  }
+}

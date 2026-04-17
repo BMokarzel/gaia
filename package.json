@@ -1,0 +1,41 @@
+{
+  "name": "tree-cli",
+  "version": "0.1.0",
+  "description": "AST-based code topology extractor using tree-sitter — generates SystemTopology JSON from source code",
+  "main": "dist/cli.js",
+  "bin": {
+    "tree-cli": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/cli.ts",
+    "start": "node dist/cli.js",
+    "analyze": "ts-node src/cli.ts analyze"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^12.0.0",
+    "glob": "^10.4.5",
+    "nanoid": "^3.3.7",
+    "ora": "^5.4.1",
+    "tree-sitter": "^0.21.1",
+    "tree-sitter-c": "^0.21.4",
+    "tree-sitter-cpp": "^0.22.3",
+    "tree-sitter-c-sharp": "^0.21.4",
+    "tree-sitter-go": "^0.21.2",
+    "tree-sitter-java": "^0.21.0",
+    "tree-sitter-kotlin": "^0.3.8",
+    "tree-sitter-python": "^0.21.0",
+    "tree-sitter-rust": "^0.21.2",
+    "tree-sitter-swift": "^0.5.0",
+    "tree-sitter-typescript": "^0.21.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
