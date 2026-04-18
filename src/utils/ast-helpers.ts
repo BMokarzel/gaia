@@ -76,9 +76,30 @@ export function hasDecorator(node: SyntaxNode, name: string | string[]): boolean
  */
 export function getDecorators(node: SyntaxNode): SyntaxNode[] {
   const decorators: SyntaxNode[] = [];
+
+  // 1. Filhos diretos — cobre decorators de parâmetro (@Query, @Body, etc.)
   for (const child of node.children) {
     if (child.type === 'decorator') decorators.push(child);
   }
+  if (decorators.length > 0) return decorators;
+
+  // 2. Irmãos nomeados anteriores no pai — cobre dois casos do tree-sitter-typescript:
+  //    a) @Get() aparece como irmão de method_definition dentro de class_body
+  //    b) @Controller() aparece como irmão de class_declaration dentro de export_statement
+  const parent = node.parent;
+  if (!parent) return decorators;
+
+  const namedSiblings = parent.namedChildren;
+  const idx = namedSiblings.indexOf(node);
+  for (let i = idx - 1; i >= 0; i--) {
+    const sib = namedSiblings[i];
+    if (sib.type === 'decorator') {
+      decorators.unshift(sib);
+    } else {
+      break;
+    }
+  }
+
   return decorators;
 }
 

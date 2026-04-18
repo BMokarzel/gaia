@@ -169,7 +169,7 @@ function detectSDK(objPath: string): SDK | null {
   return null;
 }
 
-function detectSpanKind(spanName: string): TelemetryNode['metadata']['span'] extends { kind: infer K } ? K : never {
+function detectSpanKind(spanName: string): 'internal' | 'server' | 'client' | 'producer' | 'consumer' {
   const lower = spanName.toLowerCase();
   if (/http|request|endpoint|route|controller/.test(lower)) return 'server';
   if (/client|call|fetch|axios|grpc/.test(lower)) return 'client';
