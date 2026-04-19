@@ -98,6 +98,17 @@ export interface ServiceNode {
     healthCheck?: string;
     dashboardUrl?: string;
     runbookUrl?: string;
+    coupling?: {
+      ca: number;
+      ce: number;
+      instability: number;
+      classes: {
+        name: string;
+        ca: number;
+        ce: number;
+        instability: number;
+      }[];
+    };
   };
   endpoints: EndpointNode[];
   functions: FunctionNode[];
@@ -356,6 +367,15 @@ export interface FunctionNode extends BaseCodeNode {
     decorators?: string[];
     className?: string;
     errorMap: ErrorDescriptor[];
+    complexity?: {
+      cyclomatic: number;
+      linesOfCode: number;
+    };
+    sideEffects?: {
+      performsIO: boolean;
+      throwsUnhandled: boolean;
+    };
+    inferredReturnShape?: TypedField[];
   };
 }
 

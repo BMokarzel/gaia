@@ -31,10 +31,9 @@ export function extractDataNodes(
     nodes.push(buildEnumNode(node, filePath));
   }
 
-  // Top-level variable declarations (const/let/var no módulo)
+  // Variable declarations (const/let) — módulo e escopo local
   for (const node of findAll(rootNode, 'lexical_declaration')) {
-    if (!isModuleLevel(node)) continue;
-    const varNodes = buildVariableNodes(node, filePath);
+    const varNodes = buildVariableNodes(node, filePath, isModuleLevel(node));
     nodes.push(...varNodes);
   }
 
@@ -159,7 +158,7 @@ function buildEnumNode(node: SyntaxNode, filePath: string): DataNode {
   };
 }
 
-function buildVariableNodes(node: SyntaxNode, filePath: string): DataNode[] {
+function buildVariableNodes(node: SyntaxNode, filePath: string, moduleLevel = false): DataNode[] {
   const results: DataNode[] = [];
   const isConst = node.children.some(c => c.type === 'const');
 
@@ -192,8 +191,8 @@ function buildVariableNodes(node: SyntaxNode, filePath: string): DataNode[] {
         kind,
         dataType,
         mutable: !isConst,
-        scope: 'module',
-        exported: isExported(node),
+        scope: moduleLevel ? 'module' : 'local',
+        exported: moduleLevel ? isExported(node) : false,
         initialValue,
       },
     });

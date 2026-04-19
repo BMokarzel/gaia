@@ -13,10 +13,12 @@ import { extractTypeORMOperations } from '../extractors/ts/db/typeorm.extractor'
 import { extractSequelizeOperations } from '../extractors/ts/db/sequelize.extractor';
 import { extractEvents } from '../extractors/ts/event.extractor';
 import { extractFlowControl } from '../extractors/ts/flow.extractor';
+import { extractCalls } from '../extractors/ts/call.extractor';
 import { extractLogs } from '../extractors/ts/log.extractor';
 import { extractTelemetry } from '../extractors/ts/telemetry.extractor';
 import { extractDataNodes } from '../extractors/ts/data.extractor';
 import { extractFrontendNodes } from '../extractors/ts/frontend/screen.extractor';
+import { extractAssignments } from '../extractors/ts/assignment.extractor';
 
 // Lazy load das grammars para não crashar se não estiverem instaladas
 function loadLanguage(name: string): unknown {
@@ -127,6 +129,12 @@ export class TypeScriptParser implements LanguageParser {
       const eventResult = extractEvents(root as any, file.relativePath, serviceId);
       codeNodes.push(...eventResult.eventNodes);
       brokers.push(...eventResult.brokers);
+
+      // Chamadas de função/método
+      codeNodes.push(...extractCalls(root as any, file.relativePath));
+
+      // Atribuições (reatribuições de variáveis)
+      codeNodes.push(...extractAssignments(root as any, file.relativePath));
 
       // Controle de fluxo
       codeNodes.push(...extractFlowControl(root as any, file.relativePath));

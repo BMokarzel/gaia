@@ -17,6 +17,8 @@ import { mergeBrokers, buildBrokerFromHint } from '../builders/broker.builder';
 import { buildEdges } from '../builders/edge.builder';
 import { buildErrorFlowMap } from '../builders/error-flow.builder';
 import { serviceId } from '../utils/id';
+import { computeCoupling } from '../analysis/coupling';
+import { detectUnused } from '../analysis/unused';
 
 export interface AnalysisOptions {
   /** Ignora arquivos de teste */
@@ -87,6 +89,14 @@ export async function analyzeRepository(
   // 5. Constrói edges globais
   onProgress('Building edges...');
   const edges = buildEdges(context.services, allDatabases, allBrokers);
+
+  // 5b. Métricas de acoplamento por serviço
+  onProgress('Computing coupling metrics...');
+  computeCoupling(context.services, edges);
+
+  // 5c. Detecção de código não utilizado
+  onProgress('Detecting unused code...');
+  detectUnused(context.services, edges, context.diagnostics);
 
   // 6. Constrói error flow map
   onProgress('Mapping error flows...');
