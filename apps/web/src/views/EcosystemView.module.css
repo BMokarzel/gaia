@@ -1,0 +1,103 @@
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.edgeLayer { pointer-events: none; }
+
+.nodeLayer .node {
+  transition: opacity 150ms;
+}
+
+.nodeLayer .node:hover circle,
+.nodeLayer .node:hover rect {
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+.nodeSelected circle,
+.nodeSelected rect {
+  stroke-width: 2.5 !important;
+}
+
+.empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.emptyState {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.emptyIcon {
+  font-size: 36px;
+  color: var(--text-faint);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.emptyTitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.errorBanner {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--accent-red);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent-red);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 480px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 12, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+
+.loadingLabel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent-green);
+  animation: pulse 1s ease-in-out infinite;
+}

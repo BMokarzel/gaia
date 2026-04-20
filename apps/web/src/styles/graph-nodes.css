@@ -1,0 +1,154 @@
+/* Gaia graph nodes v2 — text-sized, draggable, click-glow, edge wave-fill. */
+
+/* ─── NODE ROOT ─────────────────────────────────────────────── */
+.gn-node { cursor: grab; transition: opacity 160ms, filter 160ms; }
+.gn-node.is-dragging { cursor: grabbing; }
+.gn-node__inner { transition: transform 140ms cubic-bezier(.2,.8,.2,1); transform-box: fill-box; transform-origin: center; }
+
+.gn-node__body   { fill: var(--bg-elevated); stroke-width: 2; }
+.gn-node__title  { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600;
+                   fill: var(--text-primary); text-anchor: middle; pointer-events: none;
+                   dominant-baseline: central; }
+.gn-node__meta   { font-family: 'JetBrains Mono', monospace; font-size: 10px;
+                   fill: var(--text-muted); text-anchor: middle; pointer-events: none;
+                   dominant-baseline: central; }
+.gn-node__code   { font-family: 'JetBrains Mono', monospace; font-size: 12px;
+                   fill: var(--text-primary); text-anchor: middle; pointer-events: none;
+                   dominant-baseline: central; }
+.gn-node__method { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700;
+                   fill: var(--bg-canvas); text-anchor: middle; pointer-events: none;
+                   dominant-baseline: central; }
+
+/* ─── COLOR VARIANTS (stroke + currentColor for glow) ────── */
+.gn-node--service  { color: var(--accent-green);  }
+.gn-node--database { color: var(--accent-blue);   }
+.gn-node--broker   { color: var(--accent-teal);   }
+.gn-node--frontend { color: var(--accent-purple); }
+.gn-node--event    { color: var(--accent-purple); }
+.gn-node--endpoint { color: var(--accent-green);  }
+.gn-node--function { color: var(--text-muted);    }
+.gn-node--control  { color: var(--accent-orange); }
+.gn-node--return   { color: var(--text-muted);    }
+.gn-node--return.gn-node--status-ok  { color: var(--accent-green); }
+.gn-node--return.gn-node--status-err { color: var(--accent-red);   }
+
+.gn-node .gn-node__body { stroke: currentColor; }
+.gn-node--function .gn-node__body { fill: var(--bg-surface); }
+
+/* ─── STATES ───────────────────────────────────────────────── */
+/* Hover: subtle tint + scale */
+.gn-node:hover .gn-node__inner { transform: scale(1.04); }
+.gn-node:hover .gn-node__body  { filter: drop-shadow(0 0 6px currentColor); }
+
+/* Selected: persistent glow (from selected onwards) */
+.gn-node--selected .gn-node__body {
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 10px currentColor) drop-shadow(0 0 18px currentColor);
+}
+.gn-node--selected .gn-node__inner { transform: scale(1.02); }
+
+/* Click-tap: a one-shot radial flash on top of the node that fades in/out */
+.gn-node__flash {
+  fill: currentColor;
+  opacity: 0;
+  pointer-events: none;
+}
+.gn-node--tapping .gn-node__flash {
+  animation: gn-flash 420ms ease-out forwards;
+}
+@keyframes gn-flash {
+  0%   { opacity: 0;    transform: scale(0.8); }
+  30%  { opacity: 0.45; transform: scale(1.0); }
+  100% { opacity: 0;    transform: scale(1.25); }
+}
+.gn-node__flash { transform-box: fill-box; transform-origin: center; }
+
+.gn-node--dimmed { opacity: 0.18; filter: grayscale(70%); }
+
+.gn-node--error .gn-node__body { stroke: var(--accent-red) !important; }
+.gn-node--error { color: var(--accent-red); }
+
+/* ─── ENDPOINT METHOD PILL ─────────────────────────────── */
+.gn-endpoint__pill--GET    { fill: var(--accent-green);  }
+.gn-endpoint__pill--POST   { fill: var(--accent-blue);   }
+.gn-endpoint__pill--PUT    { fill: var(--accent-orange); }
+.gn-endpoint__pill--DELETE { fill: var(--accent-red);    }
+.gn-endpoint__pill--PATCH  { fill: var(--accent-purple); }
+
+/* ─── REGIONS (function containers) ──────────────────────── */
+.gn-region__body {
+  fill: color-mix(in oklab, var(--accent-green) 6%, transparent);
+  stroke: var(--accent-green);
+  stroke-width: 1.2;
+  stroke-dasharray: 5 4;
+}
+.gn-region__label {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  fill: var(--accent-green); cursor: pointer; user-select: none;
+}
+.gn-region__chev {
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  fill: var(--accent-green); cursor: pointer; user-select: none;
+}
+.gn-region.is-collapsed .gn-region__body {
+  fill: color-mix(in oklab, var(--accent-green) 12%, transparent);
+  stroke-dasharray: none;
+  stroke-width: 1.8;
+}
+
+/* Edge label (reads/writes/publishes) */
+.gn-edge-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  fill: var(--text-secondary); text-anchor: middle; dominant-baseline: central;
+  pointer-events: none;
+}
+.gn-edge-label-bg {
+  fill: var(--bg-canvas);
+  stroke: var(--border);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+/* ─── EDGES ────────────────────────────────────────────────── */
+.gn-edge {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  opacity: 0.65;
+  transition: opacity 160ms, stroke 160ms;
+}
+.gn-edge--async { stroke-dasharray: 7 4; }
+.gn-edge--data  { stroke-dasharray: 2 4; stroke-width: 1.3; }
+.gn-edge--error { stroke: var(--accent-red); opacity: 0.9; }
+
+/* Wave-fill overlay: same path drawn on top, dash-offset animated */
+.gn-edge-wave {
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+.gn-edge-group--sync  .gn-edge-wave { stroke: var(--accent-green); color: var(--accent-green); }
+.gn-edge-group--async .gn-edge-wave { stroke: var(--accent-teal);  color: var(--accent-teal);  }
+.gn-edge-group--data  .gn-edge-wave { stroke: var(--accent-blue);  color: var(--accent-blue);  }
+.gn-edge-group--error .gn-edge-wave { stroke: var(--accent-red);   color: var(--accent-red);   }
+
+/* When the edge fires: draw from 0→full, then hold */
+.gn-edge-group.is-firing .gn-edge-wave {
+  opacity: 1;
+  animation: gn-draw 650ms cubic-bezier(.5,.1,.2,1) forwards;
+}
+/* Persistent glow after fire (when selected) */
+.gn-edge-group.is-lit .gn-edge-wave { opacity: 0.9; stroke-dashoffset: 0 !important; }
+.gn-edge-group.is-lit .gn-edge { opacity: 0.3; }
+
+@keyframes gn-draw {
+  from { stroke-dashoffset: var(--gn-len, 1000); }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* Arrow marker scale tuning — defs set a tiny path; this just tones opacity */
+.gn-edge { marker-end: url(#gn-arrow); }

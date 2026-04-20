@@ -1,0 +1,42 @@
+.controls {
+  position: fixed;
+  bottom: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(var(--bg-surface-rgb, 17,17,21), 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  z-index: 90;
+}
+
+.btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text-secondary);
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 120ms;
+  font-family: 'Space Grotesk', sans-serif;
+}
+.btn:hover { color: var(--text-primary); }
+
+.label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-width: 38px;
+  text-align: center;
+}
+
+.divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+}

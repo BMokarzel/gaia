@@ -1,0 +1,90 @@
+.rail {
+  position: fixed;
+  left: 14px;
+  top: 68px;
+  bottom: 14px;
+  width: 48px;
+  background: rgba(var(--bg-surface-rgb, 17,17,21), 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 0;
+  overflow: hidden;
+  transition: width 220ms cubic-bezier(.2,.8,.2,1), border-radius 160ms;
+  z-index: 90;
+}
+
+.railExpanded {
+  width: 210px;
+  border-radius: var(--radius-lg);
+  padding: 10px 8px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 120ms;
+  border-left: 2px solid transparent;
+  flex-shrink: 0;
+}
+
+.railExpanded .item {
+  padding: 8px 8px;
+  justify-content: flex-start;
+}
+
+.item:hover:not(.itemDisabled) {
+  background: var(--bg-elevated);
+}
+
+.itemActive {
+  background: var(--accent-green-dim) !important;
+  border-left-color: var(--accent-green);
+}
+
+.itemDisabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.glyph {
+  font-size: 17px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.itemActive .glyph { color: var(--accent-green); }
+
+.labelGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+}
+
+.label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.itemActive .label { color: var(--accent-green); }
+
+.sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}

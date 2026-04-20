@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Turbo cache
+.turbo/
+
+# Vite / web
+apps/web/dist/
+
+# NestJS / API
+apps/api/dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Storage & cloned repos (runtime data)
+storage/
+repos/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

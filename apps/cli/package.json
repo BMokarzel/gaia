@@ -1,0 +1,29 @@
+{
+  "name": "@topology/cli",
+  "version": "0.1.0",
+  "description": "CLI for topology extractor",
+  "main": "dist/cli.js",
+  "bin": {
+    "tree-cli": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/cli.ts",
+    "start": "node dist/cli.js",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@topology/core": "workspace:*",
+    "chalk": "^4.1.2",
+    "commander": "^12.0.0",
+    "ora": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
