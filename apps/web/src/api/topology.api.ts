@@ -6,7 +6,7 @@ import type {
   ListQuery,
 } from './types'
 
-const BASE = '/api'
+const BASE = '/nest'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -15,7 +15,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error(body?.error?.message ?? `HTTP ${res.status}`)
+    const msg = body?.error?.message
+    const text = typeof msg === 'string' ? msg
+      : Array.isArray(msg) ? msg.join('; ')
+      : typeof msg === 'object' && msg !== null ? (msg.message ?? JSON.stringify(msg))
+      : `HTTP ${res.status}`
+    throw new Error(text)
   }
   if (res.status === 204) return undefined as T
   const json = await res.json()

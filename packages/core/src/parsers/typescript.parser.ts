@@ -19,6 +19,7 @@ import { extractTelemetry } from '../extractors/ts/telemetry.extractor';
 import { extractDataNodes } from '../extractors/ts/data.extractor';
 import { extractFrontendNodes } from '../extractors/ts/frontend/screen.extractor';
 import { extractAssignments } from '../extractors/ts/assignment.extractor';
+import { serviceId as computeServiceId } from '../utils/id';
 
 // Lazy load das grammars para não crashar se não estiverem instaladas
 function loadLanguage(name: string): unknown {
@@ -74,7 +75,7 @@ export class TypeScriptParser implements LanguageParser {
       const root = tree.rootNode;
 
       const isFrontend = isFrontendFile(file);
-      const serviceId = context.services[0]?.id ?? 'unknown';
+      const serviceId = computeServiceId(context.repoPath);
 
       const codeNodes: CodeNode[] = [];
       const databases = [];

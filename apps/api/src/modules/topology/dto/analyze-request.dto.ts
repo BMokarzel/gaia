@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsEnum, IsArray, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsArray, IsBoolean, ValidateNested, IsDefined } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 class LocalSourceDto {
@@ -45,6 +46,9 @@ class AnalysisOptionsDto {
 
 export class AnalyzeRequestDto {
   @ApiProperty({ description: 'Fonte de extração (local | git)' })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => LocalSourceDto)
   source!: LocalSourceDto | GitSourceDto;
 
   @ApiPropertyOptional({ description: 'Nome da topologia. Default: derivado da fonte' })
@@ -60,6 +64,8 @@ export class AnalyzeRequestDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @ValidateNested()
+  @Type(() => AnalysisOptionsDto)
   options?: AnalysisOptionsDto;
 
   @ApiPropertyOptional({

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 import type {
@@ -20,7 +20,7 @@ export class LocalDirectoryAdapter implements IExtractionSourceAdapter {
     }
     const localPath = resolve(descriptor.path);
     if (!existsSync(localPath)) {
-      throw new Error(`Path not found: ${localPath}`);
+      throw new NotFoundException('Source path not found');
     }
     return {
       localPath,

@@ -7,7 +7,11 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:security": "vitest run tests/security",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "glob": "^10.4.5",
@@ -26,7 +30,9 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
-    "typescript": "^5.4.5"
+    "@vitest/coverage-v8": "^1.6.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
   },
   "engines": {
     "node": ">=18.0.0"

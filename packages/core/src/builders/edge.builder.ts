@@ -28,7 +28,7 @@ export function buildEdges(
         f.location.file === endpoint.location.file
       );
       if (fn) {
-        edges.push({ from: endpoint.id, to: fn.id, kind: 'calls' });
+        edges.push({ source: endpoint.id, target: fn.id, kind: 'calls' });
       }
     }
 
@@ -47,8 +47,8 @@ export function buildEdges(
         if (db) {
           const isWrite = ['create', 'createMany', 'update', 'updateMany', 'upsert', 'delete', 'deleteMany', 'raw', 'migrate'].includes(dbNode.metadata.operation);
           edges.push({
-            from: dbNode.id,
-            to: db.id,
+            source: dbNode.id,
+            target: db.id,
             kind: isWrite ? 'writes_to' : 'reads_from',
             metadata: {
               operation: dbNode.metadata.operation,
@@ -70,8 +70,8 @@ export function buildEdges(
               ? 'publishes_to'
               : 'consumes_from';
             edges.push({
-              from: service.id,
-              to: brokerId,
+              source: service.id,
+              target: brokerId,
               kind,
               metadata: { topic: eventNode.metadata.eventName },
             });
@@ -83,8 +83,8 @@ export function buildEdges(
     // Service → Database (depends_on)
     for (const dep of service.dependencies) {
       edges.push({
-        from: service.id,
-        to: dep.targetId,
+        source: service.id,
+        target: dep.targetId,
         kind: 'depends_on',
         metadata: {
           kind: dep.kind,
@@ -127,8 +127,8 @@ export function buildEdges(
       }
 
       edges.push({
-        from: service.id,
-        to: targetId,
+        source: service.id,
+        target: targetId,
         kind: 'imports',
         metadata: { modulePath },
       });
@@ -166,48 +166,11 @@ export function buildEdges(
         const target = classToConstructor.get(baseType);
         if (target && target.id !== fn.id) {
           edges.push({
-            from: fn.id,
-            to: target.id,
+            source: fn.id,
+            target: target.id,
             kind: 'depends_on',
             metadata: { paramName: param.name, typeName: baseType },
           });
-        }
-      }
-    }
-  }
-
-  // Read edges — variáveis locais referenciadas em calls e returns
-  const MIN_VAR_NAME_LENGTH = 2;
-
-  for (const service of services) {
-    for (const fn of service.functions) {
-      const localVars = fn.children.filter(
-        c => c.type === 'data' &&
-          (c as DataNode).metadata.scope === 'local' &&
-          (c as DataNode).metadata.kind !== 'destructuring' &&
-          c.name.length >= MIN_VAR_NAME_LENGTH,
-      ) as DataNode[];
-
-      if (localVars.length === 0) continue;
-
-      const calls = fn.children.filter(c => c.type === 'call') as CallNode[];
-      const returns = fn.children.filter(c => c.type === 'return') as ReturnNode[];
-
-      for (const varNode of localVars) {
-        const varName = varNode.name;
-
-        for (const call of calls) {
-          if (call.metadata.arguments.some(a => a.includes(varName)) ||
-              call.metadata.callee.includes(varName)) {
-            edges.push({ from: varNode.id, to: call.id, kind: 'uses' });
-          }
-        }
-
-        for (const ret of returns) {
-          const val = ret.metadata.value ?? '';
-          if (val.includes(varName)) {
-            edges.push({ from: varNode.id, to: ret.id, kind: 'uses' });
-          }
         }
       }
     }
@@ -240,7 +203,7 @@ export function buildEdges(
         );
 
         if (target && target.id !== fn.id) {
-          edges.push({ from: fn.id, to: target.id, kind: 'calls' });
+          edges.push({ source: fn.id, target: target.id, kind: 'calls' });
           callNode.metadata.resolvedTo = target.id;
         }
       }
@@ -252,16 +215,16 @@ export function buildEdges(
     for (const topic of broker.metadata.topics) {
       for (const producerId of topic.producers) {
         edges.push({
-          from: producerId,
-          to: broker.id,
+          source: producerId,
+          target: broker.id,
           kind: 'publishes_to',
           metadata: { topic: topic.name },
         });
       }
       for (const consumerId of topic.consumers) {
         edges.push({
-          from: broker.id,
-          to: consumerId,
+          source: broker.id,
+          target: consumerId,
           kind: 'consumes_from',
           metadata: { topic: topic.name },
         });
@@ -310,7 +273,7 @@ function resolveCallTarget(
 function deduplicateEdges(edges: Edge[]): Edge[] {
   const seen = new Set<string>();
   return edges.filter(e => {
-    const key = `${e.from}→${e.to}:${e.kind}`;
+    const key = `${e.source}→${e.target}:${e.kind}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

@@ -1,4 +1,4 @@
-import { readdirSync, statSync, readFileSync } from 'fs';
+import { readdirSync, lstatSync, readFileSync } from 'fs';
 import { join, extname, relative, basename } from 'path';
 
 export interface SourceFile {
@@ -101,10 +101,13 @@ export function walkRepository(repoPath: string, options: WalkOptions = {}): Sou
       const fullPath = join(dir, entry);
       let stat;
       try {
-        stat = statSync(fullPath);
+        stat = lstatSync(fullPath);
       } catch {
         continue;
       }
+
+      // Skip symlinks to prevent path traversal outside repo root
+      if (stat.isSymbolicLink()) continue;
 
       if (stat.isDirectory()) {
         walk(fullPath);
@@ -136,6 +139,9 @@ export function walkRepository(repoPath: string, options: WalkOptions = {}): Sou
       } catch {
         continue;
       }
+
+      // Final containment guard — ensures no path escapes the repo root
+      if (!fullPath.startsWith(repoPath)) continue;
 
       files.push({
         absolutePath: fullPath,
@@ -240,7 +246,8 @@ export function detectServiceBoundaries(repoPath: string): ServiceBoundary[] {
       if (IGNORE_DIRS.has(entry)) continue;
       const full = join(dir, entry);
       try {
-        if (statSync(full).isDirectory()) {
+        const s = lstatSync(full);
+        if (!s.isSymbolicLink() && s.isDirectory()) {
           walk(full, depth + 1);
         }
       } catch {

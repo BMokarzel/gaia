@@ -74,8 +74,8 @@ export function EcosystemView() {
     // ── Edges: service→service, service→db, service→broker ──
     const nodeIds = new Set(d3Nodes.map(n => n.id))
     const d3Links = edges
-      .filter(e => nodeIds.has(e.from) && nodeIds.has(e.to))
-      .map(e => ({ source: e.from, target: e.to, kind: e.kind }))
+      .filter(e => nodeIds.has(e.source ?? e.from!) && nodeIds.has(e.target ?? e.to!))
+      .map(e => ({ source: e.source ?? e.from!, target: e.target ?? e.to!, kind: e.kind }))
 
     // ── Create DOM nodes ──────────────────────────────────────
     const nodeMap = new Map<string, GaiaNode>()
@@ -201,7 +201,9 @@ export function EcosystemView() {
     if (!svg) return
     svg.querySelectorAll('.gn-node--selected').forEach(n => n.classList.remove('gn-node--selected'))
     if (selectedNodeId) {
-      svg.querySelector(`[data-id="${selectedNodeId}"]`)?.classList.add('gn-node--selected')
+      try {
+        svg.querySelector(`[data-id="${CSS.escape(selectedNodeId)}"]`)?.classList.add('gn-node--selected')
+      } catch { /* invalid selector — skip selection highlight */ }
     }
   }, [selectedNodeId])
 

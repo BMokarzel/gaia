@@ -70,11 +70,13 @@ export function buildServiceLayout(service: ServiceNode, topology: SystemTopolog
   // Edges from global topology edges involving this service
   const nodeIds = new Set(nodes.map(n => n.id))
   for (const e of topology.edges) {
-    if (!nodeIds.has(e.from) || !nodeIds.has(e.to)) continue
+    const src = e.source ?? e.from
+    const tgt = e.target ?? e.to
+    if (!src || !tgt || !nodeIds.has(src) || !nodeIds.has(tgt)) continue
     const kind: ServiceLayoutEdge['kind'] =
       e.kind === 'publishes_to' || e.kind === 'consumes_from' ? 'async' :
       e.kind === 'reads_from' || e.kind === 'writes_to' ? 'data' : 'sync'
-    edges.push({ from: e.from, to: e.to, kind })
+    edges.push({ from: src, to: tgt, kind })
   }
 
   // If no global edges, draw edges from endpoints to all deps (fallback)

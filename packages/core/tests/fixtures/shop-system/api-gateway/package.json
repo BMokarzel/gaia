@@ -1,0 +1,12 @@
+{
+  "name": "api-gateway",
+  "version": "0.1.0",
+  "dependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/event-emitter": "^2.0.0",
+    "@opentelemetry/api": "^1.7.0",
+    "@prisma/client": "^5.0.0",
+    "winston": "^3.11.0"
+  }
+}

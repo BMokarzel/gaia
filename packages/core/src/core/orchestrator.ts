@@ -1,5 +1,7 @@
 import type { AnalysisContext, SystemTopology, LogNode, TelemetryNode, CodeNode, ServiceNode } from '../types/topology';
 import type { ServiceBoundary } from './walker';
+import type { Logger } from '../logging/types';
+import { NullLogger } from '../logging/null-logger';
 import { walkRepository, detectServiceBoundaries } from './walker';
 import { detectTechStack } from './detector';
 import { TypeScriptParser } from '../parsers/typescript.parser';
@@ -25,8 +27,10 @@ export interface AnalysisOptions {
   skipTests?: boolean;
   /** Inclui análise de frontend */
   includeFrontend?: boolean;
-  /** Callback de progresso */
+  /** Callback de progresso (texto simples para UI — continua funcionando independente do logger) */
   onProgress?: (message: string) => void;
+  /** Logger estruturado. Default: NullLogger */
+  logger?: Logger;
 }
 
 const PARSERS: LanguageParser[] = [
@@ -52,7 +56,10 @@ export async function analyzeRepository(
     skipTests = true,
     includeFrontend = true,
     onProgress = () => {},
+    logger: rawLogger = NullLogger,
   } = options;
+
+  const log = rawLogger.child({ component: 'core.orchestrator' });
 
   const context: AnalysisContext = {
     repoPath,
@@ -68,18 +75,22 @@ export async function analyzeRepository(
 
   // 1. Detecta boundaries de serviços (monorepo vs single service)
   onProgress('Detecting service boundaries...');
+  log.info('Detecting service boundaries', { repoPath });
   const boundaries = detectServiceBoundaries(repoPath);
   onProgress(`Found ${boundaries.length} service(s)`);
+  log.info('Service boundaries detected', { count: boundaries.length });
 
   // 2. Para cada boundary, analisa os arquivos
   for (const boundary of boundaries) {
     onProgress(`Analyzing service: ${boundary.name}`);
-    await analyzeService(boundary, context, { skipTests, includeFrontend, onProgress });
+    log.info('Analyzing service', { service: boundary.name, path: boundary.rootPath });
+    await analyzeService(boundary, context, { skipTests, includeFrontend, onProgress, logger: rawLogger });
   }
 
   // 3. Consolida databases e brokers de todos os serviços
   const allDatabases = Array.from(context.databases.values());
   const allBrokers = Array.from(context.brokers.values());
+  log.debug('Resources consolidated', { databases: allDatabases.length, brokers: allBrokers.length });
 
   // 4. Atualiza ServiceDependencies baseado nos databases/brokers encontrados
   for (const service of context.services) {
@@ -88,7 +99,9 @@ export async function analyzeRepository(
 
   // 5. Constrói edges globais
   onProgress('Building edges...');
+  log.debug('Building edges');
   const edges = buildEdges(context.services, allDatabases, allBrokers);
+  log.debug('Edges built', { count: edges.length });
 
   // 5b. Métricas de acoplamento por serviço
   onProgress('Computing coupling metrics...');
@@ -126,6 +139,14 @@ export async function analyzeRepository(
     diagnostics: context.diagnostics,
   };
 
+  const errorCount = context.diagnostics.filter(d => d.level === 'error').length;
+  const warnCount  = context.diagnostics.filter(d => d.level === 'warning').length;
+  log.info('Analysis complete', {
+    services: context.services.length,
+    edges: edges.length,
+    diagnostics: { errors: errorCount, warnings: warnCount },
+  });
+
   return topology;
 }
 
@@ -134,10 +155,12 @@ async function analyzeService(
   context: AnalysisContext,
   options: Required<AnalysisOptions>,
 ): Promise<void> {
-  const { skipTests, includeFrontend, onProgress } = options;
+  const { skipTests, includeFrontend, onProgress, logger: parentLogger } = options;
+  const log = parentLogger.child({ component: 'core.service', service: boundary.name });
 
   // Detecta stack tecnológica
   const stack = detectTechStack(boundary);
+  log.debug('Stack detected', { language: stack.language, framework: stack.framework });
 
   // Walk nos arquivos do serviço
   const files = walkRepository(boundary.rootPath, {
@@ -146,12 +169,18 @@ async function analyzeService(
   });
 
   onProgress(`  ${files.length} files found in ${boundary.name}`);
+  log.info('Files found', { count: files.length, service: boundary.name });
 
   const allCodeNodes: CodeNode[] = [];
   const serviceDatabases: ReturnType<typeof buildDatabaseFromHint>[] = [];
   const serviceBrokers: ReturnType<typeof buildBrokerFromHint>[] = [];
 
   // Parseia cada arquivo com o parser adequado
+  // Temporarily override context.repoPath with the boundary path so parsers
+  // compute the correct service ID for topics/events
+  const savedRepoPath = context.repoPath;
+  context.repoPath = boundary.rootPath;
+
   for (const file of files) {
     const parser = PARSERS.find(p => p.supports(file));
     if (!parser) continue;
@@ -188,18 +217,31 @@ async function analyzeService(
             const existingTopic = existing.metadata.topics.find(t => t.name === topic.name);
             if (!existingTopic) {
               existing.metadata.topics.push(topic);
+            } else {
+              // Merge producers and consumers
+              for (const p of topic.producers) {
+                if (!existingTopic.producers.includes(p)) existingTopic.producers.push(p);
+              }
+              for (const c of topic.consumers) {
+                if (!existingTopic.consumers.includes(c)) existingTopic.consumers.push(c);
+              }
             }
           }
         }
       }
     } catch (err) {
+      const error = err as Error;
+      log.warn('Parser error', { file: file.relativePath, error: error.message });
       context.diagnostics.push({
         level: 'warning',
-        message: `Failed to parse ${file.relativePath}: ${(err as Error).message}`,
+        message: `Failed to parse ${file.relativePath}: ${error.message}`,
         location: { file: file.relativePath, line: 1, column: 0 },
       });
     }
   }
+
+  // Restore original repoPath
+  context.repoPath = savedRepoPath;
 
   // Adiciona databases da stack que ainda não foram detectados no código
   for (const hint of stack.databaseHints) {

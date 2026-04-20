@@ -5,6 +5,9 @@ import { existsSync } from 'fs';
 import chalk from 'chalk';
 import ora from 'ora';
 import { analyzeRepository, writeTopology, buildSummary } from '@topology/core';
+import {
+  createLogger, FileTransport, ConsoleTransport, CompositeTransport,
+} from '@topology/core';
 
 const program = new Command();
 
@@ -41,6 +44,14 @@ program
 
     const spinner = ora({ text: 'Starting analysis...', color: 'cyan' }).start();
 
+    const logDir = resolve(repoPath, 'logs');
+    const logger = createLogger('cli', [
+      new CompositeTransport([
+        new ConsoleTransport({ level: options.verbose ? 'debug' : 'warn', colorize: true }),
+        new FileTransport({ dir: logDir, component: 'cli', projectRoot: repoPath }),
+      ]),
+    ]);
+
     const onProgress = (msg: string) => {
       spinner.text = msg;
       if (options.verbose) {
@@ -54,6 +65,7 @@ program
         skipTests: !options.includeTests,
         includeFrontend: options.frontend,
         onProgress,
+        logger,
       });
 
       spinner.text = 'Writing output...';
@@ -92,9 +104,11 @@ program
         }
       }
     } catch (err) {
-      spinner.fail(chalk.red(`Analysis failed: ${(err as Error).message}`));
+      const error = err as Error;
+      logger.error('Analysis failed', error);
+      spinner.fail(chalk.red(`Analysis failed: ${error.message}`));
       if (options.verbose) {
-        console.error((err as Error).stack);
+        console.error(error.stack);
       }
       process.exit(1);
     }

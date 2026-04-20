@@ -47,7 +47,7 @@ export function extractGoEndpoints(
 
     const argList = args.namedChildren;
     const pathArg = argList[0];
-    const path = pathArg ? extractStringValue(pathArg) : null;
+    const path = pathArg ? (extractStringValue(pathArg) ?? extractGoStringLit(pathArg)) : null;
     if (!path) continue;
 
     // Handler — último argumento
@@ -85,7 +85,7 @@ export function extractGoEndpoints(
     if (!args) continue;
 
     const pathArg = args.namedChildren[0];
-    const path = pathArg ? extractStringValue(pathArg) : null;
+    const path = pathArg ? (extractStringValue(pathArg) ?? extractGoStringLit(pathArg)) : null;
     if (!path) continue;
 
     const loc = toLocation(call, filePath);
@@ -117,6 +117,13 @@ function detectGoFramework(objText: string, call: SyntaxNode): string {
   if (/fiber/i.test(objText)) return 'fiber';
   if (/chi/i.test(objText)) return 'chi';
   return 'gin'; // default mais comum
+}
+
+function extractGoStringLit(node: SyntaxNode): string | null {
+  if (node.type === 'interpreted_string_literal' || node.type === 'raw_string_literal') {
+    return node.text.replace(/^["`]|["`]$/g, '');
+  }
+  return null;
 }
 
 function extractGoPathParams(path: string): EndpointNode['metadata']['request'] {

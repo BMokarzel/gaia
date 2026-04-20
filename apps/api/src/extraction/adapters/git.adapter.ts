@@ -1,9 +1,36 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { mkdirSync, existsSync, rmSync } from 'fs';
 import { join } from 'path';
 import { createHash } from 'crypto';
 import simpleGit from 'simple-git';
+
+const ALLOWED_SCHEMES = ['https:', 'http:', 'git:', 'ssh:'];
+
+// RFC-1918 + loopback + link-local private ranges
+const PRIVATE_IP_RE = /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1$|\[::1\])/;
+
+function assertSafeGitUrl(rawUrl: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    // Non-URL formats like "git@github.com:org/repo" are SCP-style SSH — allow them
+    // but block any path that starts with a slash followed by system directories
+    if (/^\//.test(rawUrl)) {
+      throw new BadRequestException('Local filesystem paths are not allowed as git URLs');
+    }
+    return;
+  }
+
+  if (!ALLOWED_SCHEMES.includes(parsed.protocol)) {
+    throw new BadRequestException(`Git URL scheme "${parsed.protocol}" is not allowed`);
+  }
+
+  if (PRIVATE_IP_RE.test(parsed.hostname)) {
+    throw new BadRequestException('Git URLs pointing to private/loopback addresses are not allowed');
+  }
+}
 import type {
   IExtractionSourceAdapter,
   SourceDescriptor,
@@ -42,6 +69,8 @@ export class GitAdapter implements IExtractionSourceAdapter {
         cleanup: async () => {},
       };
     }
+
+    assertSafeGitUrl(descriptor.url);
 
     mkdirSync(cloneDir, { recursive: true });
 

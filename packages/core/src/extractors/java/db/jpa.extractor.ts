@@ -3,6 +3,7 @@ import {
   findAll, toLocation, fieldText,
 } from '../../../utils/ast-helpers';
 import { nodeId, resourceId, tableId as makeTableId } from '../../../utils/id';
+import { escapeRegex } from '../../../utils/regex';
 import type { DbProcessNode, DatabaseNode, TableNode, ColumnDef } from '../../../types/topology';
 
 /**
@@ -260,7 +261,7 @@ function inferModelFromRepo(repoName: string): string {
 function extractAnnotationStringAttr(ann: SyntaxNode, attr: string): string | null {
   const args = ann.childForFieldName('arguments');
   if (!args) return null;
-  const match = args.text.match(new RegExp(`${attr}\\s*=\\s*["']([^"']+)["']`));
+  const match = args.text.match(new RegExp(`${escapeRegex(attr)}\\s*=\\s*["']([^"']+)["']`));
   return match ? match[1] : null;
 }
 

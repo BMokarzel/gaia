@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gaia — POST /checkout · Endpoint Flow</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green:   #39FF6E;
+  --pink:    #FF3C8E;
+  --orange:  #FF7A1A;
+  --blue:    #00BFFF;
+  --purple:  #B47AFF;
+  --amber:   #FFD166;
+  --white:   #F2F2F0;
+  --black:   #0A0A0C;
+  --surface: #111115;
+  --surf2:   #18181E;
+  --border:  #2A2A35;
+  --muted:   #6B6B78;
+}
+
+html, body { height: 100%; overflow: hidden; }
+body { font-family: 'Space Grotesk', sans-serif; background: var(--black); color: var(--white); display: flex; }
+
+/* ── SIDEBAR ─────────────────────────────────────────────────── */
+.sidebar {
+  width: 64px; height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 16px 0 20px; flex-shrink: 0; z-index: 10;
+}
+.logo-mark { width: 36px; height: 36px; margin-bottom: 20px; }
+.nav-btn {
+  width: 44px; height: 44px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--muted); border: none; background: transparent;
+  transition: background 180ms, color 180ms;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+.nav-btn.active { background: rgba(57,255,110,0.12); color: var(--green); }
+.nav-btn + .nav-btn { margin-top: 4px; }
+.sidebar-bottom { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--green), var(--blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--black);
+}
+
+/* ── MAIN ────────────────────────────────────────────────────── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+.topbar {
+  height: 48px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px; gap: 5px; flex-shrink: 0;
+}
+.crumb { font-size: 13px; color: var(--muted); cursor: pointer; }
+.crumb:hover { color: var(--white); }
+.crumb.cur { color: var(--white); font-weight: 500; }
+.sep { color: var(--border); font-size: 13px; }
+
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+.badge {
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.04em;
+}
+.b-green  { background: rgba(57,255,110,0.12);  color: var(--green);  }
+.b-blue   { background: rgba(0,191,255,0.12);   color: var(--blue);   }
+.b-orange { background: rgba(255,122,26,0.12);  color: var(--orange); }
+.b-amber  { background: rgba(255,209,102,0.12); color: var(--amber);  }
+.b-pink   { background: rgba(255,60,142,0.12);  color: var(--pink);   }
+.b-gray   { background: rgba(242,242,240,0.08); color: var(--muted);  }
+
+.btn-ghost {
+  height: 30px; padding: 0 12px; border-radius: 7px;
+  border: 1px solid var(--border); background: transparent; color: var(--muted);
+  font-family: inherit; font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: border-color 180ms, color 180ms;
+}
+.btn-ghost:hover { border-color: var(--green); color: var(--green); }
+
+.level-switch {
+  display: flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden;
+}
+.lvl-btn {
+  height: 28px; padding: 0 12px; font-family: inherit; font-size: 11px;
+  font-weight: 500; background: transparent; border: none; color: var(--muted);
+  cursor: pointer; transition: background 150ms, color 150ms;
+}
+.lvl-btn.active { background: rgba(57,255,110,0.12); color: var(--green); }
+
+/* ── CANVAS ──────────────────────────────────────────────────── */
+.canvas-wrap {
+  flex: 1; position: relative; overflow: hidden;
+  background: var(--black);
+  background-image: radial-gradient(circle, rgba(255,255,255,0.028) 1px, transparent 1px);
+  background-size: 24px 24px;
+  cursor: grab;
+}
+.canvas-wrap:active { cursor: grabbing; }
+#svg { width: 100%; height: 100%; overflow: visible; }
+
+/* ── LEGEND ──────────────────────────────────────────────────── */
+.legend {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 14px; align-items: center;
+  background: rgba(17,17,21,0.88); padding: 8px 18px;
+  border-radius: 999px; border: 1px solid var(--border);
+  backdrop-filter: blur(8px); font-size: 11px; color: var(--muted);
+  pointer-events: none; white-space: nowrap;
+}
+.leg-item { display: flex; align-items: center; gap: 5px; }
+.leg-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.leg-pill   { width: 10px; height: 10px; border-radius: 999px; flex-shrink: 0; }
+.leg-diamond { width: 9px; height: 9px; transform: rotate(45deg); flex-shrink: 0; }
+.leg-dash { width: 10px; height: 10px; border-radius: 2px; border: 1px dashed; flex-shrink: 0; }
+
+/* ── PANEL ───────────────────────────────────────────────────── */
+.panel {
+  position: absolute; right: 0; top: 0; bottom: 0; width: 340px;
+  background: var(--surf2); border-left: 1px solid var(--border);
+  transform: translateX(100%);
+  transition: transform 300ms cubic-bezier(0.25,0.46,0.45,0.94);
+  z-index: 20; display: flex; flex-direction: column;
+}
+.panel.open { transform: translateX(0); }
+
+.ph {
+  padding: 18px 18px 14px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.ph-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600;
+  flex-shrink: 0; margin-top: 2px;
+}
+.ph-info { flex: 1; min-width: 0; }
+.ph-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ph-sub  { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.ph-close {
+  width: 26px; height: 26px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ph-close:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+
+.p-badges { padding: 10px 18px; display: flex; gap: 5px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+.p-stats  {
+  padding: 14px 18px; display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; border-bottom: 1px solid var(--border);
+}
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+.stat-val { font-size: 22px; font-weight: 700; line-height: 1; }
+.stat-lbl { font-size: 10px; color: var(--muted); margin-top: 4px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+
+.p-sec { padding: 12px 18px; border-bottom: 1px solid var(--border); }
+.p-sec:last-of-type { border-bottom: none; }
+.p-sec-title { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+
+.p-mono {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--white); background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 10px; word-break: break-all; line-height: 1.7;
+}
+
+.p-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 5px 0; font-size: 12px; border-bottom: 1px solid rgba(42,42,53,0.5); gap: 10px; }
+.p-row:last-child { border-bottom: none; }
+.p-row-key { color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+.p-row-val { color: var(--white); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: right; }
+
+.p-actions { margin-top: auto; padding: 14px 18px; display: flex; gap: 8px; }
+.btn-primary {
+  flex: 1; height: 34px; border-radius: 8px; border: none;
+  background: var(--green); color: var(--black);
+  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: box-shadow 200ms;
+}
+.btn-primary:hover { box-shadow: 0 0 20px rgba(57,255,110,0.4); }
+
+/* ── TOOLTIP ─────────────────────────────────────────────────── */
+.tip {
+  position: fixed; pointer-events: none;
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 11px; font-size: 11.5px;
+  white-space: nowrap; opacity: 0; transition: opacity 150ms; z-index: 99;
+}
+.tip.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <svg class="logo-mark" viewBox="0 0 36 36" fill="none">
+    <circle cx="18" cy="18" r="6" fill="#39FF6E"/>
+    <circle cx="18" cy="18" r="10" fill="none" stroke="#39FF6E" stroke-width="1" opacity="0.3"/>
+    <ellipse cx="18" cy="18" rx="16" ry="7" stroke="rgba(57,255,110,0.55)" stroke-width="1.3" fill="none" transform="rotate(-35 18 18)"/>
+    <ellipse cx="18" cy="18" rx="16" ry="7" stroke="rgba(57,255,110,0.3)" stroke-width="1" fill="none" transform="rotate(55 18 18)"/>
+  </svg>
+
+  <button class="nav-btn" title="Global Graph">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="6" r="2"/>
+      <circle cx="4" cy="18" r="2"/><circle cx="20" cy="18" r="2"/>
+      <line x1="6" y1="7" x2="10" y2="11"/><line x1="14" y1="11" x2="18" y2="7"/>
+      <line x1="6" y1="17" x2="10" y2="13"/><line x1="14" y1="13" x2="18" y2="17"/>
+    </svg>
+  </button>
+
+  <button class="nav-btn active" title="Endpoint View">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+    </svg>
+  </button>
+
+  <button class="nav-btn" title="Debug">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="8"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/>
+    </svg>
+  </button>
+
+  <button class="nav-btn" title="Search">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  </button>
+
+  <div class="sidebar-bottom">
+    <button class="nav-btn" title="Settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+    <div class="avatar">G</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <span class="crumb">Gaia</span>
+    <span class="sep">›</span>
+    <span class="crumb">order-service</span>
+    <span class="sep">›</span>
+    <span class="crumb">Endpoints</span>
+    <span class="sep">›</span>
+    <span class="crumb cur">POST /checkout</span>
+
+    <div class="topbar-right">
+      <div class="level-switch">
+        <button class="lvl-btn">L1 summary</button>
+        <button class="lvl-btn active">L2 full map</button>
+      </div>
+      <span class="badge b-amber">3 conditions</span>
+      <span class="badge b-blue">2 db queries</span>
+      <span class="badge b-orange">1 http · 1 event</span>
+      <span class="badge b-pink">3 error returns</span>
+      <button class="btn-ghost" onclick="resetView()">⌖ Fit view</button>
+    </div>
+  </div>
+
+  <div class="canvas-wrap" id="canvas">
+    <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Glow filters -->
+        <filter id="fg" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="fb" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="fo" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="fa" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="fp" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="fw" x="-150%" y="-150%" width="400%" height="400%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- Arrowheads -->
+        <marker id="ar-def" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,1 L10,5 L0,9 z" fill="#2A2A35"/>
+        </marker>
+        <marker id="ar-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,1 L10,5 L0,9 z" fill="#39FF6E"/>
+        </marker>
+        <marker id="ar-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,1 L10,5 L0,9 z" fill="#00BFFF"/>
+        </marker>
+        <marker id="ar-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,1 L10,5 L0,9 z" fill="#FF7A1A"/>
+        </marker>
+        <marker id="ar-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,1 L10,5 L0,9 z" fill="#FF3C8E"/>
+        </marker>
+        <marker id="ar-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,1 L10,5 L0,9 z" fill="#FFD166"/>
+        </marker>
+      </defs>
+
+      <g id="root">
+        <g id="el"></g>
+        <g id="nl"></g>
+        <g id="wl"></g>
+      </g>
+    </svg>
+
+    <!-- LEGEND -->
+    <div class="legend">
+      <div class="leg-item"><div class="leg-swatch" style="background:#F2F2F0;opacity:.7"></div>function</div>
+      <div class="leg-item"><div class="leg-swatch" style="background:#00BFFF;opacity:.8"></div>db query</div>
+      <div class="leg-item"><div class="leg-swatch" style="background:#FF7A1A;opacity:.8"></div>http call</div>
+      <div class="leg-item"><div class="leg-dash" style="border-color:#FF7A1A;opacity:.7"></div>event (async)</div>
+      <div class="leg-item"><div class="leg-diamond" style="background:#FFD166;opacity:.8"></div>if / else</div>
+      <div class="leg-item"><div class="leg-pill" style="background:#39FF6E;opacity:.8"></div>return 2xx</div>
+      <div class="leg-item"><div class="leg-pill" style="background:#FF3C8E;opacity:.8"></div>return 4xx</div>
+      <div style="color:#4A4A5A">· double-click for details</div>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div class="panel" id="panel">
+  <div class="ph">
+    <div class="ph-icon" id="ph-icon" style="background:rgba(57,255,110,0.12);color:#39FF6E">fn</div>
+    <div class="ph-info">
+      <div class="ph-name" id="ph-name">—</div>
+      <div class="ph-sub"  id="ph-sub">—</div>
+    </div>
+    <button class="ph-close" onclick="closePanel()">×</button>
+  </div>
+  <div class="p-badges" id="p-badges"></div>
+  <div class="p-stats"  id="p-stats"></div>
+  <div id="p-detail-sec" class="p-sec">
+    <div class="p-sec-title" id="p-detail-title">Details</div>
+    <div id="p-detail-rows"></div>
+  </div>
+  <div id="p-source-sec" class="p-sec" style="display:none">
+    <div class="p-sec-title">Source</div>
+    <div class="p-mono" id="p-source"></div>
+  </div>
+  <div class="p-actions">
+    <button class="btn-primary">Go to source →</button>
+  </div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+function mk(tag, attrs) {
+  const el = document.createElementNS(NS, tag);
+  if (attrs) Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, String(v)));
+  return el;
+}
+function txt(content, attrs) {
+  const el = mk('text', attrs);
+  el.textContent = content;
+  return el;
+}
+
+// ── NODE DEFINITIONS ─────────────────────────────────────────────
+// Layout: main flow centered at x=500, width=300 blocks → x=350..650
+// Parallel lanes: left center x=302, right center x=697
+const NODES = [
+  {
+    id: 'entry',
+    type: 'endpoint',
+    label: 'POST /checkout',
+    sub: 'order-service · JWT · RateLimit · CORS',
+    x: 350, y: 60, w: 300, h: 52,
+    color: '#39FF6E',
+    tag: 'POST',
+    panel: {
+      icon: '⇒', iconBg: 'rgba(57,255,110,0.15)', iconColor: '#39FF6E',
+      title: 'POST /checkout',
+      sub: 'endpoint · order-service',
+      badges: ['POST','JWT','RateLimit','3 middleware'],
+      stats: { middleware: 3, guards: 2 },
+      detail: 'Route',
+      rows: [
+        { k: 'path',         v: '/checkout' },
+        { k: 'controller',   v: 'CheckoutController' },
+        { k: 'auth',         v: 'JWT Bearer' },
+        { k: 'body type',    v: 'CheckoutDto' },
+        { k: 'framework',    v: 'NestJS' },
+      ],
+      source: `@Post('/checkout')\nasync checkout(\n  @Body() body: CheckoutDto,\n  @Req() req: Request\n): Promise<OrderResponse> {`
+    }
+  },
+  {
+    id: 'validate',
+    type: 'function',
+    label: 'validateCheckoutPayload(body)',
+    sub: 'process · validation · ~0.1ms',
+    x: 350, y: 170, w: 300, h: 48,
+    color: '#F2F2F0',
+    tag: 'fn',
+    panel: {
+      icon: 'fn', iconBg: 'rgba(242,242,240,0.08)', iconColor: '#F2F2F0',
+      title: 'validateCheckoutPayload',
+      sub: 'function · validators/checkout.ts',
+      badges: ['sync','pure','throws ValidationError'],
+      stats: { params: 1, lines: 34 },
+      detail: 'Signature',
+      rows: [
+        { k: 'param',    v: 'body: CheckoutDto' },
+        { k: 'returns',  v: 'ValidationResult' },
+        { k: 'throws',   v: 'ValidationError' },
+        { k: 'file',     v: 'validators/checkout.ts:12' },
+      ],
+      source: `function validateCheckoutPayload(\n  body: CheckoutDto\n): ValidationResult {\n  // Joi schema validation\n  return schema.validate(body);\n}`
+    }
+  },
+  {
+    id: 'if-valid',
+    type: 'condition',
+    label: 'payload.valid?',
+    cx: 500, cy: 288, hw: 110, hh: 56,
+    color: '#FFD166',
+    panel: {
+      icon: '◇', iconBg: 'rgba(255,209,102,0.12)', iconColor: '#FFD166',
+      title: 'if payload.valid',
+      sub: 'flowControl · if/else',
+      badges: ['if/else','2 branches'],
+      stats: { branches: 2 },
+      detail: 'Condition',
+      rows: [
+        { k: 'expression', v: 'result.valid === true' },
+        { k: 'true →',     v: 'parallel block' },
+        { k: 'false →',    v: 'return 400' },
+        { k: 'file',       v: 'checkout.service.ts:28' },
+      ],
+      source: `if (!result.valid) {\n  throw new BadRequestException(\n    result.error\n  );\n}`
+    }
+  },
+  {
+    id: 'ret-400',
+    type: 'return',
+    code: 400,
+    label: 'Bad Request',
+    x: 700, y: 268, w: 160, h: 40,
+    color: '#FF3C8E',
+    panel: {
+      icon: '←', iconBg: 'rgba(255,60,142,0.12)', iconColor: '#FF3C8E',
+      title: '400 Bad Request',
+      sub: 'return · error response',
+      badges: ['4xx','error','thrown'],
+      stats: {},
+      detail: 'Response',
+      rows: [
+        { k: 'status',  v: '400' },
+        { k: 'trigger', v: 'ValidationError' },
+        { k: 'body',    v: '{ error: string }' },
+        { k: 'header',  v: 'Content-Type: application/json' },
+      ],
+      source: `throw new BadRequestException({\n  statusCode: 400,\n  error: result.error.message\n});`
+    }
+  },
+  // Parallel container → drawn separately
+  {
+    id: 'get-user',
+    type: 'db',
+    label: 'getUserById(userId)',
+    sub: 'users-db · findUnique · ~8ms',
+    x: 175, y: 405, w: 255, h: 44,
+    color: '#00BFFF',
+    tag: 'db',
+    panel: {
+      icon: 'db', iconBg: 'rgba(0,191,255,0.12)', iconColor: '#00BFFF',
+      title: 'getUserById',
+      sub: 'dbProcess · users-db · findUnique',
+      badges: ['SELECT','users-db','indexed','~8ms'],
+      stats: { rows: 1, avgMs: 8 },
+      detail: 'Query',
+      rows: [
+        { k: 'operation', v: 'findUnique' },
+        { k: 'table',     v: 'users' },
+        { k: 'where',     v: 'id = :userId' },
+        { k: 'index',     v: 'users_pkey (btree)' },
+        { k: 'orm',       v: 'Prisma' },
+      ],
+      source: `const user = await prisma.user.findUnique({\n  where: { id: userId },\n  select: { id, email, status }\n});`
+    }
+  },
+  {
+    id: 'check-inv',
+    type: 'db',
+    label: 'checkInventory(items)',
+    sub: 'inventory-db · findMany · ~14ms',
+    x: 570, y: 405, w: 255, h: 44,
+    color: '#00BFFF',
+    tag: 'db',
+    panel: {
+      icon: 'db', iconBg: 'rgba(0,191,255,0.12)', iconColor: '#00BFFF',
+      title: 'checkInventory',
+      sub: 'dbProcess · inventory-db · findMany',
+      badges: ['SELECT','inventory-db','n rows','~14ms'],
+      stats: { rows: 'n', avgMs: 14 },
+      detail: 'Query',
+      rows: [
+        { k: 'operation', v: 'findMany' },
+        { k: 'table',     v: 'inventory' },
+        { k: 'where',     v: 'sku IN (...) AND qty > 0' },
+        { k: 'index',     v: 'inv_sku_idx (btree)' },
+        { k: 'orm',       v: 'Prisma' },
+      ],
+      source: `const stock = await prisma.inventory.findMany({\n  where: {\n    sku: { in: items.map(i => i.sku) },\n    quantity: { gt: 0 }\n  }\n});`
+    }
+  },
+  {
+    id: 'if-avail',
+    type: 'condition',
+    label: 'user && stock ok?',
+    cx: 500, cy: 618, hw: 120, hh: 56,
+    color: '#FFD166',
+    panel: {
+      icon: '◇', iconBg: 'rgba(255,209,102,0.12)', iconColor: '#FFD166',
+      title: 'if user && inventory',
+      sub: 'flowControl · if/else',
+      badges: ['if/else','2 branches'],
+      stats: { branches: 2 },
+      detail: 'Condition',
+      rows: [
+        { k: 'expression', v: 'user && items.every(available)' },
+        { k: 'true →',     v: 'Stripe HTTP call' },
+        { k: 'false →',    v: 'return 422' },
+        { k: 'file',       v: 'checkout.service.ts:55' },
+      ],
+      source: `if (!user || !allItemsAvailable(items, stock)) {\n  throw new UnprocessableException(\n    'User not found or item out of stock'\n  );\n}`
+    }
+  },
+  {
+    id: 'ret-422',
+    type: 'return',
+    code: 422,
+    label: 'Unprocessable',
+    x: 700, y: 596, w: 160, h: 44,
+    color: '#FF3C8E',
+    panel: {
+      icon: '←', iconBg: 'rgba(255,60,142,0.12)', iconColor: '#FF3C8E',
+      title: '422 Unprocessable',
+      sub: 'return · error response',
+      badges: ['4xx','error','thrown'],
+      stats: {},
+      detail: 'Response',
+      rows: [
+        { k: 'status',   v: '422' },
+        { k: 'trigger',  v: '!user || !stock' },
+        { k: 'body',     v: '{ error: string, code: string }' },
+      ],
+      source: `throw new UnprocessableEntityException({\n  statusCode: 422,\n  error: 'User not found or item unavailable',\n  code: 'CHECKOUT_PRECONDITION_FAILED'\n});`
+    }
+  },
+  {
+    id: 'http-stripe',
+    type: 'http',
+    method: 'POST',
+    label: 'api.stripe.com/v1/charges',
+    sub: 'external · timeout 8s · retry ×2 · Bearer auth',
+    x: 310, y: 730, w: 380, h: 54,
+    color: '#FF7A1A',
+    tag: 'POST',
+    panel: {
+      icon: '↗', iconBg: 'rgba(255,122,26,0.12)', iconColor: '#FF7A1A',
+      title: 'POST /v1/charges',
+      sub: 'call · external HTTP · Stripe API',
+      badges: ['POST','external','async/await','retry ×2'],
+      stats: { timeout: '8s', retries: 2 },
+      detail: 'Request',
+      rows: [
+        { k: 'url',     v: 'https://api.stripe.com/v1/charges' },
+        { k: 'method',  v: 'POST' },
+        { k: 'auth',    v: 'Bearer STRIPE_SECRET_KEY' },
+        { k: 'body',    v: '{ amount, currency, source }' },
+        { k: 'timeout', v: '8000ms' },
+        { k: 'retry',   v: '2× with 500ms backoff' },
+      ],
+      source: `const charge = await stripe.charges.create({\n  amount: total,\n  currency: 'usd',\n  source: paymentMethodId,\n  metadata: { orderId }\n});`
+    }
+  },
+  {
+    id: 'if-paid',
+    type: 'condition',
+    label: 'payment succeeded?',
+    cx: 500, cy: 858, hw: 128, hh: 56,
+    color: '#FFD166',
+    panel: {
+      icon: '◇', iconBg: 'rgba(255,209,102,0.12)', iconColor: '#FFD166',
+      title: 'if charge.status === "succeeded"',
+      sub: 'flowControl · if/else',
+      badges: ['if/else','2 branches'],
+      stats: { branches: 2 },
+      detail: 'Condition',
+      rows: [
+        { k: 'expression', v: 'charge.status === "succeeded"' },
+        { k: 'true →',     v: 'save order to DB' },
+        { k: 'false →',    v: 'return 402' },
+        { k: 'file',       v: 'checkout.service.ts:82' },
+      ],
+      source: `if (charge.status !== 'succeeded') {\n  throw new PaymentRequiredException({\n    code: charge.failure_code,\n    message: charge.failure_message\n  });\n}`
+    }
+  },
+  {
+    id: 'ret-402',
+    type: 'return',
+    code: 402,
+    label: 'Payment Failed',
+    x: 703, y: 836, w: 156, h: 44,
+    color: '#FF3C8E',
+    panel: {
+      icon: '←', iconBg: 'rgba(255,60,142,0.12)', iconColor: '#FF3C8E',
+      title: '402 Payment Required',
+      sub: 'return · error response',
+      badges: ['4xx','error','thrown'],
+      stats: {},
+      detail: 'Response',
+      rows: [
+        { k: 'status',   v: '402' },
+        { k: 'trigger',  v: 'charge.status !== "succeeded"' },
+        { k: 'body',     v: '{ error, code: failure_code }' },
+      ],
+      source: `throw new PaymentRequiredException({\n  statusCode: 402,\n  error: charge.failure_message,\n  code: charge.failure_code\n});`
+    }
+  },
+  {
+    id: 'save-order',
+    type: 'db',
+    label: 'orders.create(orderData)',
+    sub: 'orders-db · create · transaction · ~12ms',
+    x: 350, y: 1005, w: 300, h: 48,
+    color: '#00BFFF',
+    tag: 'db',
+    panel: {
+      icon: 'db', iconBg: 'rgba(0,191,255,0.12)', iconColor: '#00BFFF',
+      title: 'orders.create',
+      sub: 'dbProcess · orders-db · create',
+      badges: ['INSERT','orders-db','transaction','~12ms'],
+      stats: { rows: 1, avgMs: 12 },
+      detail: 'Query',
+      rows: [
+        { k: 'operation',    v: 'create' },
+        { k: 'table',        v: 'orders' },
+        { k: 'transaction',  v: 'yes (with items)' },
+        { k: 'returns',      v: '{ id, createdAt }' },
+        { k: 'orm',          v: 'Prisma' },
+      ],
+      source: `const order = await prisma.$transaction(async (tx) => {\n  const o = await tx.order.create({ data: orderData });\n  await tx.orderItem.createMany({ data: items });\n  return o;\n});`
+    }
+  },
+  {
+    id: 'pub-event',
+    type: 'event',
+    label: 'publish("order.created", order)',
+    sub: 'kafka · orders topic · async fire-and-forget',
+    x: 350, y: 1115, w: 300, h: 48,
+    color: '#FF7A1A',
+    tag: 'evt',
+    panel: {
+      icon: '⇢', iconBg: 'rgba(255,122,26,0.12)', iconColor: '#FF7A1A',
+      title: 'publish("order.created")',
+      sub: 'event · kafka · async',
+      badges: ['publish','kafka','async','fire-forget'],
+      stats: { partitions: 3, retention: '7d' },
+      detail: 'Event',
+      rows: [
+        { k: 'kind',      v: 'publish' },
+        { k: 'topic',     v: 'order.created' },
+        { k: 'key',       v: 'orderId (UUID)' },
+        { k: 'payload',   v: 'OrderCreatedEvent' },
+        { k: 'consumers', v: 'notification-service, analytics-worker' },
+      ],
+      source: `await this.kafka.emit('order.created', {\n  orderId: order.id,\n  userId,\n  total,\n  items,\n  createdAt: order.createdAt\n});`
+    }
+  },
+  {
+    id: 'ret-201',
+    type: 'return',
+    code: 201,
+    label: '{ orderId, status: "pending" }',
+    x: 360, y: 1230, w: 280, h: 44,
+    color: '#39FF6E',
+    panel: {
+      icon: '←', iconBg: 'rgba(57,255,110,0.12)', iconColor: '#39FF6E',
+      title: '201 Created',
+      sub: 'return · success response',
+      badges: ['2xx','success'],
+      stats: {},
+      detail: 'Response',
+      rows: [
+        { k: 'status',    v: '201' },
+        { k: 'body type', v: 'OrderResponse' },
+        { k: 'body',      v: '{ orderId, status, createdAt }' },
+        { k: 'location',  v: '/orders/:orderId' },
+      ],
+      source: `return {\n  orderId: order.id,\n  status: 'pending',\n  createdAt: order.createdAt\n};`
+    }
+  },
+];
+
+// Parallel container bounds
+const PARALLEL = { x: 150, y: 378, w: 700, h: 167 };
+const FORK = { x: 500, y: 378 };
+const JOIN = { x: 500, y: 545 };
+
+// ── EDGES ─────────────────────────────────────────────────────────
+// d: SVG path, kind: flow|true|false|async, label, arMarker
+const EDGES = [
+  { id:'e0', s:'entry',      t:'validate',   kind:'flow',  d:'M 500 112 L 500 170' },
+  { id:'e1', s:'validate',   t:'if-valid',   kind:'flow',  d:'M 500 218 L 500 232' },
+  { id:'e2', s:'if-valid',   t:'ret-400',    kind:'false', label:'false', d:'M 610 288 L 700 288' },
+  { id:'e3', s:'if-valid',   t:'fork',       kind:'true',  label:'true',  d:'M 500 344 L 500 378' },
+  { id:'e4', s:'fork',       t:'get-user',   kind:'flow',  d:'M 500 378 C 500 392 302 392 302 405' },
+  { id:'e5', s:'fork',       t:'check-inv',  kind:'flow',  d:'M 500 378 C 500 392 697 392 697 405' },
+  { id:'e6', s:'get-user',   t:'join',       kind:'flow',  d:'M 302 449 C 302 497 500 497 500 545' },
+  { id:'e7', s:'check-inv',  t:'join',       kind:'flow',  d:'M 697 449 C 697 497 500 497 500 545' },
+  { id:'e8', s:'join',       t:'if-avail',   kind:'flow',  d:'M 500 545 L 500 562' },
+  { id:'e9', s:'if-avail',   t:'ret-422',    kind:'false', label:'false', d:'M 620 618 L 700 618' },
+  { id:'e10',s:'if-avail',   t:'http-stripe',kind:'true',  label:'true',  d:'M 500 674 L 500 730' },
+  { id:'e11',s:'http-stripe',t:'if-paid',    kind:'flow',  d:'M 500 784 L 500 802' },
+  { id:'e12',s:'if-paid',    t:'ret-402',    kind:'false', label:'false', d:'M 628 858 L 703 858' },
+  { id:'e13',s:'if-paid',    t:'save-order', kind:'true',  label:'true',  d:'M 500 914 L 500 1005' },
+  { id:'e14',s:'save-order', t:'pub-event',  kind:'async', d:'M 500 1053 L 500 1115' },
+  { id:'e15',s:'pub-event',  t:'ret-201',    kind:'flow',  d:'M 500 1163 L 500 1230' },
+];
+
+// Edge colors and markers by kind
+const E_CLR  = { flow:'#2A2A35',  true:'#2A2A35',  false:'#2A2A35',  async:'#1E1500' };
+const E_ACLR = { flow:'#39FF6E',  true:'#39FF6E',  false:'#FF3C8E',  async:'#FF7A1A' };
+const E_ARW  = { flow:'ar-def',   true:'ar-def',   false:'ar-def',   async:'ar-def'  };
+const E_ARAW = { flow:'ar-g',     true:'ar-g',     false:'ar-p',     async:'ar-o'    };
+
+// ── STATE ─────────────────────────────────────────────────────────
+const nodeMap = {};
+NODES.forEach(n => nodeMap[n.id] = n);
+const nEl = {};   // id → { g, hitRect, mainRect }
+const eEl = {};   // id → { path, hitPath }
+let selected = null;
+let panX = 0, panY = 0, panStart = null;
+
+// ── INIT ──────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const canvas = document.getElementById('canvas');
+  resetView(false);
+  draw();
+
+  // Pan
+  canvas.addEventListener('mousedown', e => {
+    if (e.target.closest('[data-nid]')) return;
+    panStart = { x: e.clientX - panX, y: e.clientY - panY };
+  });
+  window.addEventListener('mousemove', e => {
+    if (!panStart) return;
+    panX = e.clientX - panStart.x;
+    panY = e.clientY - panStart.y;
+    applyPan();
+  });
+  window.addEventListener('mouseup', () => { panStart = null; });
+
+  canvas.addEventListener('click', e => {
+    if (e.target === canvas || e.target.id === 'svg' || e.target.id === 'root') {
+      deselect(); closePanel();
+    }
+  });
+
+  window.addEventListener('resize', resetView);
+});
+
+function resetView(redoLayout) {
+  const canvas = document.getElementById('canvas');
+  const W = canvas.clientWidth;
+  const H = canvas.clientHeight;
+  panX = (W - 1000) / 2;
+  panY = Math.max(20, (H - 1320) / 2);
+  applyPan();
+  if (redoLayout !== false && Object.keys(nEl).length) redrawAll();
+}
+
+function applyPan() {
+  document.getElementById('root').style.transform = `translate(${panX}px,${panY}px)`;
+}
+
+// ── DRAW ──────────────────────────────────────────────────────────
+function draw() {
+  drawParallelContainer();
+  drawEdges();
+  drawNodes();
+}
+
+function redrawAll() {
+  ['el','nl','wl'].forEach(id => { document.getElementById(id).innerHTML = ''; });
+  Object.keys(nEl).forEach(k => delete nEl[k]);
+  Object.keys(eEl).forEach(k => delete eEl[k]);
+  draw();
+}
+
+function drawParallelContainer() {
+  const nl = document.getElementById('nl');
+  const g = mk('g');
+
+  // Container rect (dashed amber)
+  const rx = 14;
+  g.appendChild(mk('rect', {
+    x: PARALLEL.x, y: PARALLEL.y, width: PARALLEL.w, height: PARALLEL.h,
+    rx, fill: 'rgba(255,209,102,0.025)',
+    stroke: 'rgba(255,209,102,0.22)', 'stroke-width': '1',
+    'stroke-dasharray': '8 4'
+  }));
+
+  // "PARALLEL" label
+  const ltxt = txt('PARALLEL', {
+    x: PARALLEL.x + 14, y: PARALLEL.y + 16,
+    'font-size': '9', 'font-weight': '600', fill: '#FFD166',
+    'font-family': 'Space Grotesk, sans-serif', 'letter-spacing': '0.1em',
+    opacity: '0.55'
+  });
+  g.appendChild(ltxt);
+
+  // "Promise.all" sub-label
+  const mono = txt('Promise.all([...])', {
+    x: PARALLEL.x + 14, y: PARALLEL.y + 29,
+    'font-size': '9', fill: '#FFD166',
+    'font-family': 'JetBrains Mono, monospace', opacity: '0.35'
+  });
+  g.appendChild(mono);
+
+  // Center divider
+  g.appendChild(mk('line', {
+    x1: 500, y1: PARALLEL.y + 38, x2: 500, y2: PARALLEL.y + PARALLEL.h - 18,
+    stroke: 'rgba(255,255,255,0.04)', 'stroke-width': '1'
+  }));
+
+  // Fork dot (at FORK point)
+  g.appendChild(mk('circle', {
+    cx: FORK.x, cy: FORK.y, r: '5',
+    fill: '#FFD166', opacity: '0.75', filter: 'url(#fa)'
+  }));
+
+  // Join dot (at JOIN point)
+  g.appendChild(mk('circle', {
+    cx: JOIN.x, cy: JOIN.y, r: '5',
+    fill: '#FFD166', opacity: '0.75', filter: 'url(#fa)'
+  }));
+
+  nl.appendChild(g);
+}
+
+function drawEdges() {
+  const el = document.getElementById('el');
+
+  EDGES.forEach(edge => {
+    const path = mk('path', {
+      id: edge.id,
+      d: edge.d,
+      stroke: E_CLR[edge.kind],
+      'stroke-width': '1.5',
+      fill: 'none',
+      'marker-end': `url(#${E_ARW[edge.kind]})`,
+      ...(edge.kind === 'async' ? { 'stroke-dasharray': '6 4' } : {})
+    });
+
+    // Wider invisible hit area
+    const hitPath = mk('path', {
+      d: edge.d, stroke: 'transparent', 'stroke-width': '16', fill: 'none',
+      style: 'cursor:default'
+    });
+
+    // Edge label (true/false)
+    if (edge.label) {
+      const isTrue = edge.label === 'true';
+      // Approximate midpoint label position
+      const pts = edge.d.match(/-?\d+\.?\d*/g).map(Number);
+      // For straight lines: midpoint of start→end; for curves: use control pts
+      let lx, ly;
+      if (edge.d.startsWith('M') && edge.d.includes('L') && !edge.d.includes('C')) {
+        lx = (pts[0] + pts[2]) / 2 + (isTrue ? 8 : 4);
+        ly = (pts[1] + pts[3]) / 2 - 5;
+      } else {
+        lx = pts[0] + (isTrue ? 8 : 5);
+        ly = pts[1] - 5;
+      }
+
+      const lbg = mk('rect', {
+        x: lx - 2, y: ly - 11, width: isTrue ? 26 : 29, height: 14, rx: 3,
+        fill: isTrue ? 'rgba(57,255,110,0.10)' : 'rgba(255,60,142,0.10)',
+      });
+      const lt = txt(edge.label, {
+        x: lx + (isTrue ? 11 : 12.5), y: ly - 1,
+        'text-anchor': 'middle',
+        'font-size': '9.5', 'font-weight': '500',
+        fill: isTrue ? '#39FF6E' : '#FF3C8E',
+        'font-family': 'Space Grotesk, sans-serif',
+        'letter-spacing': '0.02em'
+      });
+      el.appendChild(lbg);
+      el.appendChild(lt);
+    }
+
+    hitPath.addEventListener('mouseenter', () => {
+      if (selected) return;
+      activateEdge(path, edge);
+    });
+    hitPath.addEventListener('mouseleave', () => {
+      if (selected) return;
+      resetEdge(path, edge);
+    });
+
+    el.appendChild(path);
+    el.appendChild(hitPath);
+    eEl[edge.id] = { path, edge };
+  });
+}
+
+function drawNodes() {
+  const nl = document.getElementById('nl');
+
+  NODES.forEach((node, idx) => {
+    const g = mk('g', { 'data-nid': node.id });
+    g.style.cursor = 'pointer';
+
+    if (node.type === 'condition') {
+      drawDiamondNode(g, node);
+    } else if (node.type === 'return') {
+      drawReturnNode(g, node);
+    } else {
+      drawBlockNode(g, node);
+    }
+
+    nl.appendChild(g);
+    if (!nEl[node.id]) nEl[node.id] = {};
+    nEl[node.id].g = g;
+
+    // Staggered entry
+    g.style.opacity = '0';
+    g.style.transformOrigin = `${node.cx || node.x + (node.w||0)/2}px ${node.cy || node.y + (node.h||0)/2}px`;
+    g.style.transform = 'scale(0.85)';
+    setTimeout(() => {
+      g.style.transition = 'opacity 350ms ease, transform 400ms cubic-bezier(0.34,1.56,0.64,1)';
+      g.style.opacity = '1';
+      g.style.transform = 'scale(1)';
+    }, 80 + idx * 55);
+
+    // Hover
+    g.addEventListener('mouseenter', e => {
+      if (selected === node.id) return;
+      highlightNode(node.id, true);
+      showTip(node, e.clientX, e.clientY);
+    });
+    g.addEventListener('mouseleave', () => {
+      if (selected === node.id) return;
+      highlightNode(node.id, false);
+      hideTip();
+    });
+
+    // Click select
+    g.addEventListener('click', e => {
+      e.stopPropagation(); hideTip();
+      selected === node.id ? deselect() : selectNode(node.id);
+    });
+
+    // Double-click panel
+    g.addEventListener('dblclick', e => {
+      e.stopPropagation(); hideTip();
+      selectNode(node.id);
+      openPanel(node.id);
+    });
+  });
+}
+
+// ── NODE RENDERERS ────────────────────────────────────────────────
+function drawBlockNode(g, node) {
+  const { x, y, w, h, color, label, sub, type, tag, method } = node;
+
+  // Compute visual style by type
+  let fillAlpha, strokeColor, strokeAlpha, dashed = false, filter = '';
+  if (type === 'endpoint') {
+    fillAlpha = 0.10; strokeColor = color; strokeAlpha = 1; filter = 'url(#fg)';
+  } else if (type === 'db') {
+    fillAlpha = 0.05; strokeColor = color; strokeAlpha = 0.25; filter = 'url(#fb)';
+  } else if (type === 'http') {
+    fillAlpha = 0.06; strokeColor = color; strokeAlpha = 0.4; filter = 'url(#fo)';
+  } else if (type === 'event') {
+    fillAlpha = 0.05; strokeColor = color; strokeAlpha = 0.3; dashed = true; filter = 'url(#fo)';
+  } else {
+    // function
+    fillAlpha = 0.04; strokeColor = '#2A2A35'; strokeAlpha = 1;
+  }
+
+  const rgb = hexRGB(color);
+
+  // Background rect
+  const bg = mk('rect', {
+    x, y, width: w, height: h, rx: 10,
+    fill: `rgba(${rgb},${fillAlpha})`,
+    stroke: strokeColor,
+    'stroke-width': '1.5',
+    ...(strokeAlpha < 1 ? { stroke: `rgba(${hexRGB(strokeColor)},${strokeAlpha})` } : {}),
+    ...(dashed ? { 'stroke-dasharray': '7 4' } : {}),
+    ...(filter ? { filter } : {})
+  });
+  g.appendChild(bg);
+
+  // Left accent bar
+  g.appendChild(mk('rect', { x, y, width: 3, height: h, rx: 1.5, fill: color }));
+
+  // Tag chip (fn / db / HTTP method / evt)
+  const HTTP_METHODS = ['GET','POST','PUT','PATCH','DELETE'];
+  let labelOffsetX = 14;
+
+  if (tag) {
+    const tagX = x + 10;
+    const tagCenterY = sub ? y + 19 : y + h/2 + 5;
+
+    if (HTTP_METHODS.includes(tag)) {
+      // Colored method badge (for endpoints and http calls)
+      const bw = tag.length * 7 + 12;
+      g.appendChild(mk('rect', {
+        x: tagX, y: tagCenterY - 10, width: bw, height: 15, rx: 3,
+        fill: `rgba(${hexRGB(color)},0.22)`
+      }));
+      g.appendChild(txt(tag, {
+        x: tagX + bw/2, y: tagCenterY + 1,
+        'text-anchor': 'middle', 'font-size': '9', 'font-weight': '700',
+        fill: color, 'font-family': 'JetBrains Mono, monospace', 'letter-spacing': '0.05em'
+      }));
+      labelOffsetX = bw + 18;
+    } else {
+      // Monospace type tag (fn, db, evt)
+      g.appendChild(txt(tag, {
+        x: tagX, y: tagCenterY,
+        'font-size': '9', 'font-weight': '600',
+        fill: color, opacity: '0.55',
+        'font-family': 'JetBrains Mono, monospace', 'letter-spacing': '0.04em'
+      }));
+    }
+  }
+
+  const labelX = x + labelOffsetX;
+  const labelY = sub ? y + 22 : y + h / 2 + 5;
+  const subY   = y + 38;
+
+  g.appendChild(txt(label, {
+    x: labelX, y: labelY,
+    'font-size': '12.5', 'font-weight': '500', fill: '#F2F2F0',
+    'font-family': 'Space Grotesk, sans-serif'
+  }));
+
+  if (sub) {
+    g.appendChild(txt(sub, {
+      x: x + 14, y: subY,
+      'font-size': '10.5', fill: '#6B6B78',
+      'font-family': 'Space Grotesk, sans-serif'
+    }));
+  }
+
+  // Store ref for hover effects
+  nEl[node.id] = nEl[node.id] || {};
+  nEl[node.id].bg = bg;
+  nEl[node.id].origFill = bg.getAttribute('fill');
+  nEl[node.id].origStroke = bg.getAttribute('stroke');
+  nEl[node.id].color = color;
+  nEl[node.id].filter = filter;
+}
+
+function drawDiamondNode(g, node) {
+  const { cx, cy, hw, hh, label, color } = node;
+  const pts = `${cx},${cy-hh} ${cx+hw},${cy} ${cx},${cy+hh} ${cx-hw},${cy}`;
+
+  const poly = mk('polygon', {
+    points: pts,
+    fill: 'rgba(255,209,102,0.07)',
+    stroke: '#FFD166', 'stroke-width': '1.5',
+    filter: 'url(#fa)'
+  });
+  g.appendChild(poly);
+
+  g.appendChild(txt(label, {
+    x: cx, y: cy + 5,
+    'text-anchor': 'middle', 'font-size': '11', 'font-weight': '500',
+    fill: '#FFD166', 'font-family': 'Space Grotesk, sans-serif'
+  }));
+
+  nEl[node.id] = nEl[node.id] || {};
+  nEl[node.id].bg = poly;
+  nEl[node.id].color = color;
+}
+
+function drawReturnNode(g, node) {
+  const { x, y, w, h, code, label, color } = node;
+  const rx = h / 2;
+  const rgb = hexRGB(color);
+
+  const bg = mk('rect', {
+    x, y, width: w, height: h, rx,
+    fill: `rgba(${rgb},0.09)`,
+    stroke: `rgba(${rgb},0.55)`,
+    'stroke-width': '1.5'
+  });
+  g.appendChild(bg);
+
+  const cx = x + w / 2;
+
+  g.appendChild(txt(`${code}`, {
+    x: cx, y: y + h/2 - 2,
+    'text-anchor': 'middle',
+    'font-size': '11', 'font-weight': '700', fill: color,
+    'font-family': 'Space Grotesk, sans-serif', 'letter-spacing': '0.04em'
+  }));
+  g.appendChild(txt(label, {
+    x: cx, y: y + h/2 + 12,
+    'text-anchor': 'middle',
+    'font-size': '9.5', fill: color, opacity: '0.65',
+    'font-family': 'Space Grotesk, sans-serif'
+  }));
+
+  nEl[node.id] = nEl[node.id] || {};
+  nEl[node.id].bg = bg;
+  nEl[node.id].color = color;
+}
+
+// ── SELECTION ─────────────────────────────────────────────────────
+function selectNode(id) {
+  selected = id;
+  const connectedEdges = new Set();
+  const connectedNodes = new Set([id]);
+
+  EDGES.forEach(e => {
+    if (e.s === id || e.t === id) {
+      connectedEdges.add(e.id);
+      connectedNodes.add(e.s);
+      connectedNodes.add(e.t);
+    }
+  });
+
+  // Dim unconnected nodes
+  NODES.forEach(n => {
+    const e = nEl[n.id]; if (!e) return;
+    e.g.style.transition = 'opacity 250ms ease';
+    e.g.style.opacity = connectedNodes.has(n.id) ? '1' : '0.12';
+  });
+
+  // Edge states
+  Object.values(eEl).forEach(({ path, edge }) => {
+    if (connectedEdges.has(edge.id)) activateEdge(path, edge);
+    else dimEdge(path);
+  });
+
+  // Glow the selected node
+  highlightNode(id, true, true);
+}
+
+function deselect() {
+  selected = null;
+  NODES.forEach(n => {
+    const e = nEl[n.id]; if (!e) return;
+    e.g.style.opacity = '1';
+  });
+  Object.values(eEl).forEach(({ path, edge }) => resetEdge(path, edge));
+  NODES.forEach(n => highlightNode(n.id, false));
+}
+
+function highlightNode(id, on, strong) {
+  const e = nEl[id]; if (!e || !e.bg) return;
+  const node = nodeMap[id]; if (!node) return;
+  const color = e.color || '#39FF6E';
+  const rgb = hexRGB(color);
+
+  if (node.type === 'condition') {
+    e.bg.setAttribute('fill', on ? `rgba(${rgb},0.14)` : 'rgba(255,209,102,0.07)');
+    e.bg.setAttribute('stroke-width', on ? '2' : '1.5');
+  } else if (node.type === 'return') {
+    e.bg.setAttribute('stroke', on ? color : `rgba(${rgb},0.55)`);
+    e.bg.setAttribute('stroke-width', on ? '2' : '1.5');
+  } else {
+    const al = strong ? 0.18 : on ? 0.12 : (e.origFill ? parseFloat((e.origFill.match(/[\d.]+(?=\)$)/) || ['0.05'])[0]) : 0.05);
+    e.bg.setAttribute('fill', `rgba(${rgb},${al})`);
+    if (node.type !== 'function') {
+      const sAl = strong ? 0.8 : on ? 0.6 : (node.type === 'http' || node.type === 'event' ? 0.35 : node.type === 'db' ? 0.25 : 0.55);
+      e.bg.setAttribute('stroke', `rgba(${rgb},${sAl})`);
+      e.bg.setAttribute('stroke-width', on ? '2' : '1.5');
+    }
+  }
+}
+
+// ── EDGE HELPERS ──────────────────────────────────────────────────
+function activateEdge(path, edge) {
+  path.setAttribute('stroke', E_ACLR[edge.kind]);
+  path.setAttribute('stroke-width', '2');
+  path.setAttribute('marker-end', `url(#${E_ARAW[edge.kind]})`);
+  if (edge.kind === 'async') path.setAttribute('stroke-dasharray', '6 4');
+  else path.removeAttribute('stroke-dasharray');
+  fireWaveOnEdge(edge);
+}
+function resetEdge(path, edge) {
+  path.setAttribute('stroke', E_CLR[edge.kind]);
+  path.setAttribute('stroke-width', '1.5');
+  path.setAttribute('marker-end', `url(#${E_ARW[edge.kind]})`);
+  if (edge.kind === 'async') path.setAttribute('stroke-dasharray', '6 4');
+  else path.removeAttribute('stroke-dasharray');
+}
+function dimEdge(path) {
+  path.setAttribute('stroke', 'rgba(42,42,53,0.18)');
+  path.setAttribute('stroke-width', '1');
+  path.setAttribute('marker-end', 'url(#ar-def)');
+}
+
+// ── WAVE ANIMATION ────────────────────────────────────────────────
+function fireWaveOnEdge(edge) {
+  const wl = document.getElementById('wl');
+  const edgeColor = E_ACLR[edge.kind];
+  const dur = edge.kind === 'async' ? 1100 : edge.kind === 'false' ? 600 : 750;
+
+  const dot = mk('circle', { r: '4', fill: edgeColor, filter: 'url(#fw)' });
+
+  const motion = mk('animateMotion', {
+    dur: `${dur}ms`, fill: 'remove', calcMode: 'spline',
+    keyTimes: '0;1', keySplines: '0.4 0 0.6 1'
+  });
+  const mpath = mk('mpath');
+  mpath.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#${edge.id}`);
+  motion.appendChild(mpath);
+
+  const fade = mk('animate', {
+    attributeName: 'opacity', dur: `${dur}ms`,
+    values: '0;0.9;0.9;0', keyTimes: '0;0.05;0.90;1', fill: 'remove'
+  });
+
+  dot.appendChild(motion);
+  dot.appendChild(fade);
+  wl.appendChild(dot);
+  setTimeout(() => { if (dot.parentNode) dot.parentNode.removeChild(dot); }, dur + 80);
+}
+
+// ── PANEL ─────────────────────────────────────────────────────────
+function openPanel(id) {
+  const node = nodeMap[id]; if (!node || !node.panel) return;
+  const p = node.panel;
+
+  document.getElementById('ph-icon').textContent = p.icon;
+  document.getElementById('ph-icon').style.cssText = `background:${p.iconBg};color:${p.iconColor};width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:${p.icon.length > 1 ? '10' : '16'}px;font-weight:600;flex-shrink:0;margin-top:2px;font-family:${p.icon.length <= 2 ? "'JetBrains Mono'" : 'inherit'},monospace`;
+  document.getElementById('ph-name').textContent = p.title;
+  document.getElementById('ph-sub').textContent  = p.sub;
+
+  // Badges
+  const bEl = document.getElementById('p-badges');
+  bEl.innerHTML = '';
+  (p.badges || []).forEach(b => {
+    const s = document.createElement('span');
+    s.className = 'badge';
+    // pick badge color by content
+    if (/^(GET|POST|PUT|DELETE|PATCH)$/.test(b)) s.className += ' b-orange';
+    else if (/^\d{3}$/.test(b) || b.includes('xx')) s.className += (/^2/.test(b) || b.includes('2xx') ? ' b-green' : ' b-pink');
+    else if (/(db|sql|SELECT|INSERT|UPDATE|transaction|Prisma)/i.test(b)) s.className += ' b-blue';
+    else if (/(async|kafka|event|emit|publish)/i.test(b)) s.className += ' b-orange';
+    else if (/(error|throw|fail)/i.test(b)) s.className += ' b-pink';
+    else if (/(JWT|auth|guard)/i.test(b)) s.className += ' b-amber';
+    else s.className += ' b-gray';
+    s.textContent = b;
+    bEl.appendChild(s);
+  });
+
+  // Stats
+  const sEl = document.getElementById('p-stats');
+  sEl.innerHTML = '';
+  const statEntries = Object.entries(p.stats || {});
+  if (statEntries.length) {
+    sEl.style.display = 'grid';
+    statEntries.forEach(([k, v]) => {
+      const d = document.createElement('div');
+      d.className = 'stat';
+      d.innerHTML = `<div class="stat-val" style="color:${p.iconColor}">${v}</div><div class="stat-lbl">${k}</div>`;
+      sEl.appendChild(d);
+    });
+  } else {
+    sEl.style.display = 'none';
+  }
+
+  // Detail rows
+  document.getElementById('p-detail-title').textContent = p.detail;
+  const rEl = document.getElementById('p-detail-rows');
+  rEl.innerHTML = '';
+  (p.rows || []).forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'p-row';
+    row.innerHTML = `<span class="p-row-key">${r.k}</span><span class="p-row-val">${r.v}</span>`;
+    rEl.appendChild(row);
+  });
+
+  // Source
+  if (p.source) {
+    document.getElementById('p-source-sec').style.display = 'block';
+    document.getElementById('p-source').textContent = p.source;
+  } else {
+    document.getElementById('p-source-sec').style.display = 'none';
+  }
+
+  document.getElementById('panel').classList.add('open');
+}
+
+function closePanel() { document.getElementById('panel').classList.remove('open'); }
+
+// ── TOOLTIP ───────────────────────────────────────────────────────
+let tipTimer;
+function showTip(node, mx, my) {
+  clearTimeout(tipTimer);
+  const tip = document.getElementById('tip');
+  const typeLabel = { endpoint:'endpoint', function:'function', db:'db query', http:'http call', event:'event publish', condition:'if/else', return:'return' }[node.type] || node.type;
+  const shortLabel = (node.label || '').length > 42 ? node.label.slice(0,40)+'…' : (node.label || '');
+  tip.textContent = `${shortLabel}  ·  ${typeLabel}`;
+  tip.style.left = (mx + 14) + 'px';
+  tip.style.top  = (my - 34) + 'px';
+  tip.classList.add('show');
+}
+function hideTip() {
+  tipTimer = setTimeout(() => document.getElementById('tip').classList.remove('show'), 80);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function hexRGB(hex) {
+  if (!hex || hex[0] !== '#') return '242,242,240';
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+</script>
+</body>
+</html>

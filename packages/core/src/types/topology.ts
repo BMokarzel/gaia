@@ -472,7 +472,7 @@ export interface ReturnNode extends BaseCodeNode {
 export interface ThrowNode extends BaseCodeNode {
   type: "throw";
   metadata: {
-    kind: "throw" | "reject" | "next_error";
+    kind: "throw" | "reject" | "next_error" | "panic";
     errorClass: string;
     message?: string;
     httpStatus?: number;
@@ -695,10 +695,14 @@ export type EdgeKind =
   | "renders" | "navigates_to" | "fetches_from" | "triggers";
 
 export interface Edge {
-  from: string;
-  to: string;
+  source: string;
+  target: string;
   kind: EdgeKind;
   metadata?: Record<string, unknown>;
+  /** @deprecated use source */
+  from?: string;
+  /** @deprecated use target */
+  to?: string;
 }
 
 // ========================

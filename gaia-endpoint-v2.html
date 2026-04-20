@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gaia — POST /checkout · Endpoint Flow v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --green:#39FF6E; --pink:#FF3C8E; --orange:#FF7A1A; --blue:#00BFFF;
+  --purple:#B47AFF; --amber:#FFD166; --white:#F2F2F0;
+  --black:#0A0A0C; --surface:#111115; --surf2:#18181E;
+  --border:#2A2A35; --muted:#6B6B78;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Space Grotesk',sans-serif;background:var(--black);color:var(--white);display:flex;}
+.sidebar{width:64px;height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:16px 0 20px;flex-shrink:0;z-index:10;}
+.logo-mark{width:36px;height:36px;margin-bottom:20px;}
+.nav-btn{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);border:none;background:transparent;transition:background 180ms,color 180ms;}
+.nav-btn:hover{background:rgba(255,255,255,0.06);color:var(--white);}
+.nav-btn.active{background:rgba(57,255,110,0.12);color:var(--green);}
+.nav-btn+.nav-btn{margin-top:4px;}
+.sidebar-bottom{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--black);}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:5px;flex-shrink:0;}
+.crumb{font-size:13px;color:var(--muted);cursor:pointer;}.crumb:hover{color:var(--white);}.crumb.cur{color:var(--white);font-weight:500;}
+.sep{color:var(--border);font-size:13px;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.badge{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:500;letter-spacing:.04em;}
+.b-green{background:rgba(57,255,110,.12);color:var(--green);}
+.b-blue{background:rgba(0,191,255,.12);color:var(--blue);}
+.b-orange{background:rgba(255,122,26,.12);color:var(--orange);}
+.b-amber{background:rgba(255,209,102,.12);color:var(--amber);}
+.b-pink{background:rgba(255,60,142,.12);color:var(--pink);}
+.b-purple{background:rgba(180,122,255,.12);color:var(--purple);}
+.b-gray{background:rgba(242,242,240,.08);color:var(--muted);}
+.btn-ghost{height:30px;padding:0 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;transition:border-color 180ms,color 180ms;}
+.btn-ghost:hover{border-color:var(--green);color:var(--green);}
+.level-switch{display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+.lvl-btn{height:28px;padding:0 12px;font-family:inherit;font-size:11px;font-weight:500;background:transparent;border:none;color:var(--muted);cursor:pointer;transition:background 150ms,color 150ms;}
+.lvl-btn.active{background:rgba(57,255,110,.12);color:var(--green);}
+.canvas-wrap{flex:1;position:relative;overflow:hidden;background:var(--black);background-image:radial-gradient(circle,rgba(255,255,255,.028) 1px,transparent 1px);background-size:24px 24px;cursor:grab;}
+.canvas-wrap:active{cursor:grabbing;}
+#svg{width:100%;height:100%;overflow:visible;}
+#render-root{transition:opacity 200ms ease;}
+.legend{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:14px;align-items:center;background:rgba(17,17,21,.88);padding:8px 18px;border-radius:999px;border:1px solid var(--border);backdrop-filter:blur(8px);font-size:11px;color:var(--muted);pointer-events:none;white-space:nowrap;}
+.leg-item{display:flex;align-items:center;gap:5px;}
+.leg-sw{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.leg-pill{width:10px;height:10px;border-radius:999px;flex-shrink:0;}
+.leg-dia{width:8px;height:8px;transform:rotate(45deg);flex-shrink:0;}
+/* Panel */
+.panel{position:absolute;right:0;top:0;bottom:0;width:340px;background:var(--surf2);border-left:1px solid var(--border);transform:translateX(100%);transition:transform 300ms cubic-bezier(.25,.46,.45,.94);z-index:20;display:flex;flex-direction:column;}
+.panel.open{transform:translateX(0);}
+.ph{padding:18px 18px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;}
+.ph-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;margin-top:2px;font-family:'JetBrains Mono',monospace;}
+.ph-info{flex:1;min-width:0;}
+.ph-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ph-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+.ph-close{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ph-close:hover{background:rgba(255,255,255,.06);color:var(--white);}
+.p-badges{padding:10px 18px;display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+.p-stats{padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:8px;border-bottom:1px solid var(--border);}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;}
+.stat-val{font-size:22px;font-weight:700;line-height:1;}.stat-lbl{font-size:10px;color:var(--muted);margin-top:4px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;}
+.p-sec{padding:12px 18px;border-bottom:1px solid var(--border);}
+.p-sec-title{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;}
+.p-mono{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--white);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;word-break:break-all;line-height:1.7;}
+.p-row{display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(42,42,53,.5);gap:10px;}
+.p-row:last-child{border-bottom:none;}
+.p-row-key{color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.p-row-val{color:var(--white);font-family:'JetBrains Mono',monospace;font-size:11px;text-align:right;}
+.p-actions{margin-top:auto;padding:14px 18px;display:flex;gap:8px;}
+.btn-primary{flex:1;height:34px;border-radius:8px;border:none;background:var(--green);color:var(--black);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:box-shadow 200ms;}
+.btn-primary:hover{box-shadow:0 0 20px rgba(57,255,110,.4);}
+.tip{position:fixed;pointer-events:none;background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:11.5px;white-space:nowrap;opacity:0;transition:opacity 150ms;z-index:99;}
+.tip.show{opacity:1;}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <svg class="logo-mark" viewBox="0 0 36 36" fill="none">
+    <circle cx="18" cy="18" r="6" fill="#39FF6E"/>
+    <circle cx="18" cy="18" r="10" fill="none" stroke="#39FF6E" stroke-width="1" opacity=".3"/>
+    <ellipse cx="18" cy="18" rx="16" ry="7" stroke="rgba(57,255,110,.55)" stroke-width="1.3" fill="none" transform="rotate(-35 18 18)"/>
+    <ellipse cx="18" cy="18" rx="16" ry="7" stroke="rgba(57,255,110,.3)" stroke-width="1" fill="none" transform="rotate(55 18 18)"/>
+  </svg>
+  <button class="nav-btn" title="Global Graph">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="6" r="2"/><circle cx="4" cy="18" r="2"/><circle cx="20" cy="18" r="2"/><line x1="6" y1="7" x2="10" y2="11"/><line x1="14" y1="11" x2="18" y2="7"/><line x1="6" y1="17" x2="10" y2="13"/><line x1="14" y1="13" x2="18" y2="17"/></svg>
+  </button>
+  <button class="nav-btn active" title="Endpoint View">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+  </button>
+  <button class="nav-btn" title="Search">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  </button>
+  <div class="sidebar-bottom">
+    <button class="nav-btn" title="Settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    <div class="avatar">G</div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <span class="crumb">Gaia</span><span class="sep">›</span>
+    <span class="crumb">order-service</span><span class="sep">›</span>
+    <span class="crumb">Endpoints</span><span class="sep">›</span>
+    <span class="crumb cur">POST /checkout</span>
+    <div class="topbar-right">
+      <div class="level-switch">
+        <button class="lvl-btn" id="btn-l1" onclick="setLevel(1)">L1 summary</button>
+        <button class="lvl-btn active" id="btn-l2" onclick="setLevel(2)">L2 full map</button>
+      </div>
+      <span class="badge b-amber">3 conditions</span>
+      <span class="badge b-blue">2 db calls</span>
+      <span class="badge b-orange">1 http · 1 event</span>
+      <span class="badge b-pink">3 error paths</span>
+      <button class="btn-ghost" onclick="fitView()">⌖ Fit</button>
+    </div>
+  </div>
+
+  <div class="canvas-wrap" id="canvas">
+    <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="fg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="fb" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="fo" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="fa" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="fw" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <marker id="ar-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,1 L10,5 L0,9 z" fill="#2A2A35"/></marker>
+        <marker id="ar-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,1 L10,5 L0,9 z" fill="#39FF6E"/></marker>
+        <marker id="ar-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,1 L10,5 L0,9 z" fill="#00BFFF"/></marker>
+        <marker id="ar-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,1 L10,5 L0,9 z" fill="#FF7A1A"/></marker>
+        <marker id="ar-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,1 L10,5 L0,9 z" fill="#FF3C8E"/></marker>
+      </defs>
+      <g id="render-root"></g>
+    </svg>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-sw" style="background:#F2F2F0;opacity:.7"></div>call / fn</div>
+      <div class="leg-item"><div class="leg-sw" style="background:#00BFFF;opacity:.8"></div>db query</div>
+      <div class="leg-item"><div class="leg-sw" style="background:#FF7A1A;opacity:.8"></div>http call</div>
+      <div class="leg-item"><div class="leg-sw" style="border:1px dashed #FF7A1A;opacity:.7"></div>event (async)</div>
+      <div class="leg-item"><div class="leg-dia" style="background:#FFD166;opacity:.8"></div>condition</div>
+      <div class="leg-item"><div class="leg-pill" style="background:#39FF6E;opacity:.8"></div>return 2xx</div>
+      <div class="leg-item"><div class="leg-pill" style="background:#FF3C8E;opacity:.8"></div>return / throw 4xx</div>
+      <div style="color:#4A4A5A;margin-left:4px">· click fn to expand · dbl-click for details</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="panel">
+  <div class="ph">
+    <div class="ph-icon" id="ph-icon"></div>
+    <div class="ph-info"><div class="ph-name" id="ph-name">—</div><div class="ph-sub" id="ph-sub">—</div></div>
+    <button class="ph-close" onclick="closePanel()">×</button>
+  </div>
+  <div class="p-badges" id="p-badges"></div>
+  <div class="p-stats" id="p-stats"></div>
+  <div class="p-sec"><div class="p-sec-title" id="p-detail-title">Details</div><div id="p-detail-rows"></div></div>
+  <div class="p-sec" id="p-source-sec" style="display:none"><div class="p-sec-title">Source</div><div class="p-mono" id="p-source"></div></div>
+  <div class="p-actions"><button class="btn-primary">Go to source →</button></div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────
+// SVG helpers
+// ─────────────────────────────────────────────────────────────────
+const NS = 'http://www.w3.org/2000/svg';
+function mk(tag, a) {
+  const e = document.createElementNS(NS, tag);
+  if (a) for (const [k,v] of Object.entries(a)) e.setAttribute(k, String(v));
+  return e;
+}
+function tx(content, a) { const e = mk('text', a); e.textContent = content; return e; }
+function rgb(hex) {
+  if (!hex||hex[0]!=='#') return '242,242,240';
+  return `${parseInt(hex.slice(1,3),16)},${parseInt(hex.slice(3,5),16)},${parseInt(hex.slice(5,7),16)}`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Layout constants
+// ─────────────────────────────────────────────────────────────────
+const CX = 500;          // main flow center X
+const BW = 300;          // block width (standard)
+const BX = CX - BW/2;   // = 350  block left X
+const BRANCH_X = 700;    // error branch left X
+const PARALLEL_X = 150;  // parallel container left X
+const PARALLEL_W = 700;  // parallel container width
+
+// Collapsed heights  — all block-type nodes ~48px, diamonds 64px (box), returns 36px
+const H = {
+  endpoint: 48, fn: 48, call: 48, http: 48, db: 48,
+  event: 48, diamond: 64, ret: 36, throw_node: 32,
+  proc: 36, parallel_collapsed: 160
+};
+// Diamond geometry (uniform across all diamonds)
+const DH = 32;  // half-height
+const DW = 95;  // half-width
+
+// Expansion definitions (what's shown when a fn is expanded)
+// relY = offset from container top for each child
+const EXP = {
+  'validate': {
+    label: 'validateCheckoutPayload(body)',
+    expandedH: 212,
+    children: [
+      { id:'ve-proc',   type:'proc',   relY:38, h:36, color:'#B47AFF', tag:'proc', label:'schema = CheckoutSchema.compile()', sub:null },
+      { id:'ve-call',   type:'call',   relY:82, h:40, color:'#F2F2F0', tag:'call', label:'result = schema.validate(body)',     sub:'sync · ~0.1ms' },
+      { id:'ve-if',     type:'inline-cond', relY:130, h:32, color:'#FFD166',
+        label:'if result.error', rightLabel:'throw ValidationError(result.error)', rightColor:'#FF3C8E' },
+      { id:'ve-ret',    type:'return-inner', relY:170, h:32, color:'#39FF6E', label:'return { valid: true, data: result.value }' },
+    ]
+  },
+  'get-user': {
+    label: 'getUserById(userId)',
+    expandedH: 140,
+    children: [
+      { id:'gu-db',  type:'db',   relY:36, h:44, color:'#00BFFF', tag:'db', label:'users.findUnique({ where: { id: userId } })', sub:'users-db · SELECT · ~8ms' },
+      { id:'gu-ret', type:'return-inner', relY:88, h:32, color:'#39FF6E', label:'return user | null' },
+    ]
+  },
+  'check-inv': {
+    label: 'checkInventory(items)',
+    expandedH: 170,
+    children: [
+      { id:'ci-db',   type:'db',   relY:36, h:44, color:'#00BFFF', tag:'db', label:'inventory.findMany({ sku: { in: skus }, qty: { gt:0 } })', sub:'inventory-db · SELECT · ~14ms' },
+      { id:'ci-proc', type:'proc', relY:88, h:36, color:'#B47AFF', tag:'proc', label:'available = items.every(i => stock[i.sku]?.qty > 0)', sub:null },
+      { id:'ci-ret',  type:'return-inner', relY:132, h:32, color:'#39FF6E', label:'return { available, missingSkus }' },
+    ]
+  },
+  'save-order': {
+    label: 'createOrder(orderData)',
+    expandedH: 218,
+    children: [
+      { id:'so-proc', type:'proc', relY:38, h:36, color:'#B47AFF', tag:'proc', label:'await prisma.$transaction(async (tx) => {',       sub:null },
+      { id:'so-db1',  type:'db',   relY:82, h:44, color:'#00BFFF', tag:'db',   label:'tx.orders.create({ data: orderData })',            sub:'orders-db · INSERT · ~12ms' },
+      { id:'so-db2',  type:'db',   relY:134, h:44, color:'#00BFFF', tag:'db',  label:'tx.orderItems.createMany({ data: items })',        sub:'orders-db · INSERT · ~8ms' },
+      { id:'so-ret',  type:'return-inner', relY:186, h:32, color:'#39FF6E', label:'return order // { id, createdAt, status }' },
+    ]
+  },
+};
+
+// Panel data for nodes
+const PANEL_DATA = {
+  'entry':      { icon:'⇒', ibg:'rgba(57,255,110,.15)', ic:'#39FF6E', title:'POST /checkout', sub:'endpoint · order-service', badges:['POST','NestJS','JWT','RateLimit','CORS'], stats:{guards:3,middleware:5}, detail:'Route', rows:[{k:'path',v:'/checkout'},{k:'controller',v:'CheckoutController'},{k:'auth',v:'JWT Bearer'},{k:'body',v:'CheckoutDto'},{k:'framework',v:'NestJS'}], src:`@Post('/checkout')\nasync checkout(\n  @Body() body: CheckoutDto,\n  @Req() req: Request\n): Promise<OrderResponse>` },
+  'validate':   { icon:'fn', ibg:'rgba(242,242,240,.08)', ic:'#F2F2F0', title:'validateCheckoutPayload', sub:'function · validators/checkout.ts', badges:['sync','pure','throws'],stats:{params:1,lines:34},detail:'Signature',rows:[{k:'param',v:'body: CheckoutDto'},{k:'returns',v:'ValidationResult'},{k:'throws',v:'ValidationError'},{k:'file',v:'validators/checkout.ts:12'}], src:`function validateCheckoutPayload(\n  body: CheckoutDto\n): ValidationResult {\n  const result = schema.validate(body);\n  return result;\n}` },
+  'if-valid':   { icon:'◇', ibg:'rgba(255,209,102,.12)', ic:'#FFD166', title:'if payload.valid', sub:'flowControl · if/else', badges:['if/else','2 branches'],stats:{branches:2},detail:'Condition',rows:[{k:'expr',v:'result.valid === true'},{k:'true→',v:'parallel block'},{k:'false→',v:'return 400'}], src:`if (!result.valid) throw new BadRequestException(result.error);` },
+  'ret-400':    { icon:'←', ibg:'rgba(255,60,142,.12)',  ic:'#FF3C8E', title:'400 Bad Request', sub:'return · error', badges:['4xx','thrown'],stats:{},detail:'Response',rows:[{k:'status',v:'400'},{k:'body',v:'{ error: string }'}], src:`throw new BadRequestException({ statusCode:400, error: result.error });` },
+  'get-user':   { icon:'call',ibg:'rgba(242,242,240,.08)', ic:'#F2F2F0', title:'getUserById(userId)', sub:'call · resolves to db query', badges:['call','awaited','expandable'],stats:{params:1,avgMs:8},detail:'Call',rows:[{k:'callee',v:'userRepository.findById'},{k:'awaited',v:'true'},{k:'resolves',v:'User | null'},{k:'file',v:'services/user.ts:45'}], src:`const user = await getUserById(userId);` },
+  'check-inv':  { icon:'call',ibg:'rgba(242,242,240,.08)', ic:'#F2F2F0', title:'checkInventory(items)', sub:'call · resolves to db query', badges:['call','awaited','expandable'],stats:{params:1,avgMs:14},detail:'Call',rows:[{k:'callee',v:'inventoryService.check'},{k:'awaited',v:'true'},{k:'resolves',v:'InventoryResult'},{k:'file',v:'services/inventory.ts:28'}], src:`const inv = await checkInventory(items);` },
+  'if-avail':   { icon:'◇', ibg:'rgba(255,209,102,.12)', ic:'#FFD166', title:'if user && stock', sub:'flowControl · if/else', badges:['if/else','2 branches'],stats:{branches:2},detail:'Condition',rows:[{k:'expr',v:'user && inv.available'},{k:'true→',v:'HTTP Stripe call'},{k:'false→',v:'return 422'}], src:`if (!user || !inv.available) throw new UnprocessableException(...)` },
+  'ret-422':    { icon:'←', ibg:'rgba(255,60,142,.12)',  ic:'#FF3C8E', title:'422 Unprocessable', sub:'return · error', badges:['4xx','thrown'],stats:{},detail:'Response',rows:[{k:'status',v:'422'},{k:'trigger',v:'!user || !stock'},{k:'body',v:'{ error, code }'}], src:`throw new UnprocessableEntityException({ error: 'User not found or item unavailable' });` },
+  'stripe-call':{ icon:'↗', ibg:'rgba(255,122,26,.12)',  ic:'#FF7A1A', title:'stripeClient.charges.create', sub:'call · external HTTP · stripe-sdk', badges:['call','awaited','external','retry×2'],stats:{timeout:'8s',retries:2},detail:'Call',rows:[{k:'callee',v:'stripe.charges.create'},{k:'protocol',v:'HTTPS / stripe-node SDK'},{k:'resolves',v:'Stripe.Charge'},{k:'timeout',v:'8000ms'},{k:'retry',v:'2× · 500ms backoff'}], src:`const charge = await stripe.charges.create({\n  amount: total,\n  currency: 'usd',\n  source: paymentMethodId\n});` },
+  'if-paid':    { icon:'◇', ibg:'rgba(255,209,102,.12)', ic:'#FFD166', title:'if charge succeeded', sub:'flowControl · if/else', badges:['if/else','2 branches'],stats:{branches:2},detail:'Condition',rows:[{k:'expr',v:'charge.status === "succeeded"'},{k:'true→',v:'createOrder'},{k:'false→',v:'return 402'}], src:`if (charge.status !== 'succeeded') throw new PaymentRequiredException(...)` },
+  'ret-402':    { icon:'←', ibg:'rgba(255,60,142,.12)',  ic:'#FF3C8E', title:'402 Payment Required', sub:'return · error', badges:['4xx','thrown'],stats:{},detail:'Response',rows:[{k:'status',v:'402'},{k:'trigger',v:'charge.status !== "succeeded"'},{k:'body',v:'{ error, code: failure_code }'}], src:`throw new PaymentRequiredException({ code: charge.failure_code });` },
+  'save-order': { icon:'call',ibg:'rgba(242,242,240,.08)', ic:'#F2F2F0', title:'createOrder(orderData)', sub:'call · resolves to db transaction', badges:['call','awaited','expandable','transaction'],stats:{ops:2,avgMs:20},detail:'Call',rows:[{k:'callee',v:'orderService.create'},{k:'awaited',v:'true'},{k:'resolves',v:'Order'},{k:'transaction',v:'yes (Prisma)'}], src:`const order = await createOrder(orderData, items);` },
+  'pub-event':  { icon:'⇢', ibg:'rgba(255,122,26,.12)',  ic:'#FF7A1A', title:'kafka.emit("order.created")', sub:'event · publish · async', badges:['publish','kafka','async','fire-forget'],stats:{partitions:3,retention:'7d'},detail:'Event',rows:[{k:'kind',v:'emit / publish'},{k:'topic',v:'order.created'},{k:'key',v:'orderId (UUID)'},{k:'payload',v:'OrderCreatedEvent'},{k:'consumers',v:'notification-svc, analytics'}], src:`await this.kafka.emit('order.created', { orderId, userId, total, items });` },
+  'ret-201':    { icon:'←', ibg:'rgba(57,255,110,.12)',  ic:'#39FF6E', title:'201 Created', sub:'return · success', badges:['2xx','success'],stats:{},detail:'Response',rows:[{k:'status',v:'201'},{k:'body',v:'{ orderId, status, createdAt }'}], src:`return { orderId: order.id, status: 'pending', createdAt: order.createdAt };` },
+};
+
+// ─────────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────────
+const expanded = { validate:false, 'get-user':false, 'check-inv':false, 'save-order':false };
+let currentLevel = 2;
+let panX = 0, panY = 0, panStart = null;
+
+// ─────────────────────────────────────────────────────────────────
+// Layout computation
+// ─────────────────────────────────────────────────────────────────
+function nodeH(id) {
+  if (id === 'parallel') return parallelH();
+  const e = EXP[id];
+  if (e) return expanded[id] ? e.expandedH : H.fn;
+  return null;
+}
+
+function parallelH() {
+  const lh = expanded['get-user']  ? EXP['get-user'].expandedH  : H.db;
+  const rh = expanded['check-inv'] ? EXP['check-inv'].expandedH : H.db;
+  return Math.max(lh, rh) + 44; // 44 = fork(22) + join(22)
+}
+
+// Returns layout positions for all main-flow nodes
+function computeLayout() {
+  const L = {}; let y = 60;
+  function place(id, h, gapBefore) {
+    y += gapBefore;
+    L[id] = { y, h };
+    y += h;
+  }
+  place('entry',       H.endpoint, 0);
+  place('validate',    nodeH('validate') || H.fn, 16);
+  place('if-valid',    H.diamond, 20);  // diamond bounding box
+  place('parallel',    parallelH(), 16);
+  place('if-avail',    H.diamond, 20);
+  place('stripe-call', H.http, 20);
+  place('if-paid',     H.diamond, 16);
+  place('save-order',  nodeH('save-order') || H.fn, 20);
+  place('pub-event',   H.event, 16);
+  place('ret-201',     H.ret, 16);
+  // Branch nodes — centred on their diamond cy
+  const d1cy = L['if-valid'].y + DH;
+  const d2cy = L['if-avail'].y + DH;
+  const d3cy = L['if-paid'].y + DH;
+  L['ret-400'] = { y: d1cy - H.ret/2, h: H.ret };
+  L['ret-422'] = { y: d2cy - H.ret/2, h: H.ret };
+  L['ret-402'] = { y: d3cy - H.ret/2, h: H.ret };
+  // Ghost stripe endpoint (right of stripe-call)
+  L['stripe-ghost'] = { y: L['stripe-call'].y + 5, h: 44 };
+  // Parallel lane nodes
+  const ph = parallelH();
+  const py = L['parallel'].y;
+  const lh = expanded['get-user']  ? EXP['get-user'].expandedH  : H.db;
+  const rh = expanded['check-inv'] ? EXP['check-inv'].expandedH : H.db;
+  const innerMax = Math.max(lh, rh);
+  const laneInnerY  = py + 22 + Math.floor((innerMax - lh) / 2);
+  const laneInnerYR = py + 22 + Math.floor((innerMax - rh) / 2);
+  L['get-user']  = { y: laneInnerY,  h: lh };
+  L['check-inv'] = { y: laneInnerYR, h: rh };
+  return L;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Main render
+// ─────────────────────────────────────────────────────────────────
+function render() {
+  const root = document.getElementById('render-root');
+  root.innerHTML = '';
+  const L = computeLayout();
+  const el = mk('g'); root.appendChild(el);
+  const nl = mk('g'); root.appendChild(nl);
+  const wl = mk('g'); root.appendChild(wl);
+  window._wl = wl;
+
+  drawEdges(el, L);
+  drawAllNodes(nl, L);
+}
+
+function fadeRender() {
+  const root = document.getElementById('render-root');
+  root.style.opacity = '0';
+  setTimeout(() => { render(); root.style.opacity = '1'; }, 200);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// NODE DRAWING
+// ─────────────────────────────────────────────────────────────────
+function drawAllNodes(nl, L) {
+  const idx = [0];
+  function node(id, drawFn) {
+    const g = mk('g', {'data-nid': id});
+    g.style.cursor = 'pointer';
+    g.style.opacity = '0';
+    g.style.transform = 'scale(0.92)';
+    const cx = (id === 'if-valid' || id === 'if-avail' || id === 'if-paid') ? CX : CX;
+    const cy = (L[id]?.y || 0) + (L[id]?.h || 0) / 2;
+    g.style.transformOrigin = `${CX}px ${cy}px`;
+    nl.appendChild(g);
+    drawFn(g, L[id]);
+    const i = idx[0]++;
+    setTimeout(() => {
+      g.style.transition = 'opacity 350ms ease, transform 400ms cubic-bezier(.34,1.56,.64,1)';
+      g.style.opacity = '1';
+      g.style.transform = 'scale(1)';
+    }, 60 + i * 45);
+    // events
+    g.addEventListener('mouseenter', e => { if (!g._selected) glowNode(g, id, true); showTip(id, e.clientX, e.clientY); });
+    g.addEventListener('mouseleave', () => { if (!g._selected) glowNode(g, id, false); hideTip(); });
+    g.addEventListener('click', e => { e.stopPropagation(); hideTip(); onNodeClick(id, g); });
+    g.addEventListener('dblclick', e => { e.stopPropagation(); hideTip(); openPanel(id); });
+    return g;
+  }
+
+  // Entry
+  node('entry', (g, p) => drawEndpoint(g, p.y, BX, BW, p.h));
+  // Validate (expandable)
+  node('validate', (g, p) => {
+    if (expanded.validate) drawExpandedContainer(g, p.y, BX, BW, p.h, 'validate');
+    else drawCallBlock(g, p.y, BX, BW, p.h, '#F2F2F0', 'call', 'validateCheckoutPayload(body)', 'function · validators/checkout.ts', true);
+  });
+  // Diamonds — uniform hh=DH, hw=DW
+  node('if-valid', (g, p) => drawDiamond(g, p.y + DH, DH, DW, 'payload valid?'));
+  node('if-avail', (g, p) => drawDiamond(g, p.y + DH, DH, DW, 'user && stock ok?'));
+  node('if-paid',  (g, p) => drawDiamond(g, p.y + DH, DH, DW, 'payment ok?'));
+  // Error branches — return pill h=H.ret=36
+  node('ret-400',  (g, p) => drawReturn(g, p.y, BRANCH_X, 152, H.ret, 400, 'Bad Request',    '#FF3C8E'));
+  node('ret-422',  (g, p) => drawReturn(g, p.y, BRANCH_X, 152, H.ret, 422, 'Unprocessable',  '#FF3C8E'));
+  node('ret-402',  (g, p) => drawReturn(g, p.y, BRANCH_X, 152, H.ret, 402, 'Payment Failed', '#FF3C8E'));
+  // Parallel container + lanes
+  drawParallel(nl, L, idx);
+  // Stripe call + ghost
+  node('stripe-call', (g, p) => drawHttpCall(g, p.y, 320, 360, p.h));
+  node('stripe-ghost', (g, p) => drawGhostEndpoint(g, p.y, 700, 220, 44));
+  // Save-order (expandable)
+  node('save-order', (g, p) => {
+    if (expanded['save-order']) drawExpandedContainer(g, p.y, BX, BW, p.h, 'save-order');
+    else drawCallBlock(g, p.y, BX, BW, p.h, '#F2F2F0', 'call', 'createOrder(orderData)', 'function · services/order.ts', true);
+  });
+  // Event + return
+  node('pub-event', (g, p) => drawEventBlock(g, p.y, BX, BW, p.h));
+  node('ret-201',   (g, p) => drawReturn(g, p.y, CX - 140, 280, H.ret, 201, '{ orderId, status: "pending" }', '#39FF6E'));
+}
+
+function drawParallel(nl, L, idx) {
+  const py = L['parallel'].y;
+  const ph = parallelH();
+  const g = mk('g');
+  nl.appendChild(g);
+  // container
+  g.appendChild(mk('rect', { x:PARALLEL_X, y:py, width:PARALLEL_W, height:ph, rx:14,
+    fill:'rgba(255,209,102,.022)', stroke:'rgba(255,209,102,.22)', 'stroke-width':'1', 'stroke-dasharray':'8 4' }));
+  // label
+  g.appendChild(tx('PARALLEL', { x:PARALLEL_X+14, y:py+16, 'font-size':'9', 'font-weight':'600',
+    fill:'#FFD166', 'font-family':'Space Grotesk,sans-serif', 'letter-spacing':'.10em', opacity:'.5' }));
+  g.appendChild(tx('Promise.all([getUserById, checkInventory])', { x:PARALLEL_X+14, y:py+29,
+    'font-size':'9', fill:'#FFD166', 'font-family':'JetBrains Mono,monospace', opacity:'.3' }));
+  // divider
+  g.appendChild(mk('line', { x1:CX, y1:py+30, x2:CX, y2:py+ph-22, stroke:'rgba(255,255,255,.04)', 'stroke-width':'1' }));
+  // fork + join dots
+  g.appendChild(mk('circle', { cx:CX, cy:py,    r:'4', fill:'#FFD166', opacity:'.8', filter:'url(#fa)' }));
+  g.appendChild(mk('circle', { cx:CX, cy:py+ph, r:'4', fill:'#FFD166', opacity:'.8', filter:'url(#fa)' }));
+
+  // Lane nodes
+  function laneNode(id, lx, lw) {
+    const p = L[id];
+    const ng = mk('g', {'data-nid': id});
+    ng.style.cursor = 'pointer';
+    ng.style.opacity = '0';
+    ng.style.transform = 'scale(.92)';
+    ng.style.transformOrigin = `${lx + lw/2}px ${p.y + p.h/2}px`;
+    nl.appendChild(ng);
+    if (expanded[id]) drawExpandedContainer(ng, p.y, lx, lw, p.h, id);
+    else drawCallBlock(ng, p.y, lx, lw, p.h, '#F2F2F0', 'call', EXP[id]?.label || id, '→ db query · awaited', true);
+    const i = idx[0]++;
+    setTimeout(() => {
+      ng.style.transition = 'opacity 350ms ease, transform 400ms cubic-bezier(.34,1.56,.64,1)';
+      ng.style.opacity = '1';
+      ng.style.transform = 'scale(1)';
+    }, 60 + i * 45);
+    ng.addEventListener('mouseenter', e => { if (!ng._selected) glowNode(ng, id, true); showTip(id, e.clientX, e.clientY); });
+    ng.addEventListener('mouseleave', () => { if (!ng._selected) glowNode(ng, id, false); hideTip(); });
+    ng.addEventListener('click', ev => { ev.stopPropagation(); hideTip(); onNodeClick(id, ng); });
+    ng.addEventListener('dblclick', ev => { ev.stopPropagation(); hideTip(); openPanel(id); });
+  }
+  laneNode('get-user',  PARALLEL_X + 20, Math.floor(PARALLEL_W/2) - 30);
+  laneNode('check-inv', CX + 10,         Math.floor(PARALLEL_W/2) - 30);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Individual node renderers
+// ─────────────────────────────────────────────────────────────────
+function drawEndpoint(g, y, x, w, h) {
+  const c = '#39FF6E';
+  g.appendChild(mk('rect', { x, y, width:w, height:h, rx:10, fill:`rgba(${rgb(c)},.10)`, stroke:c, 'stroke-width':'1.5', filter:'url(#fg)' }));
+  g.appendChild(mk('rect', { x, y, width:3, height:h, rx:1.5, fill:c }));
+  // method badge
+  g.appendChild(mk('rect', { x:x+10, y:y+7, width:40, height:16, rx:4, fill:`rgba(${rgb(c)},.22)` }));
+  g.appendChild(tx('POST', { x:x+30, y:y+19, 'text-anchor':'middle', 'font-size':'9', 'font-weight':'700', fill:c, 'font-family':'JetBrains Mono,monospace', 'letter-spacing':'.05em' }));
+  g.appendChild(tx('/checkout', { x:x+56, y:y+20, 'font-size':'13', 'font-weight':'600', fill:'#F2F2F0', 'font-family':'Space Grotesk,sans-serif' }));
+  g.appendChild(tx('order-service · JWT · RateLimit · CORS', { x:x+10, y:y+36, 'font-size':'10', fill:'#6B6B78', 'font-family':'Space Grotesk,sans-serif' }));
+  _storeRef(g, c);
+}
+
+function drawCallBlock(g, y, x, w, h, c, tag, label, sub, expandable) {
+  const isWhite = c === '#F2F2F0';
+  const fc = isWhite ? '#2A2A35' : `rgba(${rgb(c)},.25)`;
+  const fill = `rgba(${rgb(c)},.04)`;
+  g.appendChild(mk('rect', { x, y, width:w, height:h, rx:10, fill, stroke:fc, 'stroke-width':'1.5' }));
+  g.appendChild(mk('rect', { x, y, width:3, height:h, rx:1.5, fill:c }));
+  g.appendChild(tx(tag, { x:x+10, y:sub?y+19:y+h/2+5, 'font-size':'9', 'font-weight':'600',
+    fill:c, opacity:'.55', 'font-family':'JetBrains Mono,monospace', 'letter-spacing':'.04em' }));
+  const labelText = label.length > 38 && w < 280 ? label.slice(0,36)+'…' : label;
+  g.appendChild(tx(labelText, { x:x+14, y:sub?y+22:y+h/2+5, 'font-size':'12.5', 'font-weight':'500',
+    fill:'#F2F2F0', 'font-family':'Space Grotesk,sans-serif' }));
+  if (sub) g.appendChild(tx(sub, { x:x+14, y:y+37, 'font-size':'10.5', fill:'#6B6B78', 'font-family':'Space Grotesk,sans-serif' }));
+  if (expandable) {
+    const expId = g.getAttribute('data-nid');
+    const isExp = expanded[expId];
+    const btn = mk('g'); btn.style.cursor = 'pointer';
+    btn.appendChild(mk('rect', { x:x+w-26, y:y+h/2-10, width:20, height:20, rx:5, fill:'rgba(255,255,255,.04)', stroke:'rgba(255,255,255,.12)', 'stroke-width':'1' }));
+    btn.appendChild(tx(isExp ? '−' : '+', { x:x+w-16, y:y+h/2+5, 'text-anchor':'middle', 'font-size':'14', fill:isExp?'#FF3C8E':'rgba(255,255,255,.4)', 'font-family':'monospace' }));
+    g.appendChild(btn);
+  }
+  _storeRef(g, c);
+}
+
+function drawHttpCall(g, y, x, w, h) {
+  const c = '#FF7A1A';
+  g.appendChild(mk('rect', { x, y, width:w, height:h, rx:10,
+    fill:`rgba(${rgb(c)},.06)`, stroke:`rgba(${rgb(c)},.4)`, 'stroke-width':'1.5', filter:'url(#fo)' }));
+  g.appendChild(mk('rect', { x, y, width:3, height:h, rx:1.5, fill:c }));
+  // method badge
+  g.appendChild(mk('rect', { x:x+10, y:y+7, width:40, height:16, rx:4, fill:`rgba(${rgb(c)},.22)` }));
+  g.appendChild(tx('POST', { x:x+30, y:y+19, 'text-anchor':'middle', 'font-size':'9', 'font-weight':'700',
+    fill:c, 'font-family':'JetBrains Mono,monospace', 'letter-spacing':'.05em' }));
+  g.appendChild(tx('stripeClient.charges.create(chargeData)', { x:x+56, y:y+20, 'font-size':'12.5', 'font-weight':'500', fill:'#F2F2F0', 'font-family':'Space Grotesk,sans-serif' }));
+  g.appendChild(tx('call · external · stripe-node SDK · timeout 8s · retry ×2', { x:x+10, y:y+36, 'font-size':'10', fill:'#6B6B78', 'font-family':'Space Grotesk,sans-serif' }));
+  _storeRef(g, c);
+}
+
+function drawGhostEndpoint(g, y, x, w, h) {
+  const c = '#FF7A1A';
+  // dashed connector line from stripe call right edge to ghost
+  // rendered as part of edges, just draw the node here
+  g.appendChild(mk('rect', { x, y, width:w, height:h, rx:8,
+    fill:'rgba(255,122,26,.04)', stroke:'rgba(255,122,26,.25)', 'stroke-width':'1',
+    'stroke-dasharray':'5 3', opacity:'.7' }));
+  // external icon
+  g.appendChild(tx('↗', { x:x+10, y:y+h/2+5, 'font-size':'11', fill:`rgba(${rgb(c)},.5)`,
+    'font-family':'monospace' }));
+  g.appendChild(tx('POST api.stripe.com/v1/charges', { x:x+25, y:y+h/2-3,
+    'font-size':'10.5', 'font-weight':'500', fill:`rgba(242,242,240,.45)`,
+    'font-family':'JetBrains Mono,monospace' }));
+  g.appendChild(tx('external endpoint reference', { x:x+25, y:y+h/2+12,
+    'font-size':'9.5', fill:'rgba(107,107,120,.7)', 'font-family':'Space Grotesk,sans-serif' }));
+  _storeRef(g, c);
+}
+
+function drawEventBlock(g, y, x, w, h) {
+  const c = '#FF7A1A';
+  g.appendChild(mk('rect', { x, y, width:w, height:h, rx:10,
+    fill:`rgba(${rgb(c)},.05)`, stroke:`rgba(${rgb(c)},.30)`,
+    'stroke-width':'1.5', 'stroke-dasharray':'7 4' }));
+  g.appendChild(mk('rect', { x, y, width:3, height:h, rx:1.5, fill:c }));
+  g.appendChild(tx('evt', { x:x+10, y:y+19, 'font-size':'9', 'font-weight':'600',
+    fill:c, opacity:'.55', 'font-family':'JetBrains Mono,monospace', 'letter-spacing':'.04em' }));
+  g.appendChild(tx('kafka.emit("order.created", order)', { x:x+14, y:y+22,
+    'font-size':'12.5', 'font-weight':'500', fill:'#F2F2F0', 'font-family':'Space Grotesk,sans-serif' }));
+  g.appendChild(tx('event · async · fire-and-forget · kafka · orders topic', { x:x+14, y:y+37,
+    'font-size':'10.5', fill:'#6B6B78', 'font-family':'Space Grotesk,sans-serif' }));
+  _storeRef(g, c);
+}
+
+function drawDiamond(g, cy, hh, hw, label) {
+  const pts = `${CX},${cy-hh} ${CX+hw},${cy} ${CX},${cy+hh} ${CX-hw},${cy}`;
+  g.appendChild(mk('polygon', { points:pts, fill:'rgba(255,209,102,.07)',
+    stroke:'#FFD166', 'stroke-width':'1.5', filter:'url(#fa)' }));
+  g.appendChild(tx(label, { x:CX, y:cy+5, 'text-anchor':'middle', 'font-size':'11', 'font-weight':'500',
+    fill:'#FFD166', 'font-family':'Space Grotesk,sans-serif' }));
+  _storeRef(g, '#FFD166');
+}
+
+function drawReturn(g, y, x, w, h, code, label, c) {
+  const rx = h/2;
+  g.appendChild(mk('rect', { x, y, width:w, height:h, rx,
+    fill:`rgba(${rgb(c)},.09)`, stroke:`rgba(${rgb(c)},.55)`, 'stroke-width':'1.5' }));
+  const cx2 = x + w/2;
+  g.appendChild(tx(String(code), { x:cx2, y:y+h/2-2, 'text-anchor':'middle',
+    'font-size':'11', 'font-weight':'700', fill:c, 'font-family':'Space Grotesk,sans-serif', 'letter-spacing':'.04em' }));
+  g.appendChild(tx(label, { x:cx2, y:y+h/2+12, 'text-anchor':'middle',
+    'font-size':'9.5', fill:c, opacity:'.65', 'font-family':'Space Grotesk,sans-serif' }));
+  _storeRef(g, c);
+}
+
+// Expanded function container with children
+function drawExpandedContainer(g, y, x, w, h, nodeId) {
+  const def = EXP[nodeId];
+  const c = '#F2F2F0';
+  // aura container
+  g.appendChild(mk('rect', { x, y, width:w, height:h, rx:12,
+    fill:'rgba(255,255,255,.018)', stroke:'rgba(242,242,240,.18)',
+    'stroke-width':'1', 'stroke-dasharray':'6 4' }));
+  // header bar
+  g.appendChild(mk('rect', { x, y, width:w, height:26, rx:12,
+    fill:'rgba(242,242,240,.05)', stroke:'none' }));
+  // fn label in header
+  g.appendChild(tx('fn', { x:x+10, y:y+17, 'font-size':'9', 'font-weight':'600',
+    fill:'#F2F2F0', opacity:'.4', 'font-family':'JetBrains Mono,monospace' }));
+  g.appendChild(tx(def.label, { x:x+26, y:y+17, 'font-size':'11', 'font-weight':'500',
+    fill:'rgba(242,242,240,.7)', 'font-family':'Space Grotesk,sans-serif' }));
+  // collapse button
+  g.appendChild(tx('−', { x:x+w-14, y:y+17, 'text-anchor':'middle', 'font-size':'13',
+    fill:'rgba(255,60,142,.6)', 'font-family':'monospace' }));
+  // children
+  def.children.forEach(child => {
+    const cy2 = y + child.relY;
+    const childW = w - 24;
+    const cx2 = x + 12;
+    if (child.type === 'inline-cond') {
+      drawInlineCondition(g, cx2, cy2, childW, child.h, child.label, child.rightLabel, child.rightColor);
+    } else if (child.type === 'return-inner') {
+      drawReturnInner(g, cx2, cy2, childW, child.h, child.label, child.color);
+    } else if (child.type === 'db') {
+      drawChildBlock(g, cx2, cy2, childW, child.h, child.color, child.tag, child.label, child.sub);
+    } else {
+      drawChildBlock(g, cx2, cy2, childW, child.h, child.color, child.tag, child.label, child.sub);
+    }
+  });
+  _storeRef(g, c);
+}
+
+function drawChildBlock(g, x, y, w, h, c, tag, label, sub) {
+  const isDb = c === '#00BFFF';
+  const fc = isDb ? `rgba(${rgb(c)},.2)` : `rgba(${rgb(c)},.12)`;
+  g.appendChild(mk('rect', { x, y, width:w, height:h, rx:7,
+    fill:`rgba(${rgb(c)},.04)`, stroke:fc, 'stroke-width':'1' }));
+  g.appendChild(mk('rect', { x, y, width:2.5, height:h, rx:1.25, fill:c }));
+  if (tag) g.appendChild(tx(tag, { x:x+9, y:sub?y+16:y+h/2+4, 'font-size':'8.5', 'font-weight':'600',
+    fill:c, opacity:'.55', 'font-family':'JetBrains Mono,monospace' }));
+  const ltext = label.length > 52 ? label.slice(0,50)+'…' : label;
+  g.appendChild(tx(ltext, { x:x+12, y:sub?y+18:y+h/2+4, 'font-size':'11', 'font-weight':'500',
+    fill:'rgba(242,242,240,.85)', 'font-family':'Space Grotesk,sans-serif' }));
+  if (sub) g.appendChild(tx(sub, { x:x+12, y:y+32, 'font-size':'10', fill:'#6B6B78', 'font-family':'Space Grotesk,sans-serif' }));
+}
+
+function drawInlineCondition(g, x, y, w, h, label, rightLabel, rightC) {
+  g.appendChild(mk('rect', { x, y, width:w, height:h, rx:6,
+    fill:'rgba(255,209,102,.05)', stroke:'rgba(255,209,102,.2)', 'stroke-width':'1' }));
+  g.appendChild(tx('◇', { x:x+8, y:y+h/2+5, 'font-size':'10', fill:'#FFD166', 'font-family':'monospace' }));
+  g.appendChild(tx(label, { x:x+22, y:y+h/2+4, 'font-size':'10.5', fill:'rgba(255,209,102,.8)', 'font-family':'Space Grotesk,sans-serif' }));
+  // arrow + throw/return label
+  g.appendChild(mk('line', { x1:x+w*0.45, y1:y+h/2, x2:x+w*0.55, y2:y+h/2,
+    stroke:'rgba(255,60,142,.4)', 'stroke-width':'1', 'marker-end':'url(#ar-p)' }));
+  const rt = tx(rightLabel, { x:x+w*0.57, y:y+h/2+4, 'font-size':'10', 'font-weight':'500',
+    fill:`rgba(${rgb(rightC)},.75)`, 'font-family':'JetBrains Mono,monospace' });
+  g.appendChild(rt);
+}
+
+function drawReturnInner(g, x, y, w, h, label, c) {
+  g.appendChild(mk('rect', { x, y, width:w, height:h, rx:h/2,
+    fill:`rgba(${rgb(c)},.07)`, stroke:`rgba(${rgb(c)},.35)`, 'stroke-width':'1' }));
+  g.appendChild(tx('↩', { x:x+10, y:y+h/2+5, 'font-size':'10', fill:`rgba(${rgb(c)},.6)`, 'font-family':'monospace' }));
+  g.appendChild(tx(label, { x:x+24, y:y+h/2+4, 'font-size':'10.5', fill:`rgba(${rgb(c)},.85)`,
+    'font-family':'JetBrains Mono,monospace' }));
+}
+
+function _storeRef(g, c) {
+  g._refColor = c;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// EDGE DRAWING
+// ─────────────────────────────────────────────────────────────────
+function drawEdges(el, L) {
+  function edge(d, kind, label) {
+    const c  = kind==='false'?'#FF3C8E':kind==='async'?'#FF7A1A':kind==='db'?'#00BFFF':'#2A2A35';
+    const ac = kind==='false'?'#FF3C8E':kind==='async'?'#FF7A1A':kind==='db'?'#00BFFF':'#39FF6E';
+    const am = kind==='false'?'ar-p':kind==='async'?'ar-o':kind==='db'?'ar-b':'ar-d';
+    const p = mk('path', { d, stroke:c, 'stroke-width':'1.5', fill:'none',
+      'marker-end':`url(#${am})`, ...(kind==='async'?{'stroke-dasharray':'6 4'}:{}) });
+    el.appendChild(p);
+    if (label) {
+      const isTrue = label==='true';
+      const nums = d.match(/-?\d+\.?\d*/g).map(Number);
+      let lx = nums[0] + (isTrue ? 8 : 4);
+      let ly = nums[1] - 7;
+      // for straight horizontal lines, position label above midpoint
+      if (d.includes(' L ') && !d.includes(' C ')) {
+        lx = (nums[0] + nums[2]) / 2 - 14;
+        ly = (nums[1] + nums[3]) / 2 - 6;
+      }
+      const bgc = isTrue ? 'rgba(57,255,110,.10)' : 'rgba(255,60,142,.10)';
+      const tc  = isTrue ? '#39FF6E' : '#FF3C8E';
+      el.appendChild(mk('rect', { x:lx-2, y:ly-11, width:isTrue?28:32, height:14, rx:3, fill:bgc }));
+      el.appendChild(tx(label, { x:lx+(isTrue?12:14), y:ly-0.5, 'text-anchor':'middle',
+        'font-size':'9.5', 'font-weight':'500', fill:tc, 'font-family':'Space Grotesk,sans-serif' }));
+    }
+  }
+
+  const d1cy = L['if-valid'].y + DH;
+  const d1hw = DW;
+  const d2cy = L['if-avail'].y + DH;
+  const d2hw = DW;
+  const d3cy = L['if-paid'].y + DH;
+  const d3hw = DW;
+  const py   = L['parallel'].y;
+  const ph   = parallelH();
+  // ── main flow ──
+  edge(`M ${CX} ${L.entry.y + H.endpoint} L ${CX} ${L.validate.y}`, 'flow');
+  edge(`M ${CX} ${L.validate.y + (nodeH('validate')||H.fn)} L ${CX} ${L['if-valid'].y}`, 'flow');
+  edge(`M ${CX} ${L['if-valid'].y + H.diamond} L ${CX} ${py}`, 'true', 'true');
+  edge(`M ${CX+d1hw} ${d1cy} L ${BRANCH_X} ${L['ret-400'].y + 20}`, 'false', 'false');
+  // parallel internals
+  const lw2 = Math.floor(PARALLEL_W/2) - 30;
+  const lx  = PARALLEL_X + 20 + lw2/2;
+  const rx2 = CX + 10 + lw2/2;
+  edge(`M ${CX} ${py} C ${CX} ${py+14} ${lx} ${py+14} ${lx} ${L['get-user'].y}`, 'flow');
+  edge(`M ${CX} ${py} C ${CX} ${py+14} ${rx2} ${py+14} ${rx2} ${L['check-inv'].y}`, 'flow');
+  edge(`M ${lx} ${L['get-user'].y + L['get-user'].h} C ${lx} ${py+ph-10} ${CX} ${py+ph-10} ${CX} ${py+ph}`, 'flow');
+  edge(`M ${rx2} ${L['check-inv'].y + L['check-inv'].h} C ${rx2} ${py+ph-10} ${CX} ${py+ph-10} ${CX} ${py+ph}`, 'flow');
+  // after parallel
+  edge(`M ${CX} ${py+ph} L ${CX} ${L['if-avail'].y}`, 'flow');
+  edge(`M ${CX+d2hw} ${d2cy} L ${BRANCH_X} ${L['ret-422'].y + 22}`, 'false', 'false');
+  edge(`M ${CX} ${L['if-avail'].y + H.diamond} L ${CX} ${L['stripe-call'].y}`, 'true', 'true');
+  // stripe call + ghost (dashed to ghost)
+  edge(`M ${CX} ${L['stripe-call'].y + H.http} L ${CX} ${L['if-paid'].y}`, 'flow');
+  // ghost connector (dashed) — right edge of stripe-call block to ghost node
+  const scr = 320 + 360; // right edge of stripe-call block
+  edge(`M ${scr} ${L['stripe-call'].y + H.http/2} L ${700} ${L['stripe-ghost'].y + H.ret/2}`, 'false');
+  edge(`M ${CX+d3hw} ${d3cy} L ${BRANCH_X + 3} ${L['ret-402'].y + 22}`, 'false', 'false');
+  edge(`M ${CX} ${L['if-paid'].y + H.diamond} L ${CX} ${L['save-order'].y}`, 'true', 'true');
+  edge(`M ${CX} ${L['save-order'].y + (nodeH('save-order')||H.fn)} L ${CX} ${L['pub-event'].y}`, 'async');
+  edge(`M ${CX} ${L['pub-event'].y + H.event} L ${CX} ${L['ret-201'].y}`, 'flow');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// INTERACTION
+// ─────────────────────────────────────────────────────────────────
+function glowNode(g, id, on) {
+  const c = g._refColor || '#F2F2F0';
+  const bg = g.querySelector('rect,polygon');
+  if (!bg) return;
+  if (on) { bg.setAttribute('filter', `url(#fg)`); bg.style.opacity = '1'; }
+  else { bg.removeAttribute('filter'); }
+}
+
+function onNodeClick(id, g) {
+  if (EXP[id]) {
+    expanded[id] = !expanded[id];
+    fadeRender();
+  }
+}
+
+function setLevel(n) {
+  currentLevel = n;
+  document.getElementById('btn-l1').classList.toggle('active', n===1);
+  document.getElementById('btn-l2').classList.toggle('active', n===2);
+  const isL2 = n===2;
+  expanded.validate       = isL2;
+  expanded['get-user']    = isL2;
+  expanded['check-inv']   = isL2;
+  expanded['save-order']  = isL2;
+  fadeRender();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// PAN
+// ─────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  fitView(false);
+  render();
+  const canvas = document.getElementById('canvas');
+  canvas.addEventListener('mousedown', e => {
+    if (e.target.closest('[data-nid]')) return;
+    panStart = { x: e.clientX - panX, y: e.clientY - panY };
+  });
+  window.addEventListener('mousemove', e => {
+    if (!panStart) return;
+    panX = e.clientX - panStart.x;
+    panY = e.clientY - panStart.y;
+    applyPan();
+  });
+  window.addEventListener('mouseup', () => { panStart = null; });
+  canvas.addEventListener('click', e => {
+    if (e.target === canvas || e.target.id === 'svg') closePanel();
+  });
+});
+
+function fitView(doRender) {
+  const canvas = document.getElementById('canvas');
+  const W = canvas.clientWidth || window.innerWidth - 64;
+  panX = (W - 1000) / 2;
+  panY = 20;
+  applyPan();
+  if (doRender !== false) render();
+}
+
+function applyPan() {
+  document.getElementById('render-root').style.transform = `translate(${panX}px,${panY}px)`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// PANEL
+// ─────────────────────────────────────────────────────────────────
+function openPanel(id) {
+  const p = PANEL_DATA[id]; if (!p) return;
+  const pi = document.getElementById('ph-icon');
+  pi.textContent = p.icon;
+  pi.style.cssText = `background:${p.ibg};color:${p.ic};width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:${p.icon.length<=2?'13':'10'}px;font-weight:600;flex-shrink:0;margin-top:2px;font-family:'JetBrains Mono',monospace;`;
+  document.getElementById('ph-name').textContent = p.title;
+  document.getElementById('ph-sub').textContent  = p.sub;
+  const bEl = document.getElementById('p-badges');
+  bEl.innerHTML = '';
+  (p.badges||[]).forEach(b => {
+    const s = document.createElement('span');
+    s.className = 'badge ' + badgeClass(b);
+    s.textContent = b; bEl.appendChild(s);
+  });
+  const sEl = document.getElementById('p-stats');
+  sEl.innerHTML = '';
+  const se = Object.entries(p.stats||{});
+  sEl.style.display = se.length ? 'grid' : 'none';
+  se.forEach(([k,v]) => {
+    const d = document.createElement('div');
+    d.className = 'stat';
+    d.innerHTML = `<div class="stat-val" style="color:${p.ic}">${v}</div><div class="stat-lbl">${k}</div>`;
+    sEl.appendChild(d);
+  });
+  document.getElementById('p-detail-title').textContent = p.detail;
+  const rEl = document.getElementById('p-detail-rows');
+  rEl.innerHTML = '';
+  (p.rows||[]).forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'p-row';
+    row.innerHTML = `<span class="p-row-key">${r.k}</span><span class="p-row-val">${r.v}</span>`;
+    rEl.appendChild(row);
+  });
+  if (p.src) {
+    document.getElementById('p-source-sec').style.display = 'block';
+    document.getElementById('p-source').textContent = p.src;
+  } else {
+    document.getElementById('p-source-sec').style.display = 'none';
+  }
+  document.getElementById('panel').classList.add('open');
+}
+
+function badgeClass(b) {
+  if (/^(GET|POST|PUT|DELETE|PATCH)$/.test(b)) return 'b-orange';
+  if (/2xx|201|200/.test(b)) return 'b-green';
+  if (/4xx|400|402|422|error|thrown|fail/.test(b)) return 'b-pink';
+  if (/db|sql|SELECT|INSERT|transaction|Prisma/.test(b)) return 'b-blue';
+  if (/async|kafka|event|emit|publish/.test(b)) return 'b-orange';
+  if (/JWT|auth|guard/.test(b)) return 'b-amber';
+  if (/expand|call|await/.test(b)) return 'b-purple';
+  return 'b-gray';
+}
+
+function closePanel() { document.getElementById('panel').classList.remove('open'); }
+
+// ─────────────────────────────────────────────────────────────────
+// TOOLTIP
+// ─────────────────────────────────────────────────────────────────
+let tipTimer;
+const TYPE_LABEL = { entry:'endpoint', validate:'function · expandable', 'if-valid':'condition',
+  'ret-400':'return 400','get-user':'call · expandable','check-inv':'call · expandable',
+  'if-avail':'condition','ret-422':'return 422','stripe-call':'call · http external',
+  'stripe-ghost':'external endpoint ref','if-paid':'condition','ret-402':'return 402',
+  'save-order':'call · expandable','pub-event':'event · kafka','ret-201':'return 201' };
+
+function showTip(id, mx, my) {
+  clearTimeout(tipTimer);
+  const tip = document.getElementById('tip');
+  const pd = PANEL_DATA[id];
+  const lbl = pd ? pd.title : id;
+  const tl  = TYPE_LABEL[id] || id;
+  tip.textContent = `${lbl}  ·  ${tl}`;
+  tip.style.left = (mx+14)+'px'; tip.style.top = (my-34)+'px';
+  tip.classList.add('show');
+}
+function hideTip() {
+  tipTimer = setTimeout(() => document.getElementById('tip').classList.remove('show'), 80);
+}
+</script>
+</body>
+</html>

@@ -43,13 +43,13 @@ export function computeCoupling(
     for (const edge of edges) {
       if (!couplingKinds.has(edge.kind)) continue;
 
-      const fromClass = fnToClass.get(edge.from);
-      const toClass = fnToClass.get(edge.to);
+      const fromClass = fnToClass.get(edge.source);
+      const toClass = fnToClass.get(edge.target);
       if (!fromClass || !toClass) continue;
       if (fromClass === toClass) continue; // intra-classe não conta
 
-      const fromSvc = fnToService.get(edge.from);
-      const toSvc = fnToService.get(edge.to);
+      const fromSvc = fnToService.get(edge.source);
+      const toSvc = fnToService.get(edge.target);
 
       // Ce: edge saindo deste serviço para classe externa
       if (fromSvc === svc.id && toSvc !== svc.id) {
@@ -104,8 +104,8 @@ function computeClassCoupling(
   for (const edge of edges) {
     if (!couplingKinds.has(edge.kind)) continue;
 
-    const fromClass = fnToClass.get(edge.from);
-    const toClass = fnToClass.get(edge.to);
+    const fromClass = fnToClass.get(edge.source);
+    const toClass = fnToClass.get(edge.target);
     if (!fromClass || !toClass || fromClass === toClass) continue;
 
     if (ownClasses.has(fromClass)) {

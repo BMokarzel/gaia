@@ -5,6 +5,13 @@ import type { SourceFile } from '../core/walker';
 import type { AnalysisContext } from '../types/topology';
 import { extractFastAPIEndpoints } from '../extractors/python/endpoint/fastapi.extractor';
 import { extractDjangoEndpoints } from '../extractors/python/endpoint/django.extractor';
+import { extractPythonFunctions } from '../extractors/python/function.extractor';
+import { extractPythonFlowControl } from '../extractors/python/flow.extractor';
+import { extractPythonLogs } from '../extractors/python/log.extractor';
+import { extractPythonCalls } from '../extractors/python/call.extractor';
+import { extractPythonEvents } from '../extractors/python/event.extractor';
+import { extractSQLAlchemyOperations } from '../extractors/python/db/sqlalchemy.extractor';
+import { serviceId as computeServiceId } from '../utils/id';
 
 function loadLanguage(name: string): unknown {
   try {
@@ -42,18 +49,37 @@ export class PythonParser implements LanguageParser {
       const tree = parser.parse(file.content);
       const root = tree.rootNode;
       const path = file.relativePath;
+      const serviceId = computeServiceId(context.repoPath);
 
       const codeNodes: any[] = [];
+      const databases: any[] = [];
+      const brokers: any[] = [];
 
       // FastAPI
-      const fastApiEndpoints = extractFastAPIEndpoints(root as any, path);
-      codeNodes.push(...fastApiEndpoints);
+      codeNodes.push(...extractFastAPIEndpoints(root as any, path));
 
       // Django
-      const djangoEndpoints = extractDjangoEndpoints(root as any, path);
-      codeNodes.push(...djangoEndpoints);
+      codeNodes.push(...extractDjangoEndpoints(root as any, path));
 
-      return { codeNodes, databases: [], brokers: [] };
+      // Functions, flow, logs, calls
+      codeNodes.push(...extractPythonFunctions(root as any, path));
+      codeNodes.push(...extractPythonFlowControl(root as any, path));
+      codeNodes.push(...extractPythonLogs(root as any, path));
+      codeNodes.push(...extractPythonCalls(root as any, path));
+
+      // Events
+      const eventResult = extractPythonEvents(root as any, path, serviceId);
+      codeNodes.push(...eventResult.eventNodes);
+      brokers.push(...eventResult.brokers);
+
+      // SQLAlchemy
+      const sqlResult = extractSQLAlchemyOperations(root as any, path);
+      codeNodes.push(...sqlResult.dbNodes);
+      if (sqlResult.database.tables.length > 0) {
+        databases.push(sqlResult.database);
+      }
+
+      return { codeNodes, databases, brokers };
     } catch (err) {
       context.diagnostics.push({
         level: 'error',

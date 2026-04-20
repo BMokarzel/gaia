@@ -1,0 +1,270 @@
+{"v":1,"ts":"2026-04-20T19:25:49.992Z","level":"info","component":"api","msg":"Starting Nest application...","pid":112528,"context":"NestFactory"}
+{"v":1,"ts":"2026-04-20T19:25:49.993Z","level":"info","component":"api","msg":"StorageModule dependencies initialized","pid":112528,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:25:49.993Z","level":"info","component":"api","msg":"ConfigHostModule dependencies initialized","pid":112528,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:25:49.993Z","level":"info","component":"api","msg":"LoggerModule dependencies initialized","pid":112528,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:25:49.994Z","level":"info","component":"api","msg":"AppModule dependencies initialized","pid":112528,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:25:49.994Z","level":"info","component":"api","msg":"ConfigModule dependencies initialized","pid":112528,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:25:49.994Z","level":"info","component":"api","msg":"ExtractionModule dependencies initialized","pid":112528,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:25:49.994Z","level":"info","component":"api","msg":"TopologyModule dependencies initialized","pid":112528,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:25:49.994Z","level":"info","component":"api","msg":"TopologyController {/topologies}:","pid":112528,"context":"RoutesResolver"}
+{"v":1,"ts":"2026-04-20T19:25:49.994Z","level":"info","component":"api","msg":"Mapped {/topologies/analyze, POST} route","pid":112528,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T19:25:49.995Z","level":"info","component":"api","msg":"Mapped {/topologies, GET} route","pid":112528,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T19:25:49.995Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, GET} route","pid":112528,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T19:25:49.995Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, PATCH} route","pid":112528,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T19:25:49.995Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, DELETE} route","pid":112528,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T19:25:49.995Z","level":"info","component":"api","msg":"Mapped {/topologies/:id/services, GET} route","pid":112528,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T19:25:49.996Z","level":"info","component":"api","msg":"Nest application successfully started","pid":112528,"context":"NestApplication"}
+{"v":1,"ts":"2026-04-20T19:25:51.079Z","level":"warn","component":"api","msg":"HTTP 404 GET /api/topology.api.ts","pid":112528,"method":"GET","path":"/api/topology.api.ts","status":404}
+{"v":1,"ts":"2026-04-20T19:26:45.867Z","level":"info","component":"api","msg":"Starting Nest application...","pid":113057,"context":"NestFactory"}
+{"v":1,"ts":"2026-04-20T19:26:45.869Z","level":"info","component":"api","msg":"StorageModule dependencies initialized","pid":113057,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:26:45.869Z","level":"info","component":"api","msg":"ConfigHostModule dependencies initialized","pid":113057,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:26:45.870Z","level":"info","component":"api","msg":"LoggerModule dependencies initialized","pid":113057,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:26:45.870Z","level":"info","component":"api","msg":"AppModule dependencies initialized","pid":113057,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:26:45.870Z","level":"info","component":"api","msg":"ConfigModule dependencies initialized","pid":113057,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:26:45.870Z","level":"info","component":"api","msg":"ExtractionModule dependencies initialized","pid":113057,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:26:45.870Z","level":"info","component":"api","msg":"TopologyModule dependencies initialized","pid":113057,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T19:26:45.871Z","level":"info","component":"api","msg":"TopologyController {/topologies}:","pid":113057,"context":"RoutesResolver"}
+{"v":1,"ts":"2026-04-20T19:26:45.872Z","level":"info","component":"api","msg":"Mapped {/topologies/analyze, POST} route","pid":113057,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T19:26:45.872Z","level":"info","component":"api","msg":"Mapped {/topologies, GET} route","pid":113057,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T19:26:45.872Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, GET} route","pid":113057,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T19:26:45.872Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, PATCH} route","pid":113057,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T19:26:45.872Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, DELETE} route","pid":113057,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T19:26:45.872Z","level":"info","component":"api","msg":"Mapped {/topologies/:id/services, GET} route","pid":113057,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T19:26:45.872Z","level":"info","component":"api","msg":"Nest application successfully started","pid":113057,"context":"NestApplication"}
+{"v":1,"ts":"2026-04-20T19:27:09.661Z","level":"warn","component":"api","msg":"HTTP 404 GET /api/topology.api.ts","pid":113057,"method":"GET","path":"/api/topology.api.ts","status":404}
+{"v":1,"ts":"2026-04-20T19:27:10.345Z","level":"warn","component":"api","msg":"HTTP 404 GET /api/topology.api.ts","pid":113057,"method":"GET","path":"/api/topology.api.ts","status":404}
+{"v":1,"ts":"2026-04-20T19:27:11.624Z","level":"warn","component":"api","msg":"HTTP 404 GET /api/topology.api.ts","pid":113057,"method":"GET","path":"/api/topology.api.ts","status":404}
+{"v":1,"ts":"2026-04-20T19:27:12.510Z","level":"warn","component":"api","msg":"HTTP 404 GET /api/topology.api.ts","pid":113057,"method":"GET","path":"/api/topology.api.ts","status":404}
+{"v":1,"ts":"2026-04-20T19:27:12.785Z","level":"warn","component":"api","msg":"HTTP 404 GET /api/topology.api.ts","pid":113057,"method":"GET","path":"/api/topology.api.ts","status":404}
+{"v":1,"ts":"2026-04-20T19:27:13.124Z","level":"warn","component":"api","msg":"HTTP 404 GET /api/topology.api.ts","pid":113057,"method":"GET","path":"/api/topology.api.ts","status":404}
+{"v":1,"ts":"2026-04-20T19:27:13.282Z","level":"warn","component":"api","msg":"HTTP 404 GET /api/topology.api.ts","pid":113057,"method":"GET","path":"/api/topology.api.ts","status":404}
+{"v":1,"ts":"2026-04-20T19:27:28.108Z","level":"warn","component":"api","msg":"HTTP 404 GET /api/topology.api.ts","pid":113057,"method":"GET","path":"/api/topology.api.ts","status":404}
+{"v":1,"ts":"2026-04-20T19:27:29.967Z","level":"warn","component":"api","msg":"HTTP 404 GET /api/topology.api.ts","pid":113057,"method":"GET","path":"/api/topology.api.ts","status":404}
+{"v":1,"ts":"2026-04-20T21:28:44.286Z","level":"info","component":"api","msg":"Starting Nest application...","pid":132851,"context":"NestFactory"}
+{"v":1,"ts":"2026-04-20T21:28:44.288Z","level":"info","component":"api","msg":"StorageModule dependencies initialized","pid":132851,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:28:44.289Z","level":"info","component":"api","msg":"ConfigHostModule dependencies initialized","pid":132851,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:28:44.289Z","level":"info","component":"api","msg":"LoggerModule dependencies initialized","pid":132851,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:28:44.289Z","level":"info","component":"api","msg":"AppModule dependencies initialized","pid":132851,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:28:44.289Z","level":"info","component":"api","msg":"ConfigModule dependencies initialized","pid":132851,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:28:44.289Z","level":"info","component":"api","msg":"ExtractionModule dependencies initialized","pid":132851,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:28:44.290Z","level":"info","component":"api","msg":"TopologyModule dependencies initialized","pid":132851,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:28:44.290Z","level":"info","component":"api","msg":"TopologyController {/topologies}:","pid":132851,"context":"RoutesResolver"}
+{"v":1,"ts":"2026-04-20T21:28:44.291Z","level":"info","component":"api","msg":"Mapped {/topologies/analyze, POST} route","pid":132851,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:28:44.291Z","level":"info","component":"api","msg":"Mapped {/topologies, GET} route","pid":132851,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:28:44.292Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, GET} route","pid":132851,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:28:44.294Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, PATCH} route","pid":132851,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:28:44.295Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, DELETE} route","pid":132851,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:28:44.296Z","level":"info","component":"api","msg":"Mapped {/topologies/:id/services, GET} route","pid":132851,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:28:44.296Z","level":"info","component":"api","msg":"Nest application successfully started","pid":132851,"context":"NestApplication"}
+{"v":1,"ts":"2026-04-20T21:34:12.435Z","level":"info","component":"api","msg":"Starting Nest application...","pid":136696,"context":"NestFactory"}
+{"v":1,"ts":"2026-04-20T21:34:12.437Z","level":"info","component":"api","msg":"StorageModule dependencies initialized","pid":136696,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:34:12.438Z","level":"info","component":"api","msg":"ConfigHostModule dependencies initialized","pid":136696,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:34:12.438Z","level":"info","component":"api","msg":"LoggerModule dependencies initialized","pid":136696,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:34:12.439Z","level":"info","component":"api","msg":"AppModule dependencies initialized","pid":136696,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:34:12.439Z","level":"info","component":"api","msg":"ConfigModule dependencies initialized","pid":136696,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:34:12.439Z","level":"info","component":"api","msg":"ExtractionModule dependencies initialized","pid":136696,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:34:12.439Z","level":"info","component":"api","msg":"TopologyModule dependencies initialized","pid":136696,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:34:12.439Z","level":"info","component":"api","msg":"TopologyController {/topologies}:","pid":136696,"context":"RoutesResolver"}
+{"v":1,"ts":"2026-04-20T21:34:12.440Z","level":"info","component":"api","msg":"Mapped {/topologies/analyze, POST} route","pid":136696,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:34:12.440Z","level":"info","component":"api","msg":"Mapped {/topologies, GET} route","pid":136696,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:34:12.440Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, GET} route","pid":136696,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:34:12.440Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, PATCH} route","pid":136696,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:34:12.440Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, DELETE} route","pid":136696,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:34:12.441Z","level":"info","component":"api","msg":"Mapped {/topologies/:id/services, GET} route","pid":136696,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:34:12.441Z","level":"info","component":"api","msg":"Nest application successfully started","pid":136696,"context":"NestApplication"}
+{"v":1,"ts":"2026-04-20T21:46:28.746Z","level":"warn","component":"api","msg":"HTTP 404 GET /nest/topologies","pid":136696,"method":"GET","path":"/nest/topologies","status":404}
+{"v":1,"ts":"2026-04-20T21:47:35.994Z","level":"warn","component":"api","msg":"HTTP 400 POST /topologies/analyze","pid":136696,"method":"POST","path":"/topologies/analyze","status":400}
+{"v":1,"ts":"2026-04-20T21:47:56.251Z","level":"warn","component":"api","msg":"HTTP 400 POST /topologies/analyze","pid":136696,"method":"POST","path":"/topologies/analyze","status":400}
+{"v":1,"ts":"2026-04-20T21:48:04.170Z","level":"warn","component":"api","msg":"HTTP 400 POST /topologies/analyze","pid":136696,"method":"POST","path":"/topologies/analyze","status":400}
+{"v":1,"ts":"2026-04-20T21:48:17.772Z","level":"warn","component":"api","msg":"HTTP 400 POST /topologies/analyze","pid":136696,"method":"POST","path":"/topologies/analyze","status":400}
+{"v":1,"ts":"2026-04-20T21:48:35.890Z","level":"info","component":"api","msg":"Starting Nest application...","pid":152710,"context":"NestFactory"}
+{"v":1,"ts":"2026-04-20T21:48:35.892Z","level":"info","component":"api","msg":"StorageModule dependencies initialized","pid":152710,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:35.892Z","level":"info","component":"api","msg":"ConfigHostModule dependencies initialized","pid":152710,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:35.893Z","level":"info","component":"api","msg":"LoggerModule dependencies initialized","pid":152710,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:35.893Z","level":"info","component":"api","msg":"AppModule dependencies initialized","pid":152710,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:35.893Z","level":"info","component":"api","msg":"ConfigModule dependencies initialized","pid":152710,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:35.893Z","level":"info","component":"api","msg":"ExtractionModule dependencies initialized","pid":152710,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:35.893Z","level":"info","component":"api","msg":"TopologyModule dependencies initialized","pid":152710,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:35.894Z","level":"info","component":"api","msg":"TopologyController {/topologies}:","pid":152710,"context":"RoutesResolver"}
+{"v":1,"ts":"2026-04-20T21:48:35.894Z","level":"info","component":"api","msg":"Mapped {/topologies/analyze, POST} route","pid":152710,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:48:35.894Z","level":"info","component":"api","msg":"Mapped {/topologies, GET} route","pid":152710,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:48:35.895Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, GET} route","pid":152710,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:48:35.895Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, PATCH} route","pid":152710,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:48:35.895Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, DELETE} route","pid":152710,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:48:35.895Z","level":"info","component":"api","msg":"Mapped {/topologies/:id/services, GET} route","pid":152710,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:48:35.895Z","level":"info","component":"api","msg":"Nest application successfully started","pid":152710,"context":"NestApplication"}
+{"v":1,"ts":"2026-04-20T21:48:40.149Z","level":"info","component":"api","msg":"Starting Nest application...","pid":152844,"context":"NestFactory"}
+{"v":1,"ts":"2026-04-20T21:48:40.152Z","level":"info","component":"api","msg":"StorageModule dependencies initialized","pid":152844,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:40.153Z","level":"info","component":"api","msg":"ConfigHostModule dependencies initialized","pid":152844,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:40.154Z","level":"info","component":"api","msg":"LoggerModule dependencies initialized","pid":152844,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:40.154Z","level":"info","component":"api","msg":"AppModule dependencies initialized","pid":152844,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:40.154Z","level":"info","component":"api","msg":"ConfigModule dependencies initialized","pid":152844,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:40.154Z","level":"info","component":"api","msg":"ExtractionModule dependencies initialized","pid":152844,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:40.154Z","level":"info","component":"api","msg":"TopologyModule dependencies initialized","pid":152844,"context":"InstanceLoader"}
+{"v":1,"ts":"2026-04-20T21:48:40.155Z","level":"info","component":"api","msg":"TopologyController {/topologies}:","pid":152844,"context":"RoutesResolver"}
+{"v":1,"ts":"2026-04-20T21:48:40.155Z","level":"info","component":"api","msg":"Mapped {/topologies/analyze, POST} route","pid":152844,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:48:40.155Z","level":"info","component":"api","msg":"Mapped {/topologies, GET} route","pid":152844,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:48:40.156Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, GET} route","pid":152844,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:48:40.156Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, PATCH} route","pid":152844,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:48:40.156Z","level":"info","component":"api","msg":"Mapped {/topologies/:id, DELETE} route","pid":152844,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:48:40.156Z","level":"info","component":"api","msg":"Mapped {/topologies/:id/services, GET} route","pid":152844,"context":"RouterExplorer"}
+{"v":1,"ts":"2026-04-20T21:48:40.157Z","level":"info","component":"api","msg":"Nest application successfully started","pid":152844,"context":"NestApplication"}
+{"v":1,"ts":"2026-04-20T21:48:57.705Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:48:57.707Z","level":"info","component":"core.orchestrator","msg":"Detecting service boundaries","pid":152844,"repoPath":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system"}
+{"v":1,"ts":"2026-04-20T21:48:57.731Z","level":"info","component":"core.orchestrator","msg":"Service boundaries detected","pid":152844,"count":4}
+{"v":1,"ts":"2026-04-20T21:48:57.734Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"api-gateway","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/api-gateway"}
+{"v":1,"ts":"2026-04-20T21:48:57.741Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"api-gateway","language":"typescript","framework":"nest"}
+{"v":1,"ts":"2026-04-20T21:48:57.744Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"api-gateway","count":0}
+{"v":1,"ts":"2026-04-20T21:48:57.747Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"notification-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/notification-service"}
+{"v":1,"ts":"2026-04-20T21:48:57.750Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"notification-service","language":"python","framework":"fastapi"}
+{"v":1,"ts":"2026-04-20T21:48:57.751Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"notification-service","count":0}
+{"v":1,"ts":"2026-04-20T21:48:57.754Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"order-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/order-service"}
+{"v":1,"ts":"2026-04-20T21:48:57.760Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"order-service","language":"java","framework":"spring"}
+{"v":1,"ts":"2026-04-20T21:48:57.762Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"order-service","count":0}
+{"v":1,"ts":"2026-04-20T21:48:57.762Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"user-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/user-service"}
+{"v":1,"ts":"2026-04-20T21:48:57.763Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"user-service","language":"go","framework":"gin"}
+{"v":1,"ts":"2026-04-20T21:48:57.764Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"user-service","count":0}
+{"v":1,"ts":"2026-04-20T21:48:57.765Z","level":"debug","component":"core.orchestrator","msg":"Resources consolidated","pid":152844,"databases":4,"brokers":1}
+{"v":1,"ts":"2026-04-20T21:48:57.766Z","level":"debug","component":"core.orchestrator","msg":"Building edges","pid":152844}
+{"v":1,"ts":"2026-04-20T21:48:57.768Z","level":"debug","component":"core.orchestrator","msg":"Edges built","pid":152844,"count":0}
+{"v":1,"ts":"2026-04-20T21:48:57.771Z","level":"info","component":"core.orchestrator","msg":"Analysis complete","pid":152844,"services":4,"edges":0,"diagnostics":{"errors":0,"warnings":0}}
+{"v":1,"ts":"2026-04-20T21:48:57.772Z","level":"info","component":"extraction.service","msg":"Extraction complete","pid":152844,"services":4,"errors":0}
+{"v":1,"ts":"2026-04-20T21:49:08.055Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:49:08.056Z","level":"info","component":"core.orchestrator","msg":"Detecting service boundaries","pid":152844,"repoPath":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system"}
+{"v":1,"ts":"2026-04-20T21:49:08.057Z","level":"info","component":"core.orchestrator","msg":"Service boundaries detected","pid":152844,"count":4}
+{"v":1,"ts":"2026-04-20T21:49:08.058Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"api-gateway","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/api-gateway"}
+{"v":1,"ts":"2026-04-20T21:49:08.060Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"api-gateway","language":"typescript","framework":"nest"}
+{"v":1,"ts":"2026-04-20T21:49:08.062Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"api-gateway","count":3}
+{"v":1,"ts":"2026-04-20T21:49:08.659Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"notification-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/notification-service"}
+{"v":1,"ts":"2026-04-20T21:49:08.660Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"notification-service","language":"python","framework":"fastapi"}
+{"v":1,"ts":"2026-04-20T21:49:08.660Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"notification-service","count":3}
+{"v":1,"ts":"2026-04-20T21:49:08.874Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"order-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/order-service"}
+{"v":1,"ts":"2026-04-20T21:49:08.876Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"order-service","language":"java","framework":"spring"}
+{"v":1,"ts":"2026-04-20T21:49:08.876Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"order-service","count":4}
+{"v":1,"ts":"2026-04-20T21:49:09.285Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"user-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/user-service"}
+{"v":1,"ts":"2026-04-20T21:49:09.286Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"user-service","language":"go","framework":"gin"}
+{"v":1,"ts":"2026-04-20T21:49:09.287Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"user-service","count":3}
+{"v":1,"ts":"2026-04-20T21:49:09.505Z","level":"debug","component":"core.orchestrator","msg":"Resources consolidated","pid":152844,"databases":5,"brokers":1}
+{"v":1,"ts":"2026-04-20T21:49:09.505Z","level":"debug","component":"core.orchestrator","msg":"Building edges","pid":152844}
+{"v":1,"ts":"2026-04-20T21:49:09.508Z","level":"debug","component":"core.orchestrator","msg":"Edges built","pid":152844,"count":26}
+{"v":1,"ts":"2026-04-20T21:49:09.514Z","level":"info","component":"core.orchestrator","msg":"Analysis complete","pid":152844,"services":4,"edges":26,"diagnostics":{"errors":0,"warnings":73}}
+{"v":1,"ts":"2026-04-20T21:49:09.515Z","level":"info","component":"extraction.service","msg":"Extraction complete","pid":152844,"services":4,"errors":0}
+{"v":1,"ts":"2026-04-20T21:49:26.855Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:49:26.856Z","level":"info","component":"core.orchestrator","msg":"Detecting service boundaries","pid":152844,"repoPath":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system"}
+{"v":1,"ts":"2026-04-20T21:49:26.857Z","level":"info","component":"core.orchestrator","msg":"Service boundaries detected","pid":152844,"count":4}
+{"v":1,"ts":"2026-04-20T21:49:26.857Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"api-gateway","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/api-gateway"}
+{"v":1,"ts":"2026-04-20T21:49:26.859Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"api-gateway","language":"typescript","framework":"nest"}
+{"v":1,"ts":"2026-04-20T21:49:26.860Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"api-gateway","count":3}
+{"v":1,"ts":"2026-04-20T21:49:27.508Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"notification-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/notification-service"}
+{"v":1,"ts":"2026-04-20T21:49:27.509Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"notification-service","language":"python","framework":"fastapi"}
+{"v":1,"ts":"2026-04-20T21:49:27.510Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"notification-service","count":3}
+{"v":1,"ts":"2026-04-20T21:49:27.705Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"order-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/order-service"}
+{"v":1,"ts":"2026-04-20T21:49:27.706Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"order-service","language":"java","framework":"spring"}
+{"v":1,"ts":"2026-04-20T21:49:27.707Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"order-service","count":4}
+{"v":1,"ts":"2026-04-20T21:49:28.091Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"user-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/user-service"}
+{"v":1,"ts":"2026-04-20T21:49:28.091Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"user-service","language":"go","framework":"gin"}
+{"v":1,"ts":"2026-04-20T21:49:28.093Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"user-service","count":3}
+{"v":1,"ts":"2026-04-20T21:49:28.351Z","level":"debug","component":"core.orchestrator","msg":"Resources consolidated","pid":152844,"databases":5,"brokers":1}
+{"v":1,"ts":"2026-04-20T21:49:28.352Z","level":"debug","component":"core.orchestrator","msg":"Building edges","pid":152844}
+{"v":1,"ts":"2026-04-20T21:49:28.354Z","level":"debug","component":"core.orchestrator","msg":"Edges built","pid":152844,"count":26}
+{"v":1,"ts":"2026-04-20T21:49:28.356Z","level":"info","component":"core.orchestrator","msg":"Analysis complete","pid":152844,"services":4,"edges":26,"diagnostics":{"errors":0,"warnings":73}}
+{"v":1,"ts":"2026-04-20T21:49:28.356Z","level":"info","component":"extraction.service","msg":"Extraction complete","pid":152844,"services":4,"errors":0}
+{"v":1,"ts":"2026-04-20T21:49:38.159Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:49:38.161Z","level":"warn","component":"api","msg":"HTTP 404 POST /topologies/analyze","pid":152844,"method":"POST","path":"/topologies/analyze","status":404}
+{"v":1,"ts":"2026-04-20T21:49:49.368Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:49:49.371Z","level":"warn","component":"api","msg":"HTTP 404 POST /topologies/analyze","pid":152844,"method":"POST","path":"/topologies/analyze","status":404}
+{"v":1,"ts":"2026-04-20T21:50:21.003Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:50:21.004Z","level":"info","component":"core.orchestrator","msg":"Detecting service boundaries","pid":152844,"repoPath":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system"}
+{"v":1,"ts":"2026-04-20T21:50:21.005Z","level":"info","component":"core.orchestrator","msg":"Service boundaries detected","pid":152844,"count":4}
+{"v":1,"ts":"2026-04-20T21:50:21.005Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"api-gateway","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/api-gateway"}
+{"v":1,"ts":"2026-04-20T21:50:21.006Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"api-gateway","language":"typescript","framework":"nest"}
+{"v":1,"ts":"2026-04-20T21:50:21.007Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"api-gateway","count":3}
+{"v":1,"ts":"2026-04-20T21:50:21.483Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"notification-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/notification-service"}
+{"v":1,"ts":"2026-04-20T21:50:21.485Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"notification-service","language":"python","framework":"fastapi"}
+{"v":1,"ts":"2026-04-20T21:50:21.486Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"notification-service","count":3}
+{"v":1,"ts":"2026-04-20T21:50:21.661Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"order-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/order-service"}
+{"v":1,"ts":"2026-04-20T21:50:21.664Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"order-service","language":"java","framework":"spring"}
+{"v":1,"ts":"2026-04-20T21:50:21.665Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"order-service","count":4}
+{"v":1,"ts":"2026-04-20T21:50:22.023Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"user-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/user-service"}
+{"v":1,"ts":"2026-04-20T21:50:22.024Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"user-service","language":"go","framework":"gin"}
+{"v":1,"ts":"2026-04-20T21:50:22.025Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"user-service","count":3}
+{"v":1,"ts":"2026-04-20T21:50:22.247Z","level":"debug","component":"core.orchestrator","msg":"Resources consolidated","pid":152844,"databases":5,"brokers":1}
+{"v":1,"ts":"2026-04-20T21:50:22.248Z","level":"debug","component":"core.orchestrator","msg":"Building edges","pid":152844}
+{"v":1,"ts":"2026-04-20T21:50:22.250Z","level":"debug","component":"core.orchestrator","msg":"Edges built","pid":152844,"count":26}
+{"v":1,"ts":"2026-04-20T21:50:22.254Z","level":"info","component":"core.orchestrator","msg":"Analysis complete","pid":152844,"services":4,"edges":26,"diagnostics":{"errors":0,"warnings":73}}
+{"v":1,"ts":"2026-04-20T21:50:22.254Z","level":"info","component":"extraction.service","msg":"Extraction complete","pid":152844,"services":4,"errors":0}
+{"v":1,"ts":"2026-04-20T21:51:21.954Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:51:21.956Z","level":"warn","component":"api","msg":"HTTP 404 POST /topologies/analyze","pid":152844,"method":"POST","path":"/topologies/analyze","status":404}
+{"v":1,"ts":"2026-04-20T21:51:38.675Z","level":"warn","component":"api","msg":"HTTP 400 POST /topologies/analyze","pid":152844,"method":"POST","path":"/topologies/analyze","status":400}
+{"v":1,"ts":"2026-04-20T21:51:44.326Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:51:44.327Z","level":"info","component":"core.orchestrator","msg":"Detecting service boundaries","pid":152844,"repoPath":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system"}
+{"v":1,"ts":"2026-04-20T21:51:44.328Z","level":"info","component":"core.orchestrator","msg":"Service boundaries detected","pid":152844,"count":4}
+{"v":1,"ts":"2026-04-20T21:51:44.329Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"api-gateway","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/api-gateway"}
+{"v":1,"ts":"2026-04-20T21:51:44.330Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"api-gateway","language":"typescript","framework":"nest"}
+{"v":1,"ts":"2026-04-20T21:51:44.332Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"api-gateway","count":3}
+{"v":1,"ts":"2026-04-20T21:51:44.820Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"notification-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/notification-service"}
+{"v":1,"ts":"2026-04-20T21:51:44.821Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"notification-service","language":"python","framework":"fastapi"}
+{"v":1,"ts":"2026-04-20T21:51:44.821Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"notification-service","count":3}
+{"v":1,"ts":"2026-04-20T21:51:44.990Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"order-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/order-service"}
+{"v":1,"ts":"2026-04-20T21:51:44.992Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"order-service","language":"java","framework":"spring"}
+{"v":1,"ts":"2026-04-20T21:51:44.993Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"order-service","count":4}
+{"v":1,"ts":"2026-04-20T21:51:45.407Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"user-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/user-service"}
+{"v":1,"ts":"2026-04-20T21:51:45.408Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"user-service","language":"go","framework":"gin"}
+{"v":1,"ts":"2026-04-20T21:51:45.408Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"user-service","count":3}
+{"v":1,"ts":"2026-04-20T21:51:45.617Z","level":"debug","component":"core.orchestrator","msg":"Resources consolidated","pid":152844,"databases":5,"brokers":1}
+{"v":1,"ts":"2026-04-20T21:51:45.618Z","level":"debug","component":"core.orchestrator","msg":"Building edges","pid":152844}
+{"v":1,"ts":"2026-04-20T21:51:45.619Z","level":"debug","component":"core.orchestrator","msg":"Edges built","pid":152844,"count":26}
+{"v":1,"ts":"2026-04-20T21:51:45.620Z","level":"info","component":"core.orchestrator","msg":"Analysis complete","pid":152844,"services":4,"edges":26,"diagnostics":{"errors":0,"warnings":73}}
+{"v":1,"ts":"2026-04-20T21:51:45.621Z","level":"info","component":"extraction.service","msg":"Extraction complete","pid":152844,"services":4,"errors":0}
+{"v":1,"ts":"2026-04-20T21:52:07.894Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:52:07.895Z","level":"warn","component":"api","msg":"HTTP 404 POST /topologies/analyze","pid":152844,"method":"POST","path":"/topologies/analyze","status":404}
+{"v":1,"ts":"2026-04-20T21:52:16.124Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:52:16.125Z","level":"warn","component":"api","msg":"HTTP 404 POST /topologies/analyze","pid":152844,"method":"POST","path":"/topologies/analyze","status":404}
+{"v":1,"ts":"2026-04-20T21:52:23.753Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:52:23.754Z","level":"warn","component":"api","msg":"HTTP 404 POST /topologies/analyze","pid":152844,"method":"POST","path":"/topologies/analyze","status":404}
+{"v":1,"ts":"2026-04-20T21:52:33.618Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:52:33.618Z","level":"info","component":"core.orchestrator","msg":"Detecting service boundaries","pid":152844,"repoPath":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system"}
+{"v":1,"ts":"2026-04-20T21:52:33.619Z","level":"info","component":"core.orchestrator","msg":"Service boundaries detected","pid":152844,"count":4}
+{"v":1,"ts":"2026-04-20T21:52:33.619Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"api-gateway","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/api-gateway"}
+{"v":1,"ts":"2026-04-20T21:52:33.619Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"api-gateway","language":"typescript","framework":"nest"}
+{"v":1,"ts":"2026-04-20T21:52:33.620Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"api-gateway","count":3}
+{"v":1,"ts":"2026-04-20T21:52:34.132Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"notification-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/notification-service"}
+{"v":1,"ts":"2026-04-20T21:52:34.133Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"notification-service","language":"python","framework":"fastapi"}
+{"v":1,"ts":"2026-04-20T21:52:34.133Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"notification-service","count":3}
+{"v":1,"ts":"2026-04-20T21:52:34.345Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"order-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/order-service"}
+{"v":1,"ts":"2026-04-20T21:52:34.347Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"order-service","language":"java","framework":"spring"}
+{"v":1,"ts":"2026-04-20T21:52:34.348Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"order-service","count":4}
+{"v":1,"ts":"2026-04-20T21:52:34.685Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"user-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/user-service"}
+{"v":1,"ts":"2026-04-20T21:52:34.685Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"user-service","language":"go","framework":"gin"}
+{"v":1,"ts":"2026-04-20T21:52:34.686Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"user-service","count":3}
+{"v":1,"ts":"2026-04-20T21:52:34.881Z","level":"debug","component":"core.orchestrator","msg":"Resources consolidated","pid":152844,"databases":5,"brokers":1}
+{"v":1,"ts":"2026-04-20T21:52:34.882Z","level":"debug","component":"core.orchestrator","msg":"Building edges","pid":152844}
+{"v":1,"ts":"2026-04-20T21:52:34.882Z","level":"debug","component":"core.orchestrator","msg":"Edges built","pid":152844,"count":26}
+{"v":1,"ts":"2026-04-20T21:52:34.883Z","level":"info","component":"core.orchestrator","msg":"Analysis complete","pid":152844,"services":4,"edges":26,"diagnostics":{"errors":0,"warnings":73}}
+{"v":1,"ts":"2026-04-20T21:52:34.884Z","level":"info","component":"extraction.service","msg":"Extraction complete","pid":152844,"services":4,"errors":0}
+{"v":1,"ts":"2026-04-20T21:53:31.578Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:53:31.578Z","level":"info","component":"core.orchestrator","msg":"Detecting service boundaries","pid":152844,"repoPath":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system"}
+{"v":1,"ts":"2026-04-20T21:53:31.581Z","level":"info","component":"core.orchestrator","msg":"Service boundaries detected","pid":152844,"count":4}
+{"v":1,"ts":"2026-04-20T21:53:31.582Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"api-gateway","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/api-gateway"}
+{"v":1,"ts":"2026-04-20T21:53:31.583Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"api-gateway","language":"typescript","framework":"nest"}
+{"v":1,"ts":"2026-04-20T21:53:31.584Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"api-gateway","count":3}
+{"v":1,"ts":"2026-04-20T21:53:32.075Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"notification-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/notification-service"}
+{"v":1,"ts":"2026-04-20T21:53:32.076Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"notification-service","language":"python","framework":"fastapi"}
+{"v":1,"ts":"2026-04-20T21:53:32.077Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"notification-service","count":3}
+{"v":1,"ts":"2026-04-20T21:53:32.251Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"order-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/order-service"}
+{"v":1,"ts":"2026-04-20T21:53:32.253Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"order-service","language":"java","framework":"spring"}
+{"v":1,"ts":"2026-04-20T21:53:32.253Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"order-service","count":4}
+{"v":1,"ts":"2026-04-20T21:53:32.621Z","level":"info","component":"core.orchestrator","msg":"Analyzing service","pid":152844,"service":"user-service","path":"/home/bbaldassin/Área de trabalho/gaia/packages/core/tests/fixtures/shop-system/user-service"}
+{"v":1,"ts":"2026-04-20T21:53:32.622Z","level":"debug","component":"core.service","msg":"Stack detected","pid":152844,"service":"user-service","language":"go","framework":"gin"}
+{"v":1,"ts":"2026-04-20T21:53:32.622Z","level":"info","component":"core.service","msg":"Files found","pid":152844,"service":"user-service","count":3}
+{"v":1,"ts":"2026-04-20T21:53:32.807Z","level":"debug","component":"core.orchestrator","msg":"Resources consolidated","pid":152844,"databases":5,"brokers":1}
+{"v":1,"ts":"2026-04-20T21:53:32.807Z","level":"debug","component":"core.orchestrator","msg":"Building edges","pid":152844}
+{"v":1,"ts":"2026-04-20T21:53:32.808Z","level":"debug","component":"core.orchestrator","msg":"Edges built","pid":152844,"count":26}
+{"v":1,"ts":"2026-04-20T21:53:32.809Z","level":"info","component":"core.orchestrator","msg":"Analysis complete","pid":152844,"services":4,"edges":26,"diagnostics":{"errors":0,"warnings":73}}
+{"v":1,"ts":"2026-04-20T21:53:32.810Z","level":"info","component":"extraction.service","msg":"Extraction complete","pid":152844,"services":4,"errors":0}
+{"v":1,"ts":"2026-04-20T21:54:04.714Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:54:04.726Z","level":"warn","component":"api","msg":"HTTP 404 POST /topologies/analyze","pid":152844,"method":"POST","path":"/topologies/analyze","status":404}
+{"v":1,"ts":"2026-04-20T21:54:20.502Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:54:20.503Z","level":"warn","component":"api","msg":"HTTP 404 POST /topologies/analyze","pid":152844,"method":"POST","path":"/topologies/analyze","status":404}
+{"v":1,"ts":"2026-04-20T21:54:33.294Z","level":"info","component":"extraction.service","msg":"Starting extraction","pid":152844,"kind":"local"}
+{"v":1,"ts":"2026-04-20T21:54:33.296Z","level":"warn","component":"api","msg":"HTTP 404 POST /topologies/analyze","pid":152844,"method":"POST","path":"/topologies/analyze","status":404}

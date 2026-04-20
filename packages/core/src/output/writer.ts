@@ -1,5 +1,5 @@
 import { writeFileSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, resolve } from 'path';
 import type { SystemTopology } from '../types/topology';
 
 export interface WriteOptions {
@@ -24,6 +24,22 @@ export function writeTopology(
     pretty = true,
     includeRaw = false,
   } = options;
+
+  const resolvedOutput = resolve(outputPath);
+  const resolvedRepo   = resolve(repoPath);
+  const resolvedCwd    = resolve(process.cwd());
+
+  if (
+    !resolvedOutput.startsWith(resolvedRepo + '/') &&
+    resolvedOutput !== resolvedRepo &&
+    !resolvedOutput.startsWith(resolvedCwd + '/') &&
+    resolvedOutput !== resolvedCwd
+  ) {
+    throw new Error(
+      `Output path "${resolvedOutput}" is outside the repository root and working directory. ` +
+      'Pass an explicit path within the repo or run from the target directory.',
+    );
+  }
 
   const output = includeRaw ? topology : stripRaw(topology);
 

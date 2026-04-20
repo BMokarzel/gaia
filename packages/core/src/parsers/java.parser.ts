@@ -5,6 +5,12 @@ import type { SourceFile } from '../core/walker';
 import type { AnalysisContext } from '../types/topology';
 import { extractSpringEndpoints } from '../extractors/java/endpoint/spring.extractor';
 import { extractJPAOperations } from '../extractors/java/db/jpa.extractor';
+import { extractJavaFunctions } from '../extractors/java/function.extractor';
+import { extractJavaFlowControl } from '../extractors/java/flow.extractor';
+import { extractJavaLogs } from '../extractors/java/log.extractor';
+import { extractJavaCalls } from '../extractors/java/call.extractor';
+import { extractJavaEvents } from '../extractors/java/event.extractor';
+import { serviceId as computeServiceId } from '../utils/id';
 
 function loadLanguage(name: string): unknown {
   try {
@@ -41,20 +47,32 @@ export class JavaParser implements LanguageParser {
       parser.setLanguage(this.lang as any);
       const tree = parser.parse(file.content);
       const root = tree.rootNode;
+      const path = file.relativePath;
+      const serviceId = computeServiceId(context.repoPath);
 
       const codeNodes: any[] = [];
       const databases: any[] = [];
+      const brokers: any[] = [];
 
-      const springResult = extractSpringEndpoints(root as any, file.relativePath);
+      const springResult = extractSpringEndpoints(root as any, path);
       codeNodes.push(...springResult.endpoints, ...springResult.functions);
 
-      const jpaResult = extractJPAOperations(root as any, file.relativePath);
+      const jpaResult = extractJPAOperations(root as any, path);
       codeNodes.push(...jpaResult.dbNodes);
       if (jpaResult.database.tables.length > 0) {
         databases.push(jpaResult.database);
       }
 
-      return { codeNodes, databases, brokers: [] };
+      codeNodes.push(...extractJavaFunctions(root as any, path));
+      codeNodes.push(...extractJavaFlowControl(root as any, path));
+      codeNodes.push(...extractJavaLogs(root as any, path));
+      codeNodes.push(...extractJavaCalls(root as any, path));
+
+      const eventResult = extractJavaEvents(root as any, path, serviceId);
+      codeNodes.push(...eventResult.eventNodes);
+      brokers.push(...eventResult.brokers);
+
+      return { codeNodes, databases, brokers };
     } catch (err) {
       context.diagnostics.push({
         level: 'error',
