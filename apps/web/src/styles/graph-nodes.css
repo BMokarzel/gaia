@@ -31,6 +31,8 @@
 .gn-node--return   { color: var(--text-muted);    }
 .gn-node--return.gn-node--status-ok  { color: var(--accent-green); }
 .gn-node--return.gn-node--status-err { color: var(--accent-red);   }
+.gn-node--data    { color: var(--accent-blue);   }
+.gn-node--process { color: var(--accent-purple); }
 
 .gn-node .gn-node__body { stroke: currentColor; }
 .gn-node--function .gn-node__body { fill: var(--bg-surface); }

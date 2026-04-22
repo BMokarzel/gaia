@@ -1,5 +1,5 @@
 import type { SyntaxNode } from '../../../utils/ast-helpers';
-import { findAll, toLocation, memberChain, extractStringValue } from '../../../utils/ast-helpers';
+import { findAll, toLocation, extractStringValue } from '../../../utils/ast-helpers';
 import { nodeId } from '../../../utils/id';
 import type { EndpointNode } from '../../../types/topology';
 
@@ -22,14 +22,17 @@ export function extractVaporEndpoints(
     const fn = call.children[0];
     if (!fn) continue;
 
-    // Swift: navigation_expression → a.b.c
+    // Swift: navigation_expression → receiver.method
     if (fn.type !== 'navigation_expression') continue;
 
-    const chain = memberChain(fn);
-    if (chain.length < 2) continue;
+    // Use node text instead of memberChain (which only handles JS member_expression).
+    // fn.text for `app.get` → "app.get"; for `app.grouped("p").post` → "app.grouped(\"p\").post"
+    const fnText = fn.text;
+    const dotIdx = fnText.lastIndexOf('.');
+    if (dotIdx === -1) continue;
 
-    const method = chain[chain.length - 1].toLowerCase();
-    const obj = chain.slice(0, -1).join('.');
+    const method = fnText.slice(dotIdx + 1).toLowerCase();
+    const obj = fnText.slice(0, dotIdx);
 
     if (!VAPOR_METHODS.has(method)) continue;
     if (!VAPOR_PATTERNS.some(p => p.test(obj))) continue;

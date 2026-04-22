@@ -80,14 +80,14 @@ export function buildEdges(
       }
     }
 
-    // Service → Database (depends_on)
+    // Service → dependency (depends_on)
     for (const dep of service.dependencies) {
       edges.push({
         source: service.id,
-        target: dep.targetId,
+        target: dep.id,
         kind: 'depends_on',
         metadata: {
-          kind: dep.kind,
+          kind: dep.callKind,
           protocol: dep.protocol,
           critical: dep.critical,
         },

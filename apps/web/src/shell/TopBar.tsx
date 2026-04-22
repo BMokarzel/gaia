@@ -1,13 +1,20 @@
 import React, { useState, useCallback } from 'react'
 import { useTopologyStore } from '@/store/topologyStore'
+import { ExportMenu } from './ExportMenu'
 import styles from './TopBar.module.css'
 
 export function TopBar() {
-  const { viewLevel, selectedServiceId, selectedEndpointId, topology, navigateTo, toggleTheme, theme, goHome } = useTopologyStore()
+  const {
+    navigation, activeTopology,
+    navigateToEcosystem, navigateToService,
+    toggleTheme, theme, goHome,
+  } = useTopologyStore()
+
+  const { screen, serviceId, endpointId } = navigation
   const [searchOpen, setSearchOpen] = useState(false)
 
-  const service = topology?.services.find(s => s.id === selectedServiceId)
-  const endpoint = service?.endpoints.find(e => e.id === selectedEndpointId)
+  const service = activeTopology?.services.find(s => s.id === serviceId)
+  const endpoint = service?.endpoints.find(e => e.id === endpointId)
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -36,18 +43,18 @@ export function TopBar() {
 
         <span className={styles.sep}>›</span>
         <span
-          className={`${styles.crumb} ${viewLevel === 'ecosystem' ? styles.crumbActive : ''}`}
-          onClick={() => navigateTo('ecosystem')}
+          className={`${styles.crumb} ${screen === 'ecosystem' ? styles.crumbActive : ''}`}
+          onClick={navigateToEcosystem}
         >
-          serviços
+          Ecossistema
         </span>
 
         {service && (
           <>
             <span className={styles.sep}>›</span>
             <span
-              className={`${styles.crumb} ${viewLevel === 'service' ? styles.crumbActive : ''}`}
-              onClick={() => navigateTo('service', selectedServiceId!)}
+              className={`${styles.crumb} ${screen === 'service' ? styles.crumbActive : ''}`}
+              onClick={() => serviceId && navigateToService(serviceId)}
             >
               {service.name}
             </span>
@@ -57,7 +64,7 @@ export function TopBar() {
         {endpoint && (
           <>
             <span className={styles.sep}>›</span>
-            <span className={`${styles.crumb} ${styles.crumbMono} ${viewLevel === 'endpoint' ? styles.crumbActive : ''}`}>
+            <span className={`${styles.crumb} ${styles.crumbMono} ${screen === 'endpoint' ? styles.crumbActive : ''}`}>
               {endpoint.metadata.method} {endpoint.metadata.path}
             </span>
           </>
@@ -80,6 +87,8 @@ export function TopBar() {
 
       {/* Controls */}
       <div className={styles.controls}>
+        <ExportMenu />
+        <div className={styles.divider} />
         <button className={styles.iconBtn} onClick={toggleTheme} title="Toggle theme">
           {theme === 'dark' ? '☀' : '☾'}
         </button>

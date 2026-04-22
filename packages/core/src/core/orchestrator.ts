@@ -19,8 +19,9 @@ import { mergeBrokers, buildBrokerFromHint } from '../builders/broker.builder';
 import { buildEdges } from '../builders/edge.builder';
 import { buildErrorFlowMap } from '../builders/error-flow.builder';
 import { serviceId } from '../utils/id';
-import { computeCoupling } from '../analysis/coupling';
 import { detectUnused } from '../analysis/unused';
+import { runCrossServiceMerge } from '../analysis/service-merger';
+import type { ExternalCallNode } from '../types/topology';
 
 export interface AnalysisOptions {
   /** Ignora arquivos de teste */
@@ -103,13 +104,18 @@ export async function analyzeRepository(
   const edges = buildEdges(context.services, allDatabases, allBrokers);
   log.debug('Edges built', { count: edges.length });
 
-  // 5b. Métricas de acoplamento por serviço
-  onProgress('Computing coupling metrics...');
-  computeCoupling(context.services, edges);
-
-  // 5c. Detecção de código não utilizado
+  // 5b. Detecção de código não utilizado
   onProgress('Detecting unused code...');
   detectUnused(context.services, edges, context.diagnostics);
+
+  // 5c. Cross-service merge: resolve ExternalCallNodes to EndpointNodes
+  onProgress('Resolving cross-service calls...');
+  const externalCalls = collectExternalCallNodes(context.services);
+  if (externalCalls.length > 0) {
+    const { edges: mergeEdges } = await runCrossServiceMerge(context.services, externalCalls);
+    edges.push(...mergeEdges);
+    log.debug('Cross-service merge complete', { resolved: mergeEdges.length, total: externalCalls.length });
+  }
 
   // 6. Constrói error flow map
   onProgress('Mapping error flows...');
@@ -297,24 +303,24 @@ function enrichServiceDependencies(
   walkNodes(service.functions as CodeNode[]);
 
   for (const dbId of dbIds) {
-    const alreadyLinked = service.dependencies.some(d => d.targetId === dbId);
+    const alreadyLinked = service.dependencies.some(d => d.id === dbId);
     if (!alreadyLinked) {
       service.dependencies.push({
-        targetId: dbId,
-        targetType: 'database',
-        kind: 'sync',
+        id: dbId,
+        targetKind: 'database',
+        callKind: 'sync',
         critical: true,
       });
     }
   }
 
   for (const brokerId of brokerIds) {
-    const alreadyLinked = service.dependencies.some(d => d.targetId === brokerId);
+    const alreadyLinked = service.dependencies.some(d => d.id === brokerId);
     if (!alreadyLinked) {
       service.dependencies.push({
-        targetId: brokerId,
-        targetType: 'broker',
-        kind: 'async',
+        id: brokerId,
+        targetKind: 'broker',
+        callKind: 'async',
         critical: false,
       });
     }
@@ -393,4 +399,19 @@ function calculateCoverage(
 
 function excludeFrontendExtensions(): string[] {
   return ['.ts', '.java', '.kt', '.py', '.go', '.rs', '.swift', '.cs', '.cpp', '.c'];
+}
+
+function collectExternalCallNodes(services: ServiceNode[]): ExternalCallNode[] {
+  const results: ExternalCallNode[] = [];
+  function walk(nodes: import('../types/topology').CodeNode[]): void {
+    for (const n of nodes) {
+      if (n.type === 'externalCall') results.push(n as ExternalCallNode);
+      walk(n.children);
+    }
+  }
+  for (const svc of services) {
+    walk(svc.endpoints as import('../types/topology').CodeNode[]);
+    walk(svc.functions as import('../types/topology').CodeNode[]);
+  }
+  return results;
 }

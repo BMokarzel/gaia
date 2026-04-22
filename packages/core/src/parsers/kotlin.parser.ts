@@ -4,6 +4,10 @@ import { emptyResult } from './base';
 import type { SourceFile } from '../core/walker';
 import type { AnalysisContext } from '../types/topology';
 import { extractKotlinSpringEndpoints } from '../extractors/kotlin/endpoint/spring.extractor';
+import { extractKotlinHttpClients } from '../extractors/kotlin/http-client.extractor';
+import { extractKotlinFlowControl } from '../extractors/kotlin/flow.extractor';
+import { extractKotlinCalls } from '../extractors/kotlin/call.extractor';
+import { extractKotlinLogs } from '../extractors/kotlin/log.extractor';
 
 function loadLanguage(name: string): unknown {
   try {
@@ -45,6 +49,14 @@ export class KotlinParser implements LanguageParser {
 
       const springResult = extractKotlinSpringEndpoints(root as any, file.relativePath);
       codeNodes.push(...springResult.endpoints, ...springResult.functions);
+
+      // HTTP client calls (ExternalCallNodes for cross-service merge)
+      codeNodes.push(...extractKotlinHttpClients(root as any, file.relativePath));
+
+      // Flow control, calls, logs
+      codeNodes.push(...extractKotlinFlowControl(root as any, file.relativePath));
+      codeNodes.push(...extractKotlinCalls(root as any, file.relativePath));
+      codeNodes.push(...extractKotlinLogs(root as any, file.relativePath));
 
       return { codeNodes, databases: [], brokers: [] };
     } catch (err) {

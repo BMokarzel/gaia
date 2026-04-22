@@ -5,6 +5,8 @@ export interface NodeDetailInfo {
   id: string
   label: string
   kind: string
+  humanName?: string
+  description?: string
   fields?: Array<{ key: string; value: string | number }>
   file?: string
   line?: number
@@ -13,6 +15,7 @@ export interface NodeDetailInfo {
 interface Props {
   info: NodeDetailInfo
   onClose: () => void
+  actions?: Array<{ label: string; onClick: () => void }>
 }
 
 const KIND_COLORS: Record<string, string> = {
@@ -28,40 +31,51 @@ const KIND_COLORS: Record<string, string> = {
   error:    'var(--accent-red)',
 }
 
-export function NodeDetailPanel({ info, onClose }: Props) {
+export function NodeDetailPanel({ info, onClose, actions }: Props) {
   const [pos, setPos] = useState({ x: 60, y: 120 })
   const dragRef = useRef<{ ox: number; oy: number } | null>(null)
 
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
+  // Drag only from the handle — not from the whole header (prevents stealing close button clicks)
+  const onHandlePointerDown = useCallback((e: React.PointerEvent) => {
     e.currentTarget.setPointerCapture(e.pointerId)
     dragRef.current = { ox: e.clientX - pos.x, oy: e.clientY - pos.y }
   }, [pos])
 
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
+  const onHandlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!dragRef.current) return
     setPos({ x: e.clientX - dragRef.current.ox, y: e.clientY - dragRef.current.oy })
   }, [])
 
-  const onPointerUp = useCallback(() => { dragRef.current = null }, [])
+  const onHandlePointerUp = useCallback(() => { dragRef.current = null }, [])
 
   const kindColor = KIND_COLORS[info.kind] ?? 'var(--text-muted)'
+  const title = info.humanName ?? info.label
 
   return (
     <div className={styles.panel} style={{ left: pos.x, top: pos.y }}>
-      <div
-        className={styles.header}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-      >
-        <span className={styles.dragHandle}>⋮⋮</span>
-        <span className={styles.title}>{info.label}</span>
+      <div className={styles.header}>
+        <span
+          className={styles.dragHandle}
+          onPointerDown={onHandlePointerDown}
+          onPointerMove={onHandlePointerMove}
+          onPointerUp={onHandlePointerUp}
+          style={{ cursor: 'grab', touchAction: 'none' }}
+        >⋮⋮</span>
+        <div className={styles.titleBlock}>
+          <span className={styles.title}>{title}</span>
+          {info.humanName && info.humanName !== info.label && (
+            <span className={styles.subtitle}>{info.label}</span>
+          )}
+        </div>
         <span className={styles.kindPill} style={{ borderColor: kindColor, color: kindColor }}>{info.kind}</span>
         <div style={{ flex: 1 }} />
         <button className={styles.closeBtn} onClick={onClose}>×</button>
       </div>
 
       <div className={styles.body}>
+        {info.description && (
+          <p className={styles.description}>{info.description}</p>
+        )}
         {info.file && (
           <div className={styles.location}>
             {info.file}{info.line != null ? `:${info.line}` : ''}
@@ -79,6 +93,19 @@ export function NodeDetailPanel({ info, onClose }: Props) {
             </div>
           ))}
         </div>
+        {actions && actions.length > 0 && (
+          <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+            {actions.map(a => (
+              <button key={a.label} onClick={a.onClick} style={{
+                background: 'var(--color-accent, #7c6ff7)', color: '#fff',
+                border: 'none', borderRadius: 4, padding: '5px 10px',
+                fontSize: 12, cursor: 'pointer',
+              }}>
+                {a.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

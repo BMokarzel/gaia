@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "ts-node src/cli.ts",
+    "dev": "tsc --watch",
     "start": "node dist/cli.js",
     "clean": "rm -rf dist"
   },

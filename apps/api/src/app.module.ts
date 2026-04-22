@@ -7,6 +7,7 @@ import { LoggerModule } from './common/logger/logger.module';
 import { ExtractionModule } from './extraction/extraction.module';
 import { StorageModule } from './storage/storage.module';
 import { TopologyModule } from './modules/topology/topology.module';
+import { EcosystemModule } from './modules/ecosystem/ecosystem.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { TopologyModule } from './modules/topology/topology.module';
     ExtractionModule,
     StorageModule,
     TopologyModule,
+    EcosystemModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
@@ -22,3 +24,7 @@ import { TopologyModule } from './modules/topology/topology.module';
   ],
 })
 export class AppModule {}
+
+
+
+

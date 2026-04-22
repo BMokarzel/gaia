@@ -19,3 +19,9 @@ export { writeTopology, buildSummary } from './output/writer';
 export type { WriteOptions } from './output/writer';
 
 export type * from './types/topology';
+
+export { sanitizeForPrompt, sanitizeArrayForPrompt, escapeRegex } from './utils/prompt-sanitizer';
+export { extractHttpClients, normalizeHttpPath } from './extractors/ts/http-client.extractor';
+export { enrichService, computeResolvedDependencies } from './analysis/llm-enrichment';
+export type { EnrichmentConfig } from './analysis/llm-enrichment';
+export { runCrossServiceMerge, applyPendingMerges, writePendingMerges } from './analysis/service-merger';

@@ -10,20 +10,25 @@ const NAV_ITEMS = [
 
 export function LeftRail() {
   const [expanded, setExpanded] = useState(false)
-  const { viewLevel, navigateTo, selectedServiceId, selectedEndpointId, topology } = useTopologyStore()
+  const {
+    navigation, activeTopology, ecosystem,
+    navigateToEcosystem, navigateToService, navigateToEndpoint,
+  } = useTopologyStore()
+
+  const { screen, serviceId, endpointId } = navigation
 
   const canNavigate = (level: 'ecosystem' | 'service' | 'endpoint') => {
-    if (level === 'ecosystem') return !!topology
-    if (level === 'service') return !!selectedServiceId
-    if (level === 'endpoint') return !!selectedEndpointId
+    if (level === 'ecosystem') return !!(activeTopology || ecosystem)
+    if (level === 'service') return !!serviceId
+    if (level === 'endpoint') return !!(serviceId && endpointId)
     return false
   }
 
   const handleNav = (level: 'ecosystem' | 'service' | 'endpoint') => {
     if (!canNavigate(level)) return
-    if (level === 'ecosystem') navigateTo('ecosystem')
-    else if (level === 'service') navigateTo('service', selectedServiceId!)
-    else if (level === 'endpoint') navigateTo('endpoint', selectedServiceId!, selectedEndpointId!)
+    if (level === 'ecosystem') navigateToEcosystem()
+    else if (level === 'service' && serviceId) navigateToService(serviceId)
+    else if (level === 'endpoint' && serviceId && endpointId) navigateToEndpoint(serviceId, endpointId)
   }
 
   return (
@@ -33,7 +38,7 @@ export function LeftRail() {
       onMouseLeave={() => setExpanded(false)}
     >
       {NAV_ITEMS.map((item) => {
-        const active = viewLevel === item.level
+        const active = screen === item.level
         const disabled = !canNavigate(item.level)
         return (
           <div

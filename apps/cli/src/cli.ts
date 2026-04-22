@@ -4,7 +4,7 @@ import { resolve, isAbsolute } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
 import ora from 'ora';
-import { analyzeRepository, writeTopology, buildSummary } from '@topology/core';
+import { analyzeRepository, writeTopology, buildSummary, enrichService } from '@topology/core';
 import {
   createLogger, FileTransport, ConsoleTransport, CompositeTransport,
 } from '@topology/core';
@@ -24,6 +24,7 @@ program
   .option('--include-raw', 'Include raw AST text in output (larger file)')
   .option('--include-tests', 'Include test files in analysis')
   .option('--no-frontend', 'Skip frontend file analysis')
+  .option('--enrich', 'Enrich topology with LLM descriptions (requires ANTHROPIC_API_KEY)')
   .option('--verbose', 'Show detailed progress')
   .action(async (repoPathArg: string, options: {
     output?: string;
@@ -31,6 +32,7 @@ program
     includeRaw?: boolean;
     includeTests?: boolean;
     frontend: boolean;
+    enrich?: boolean;
     verbose?: boolean;
   }) => {
     const repoPath = isAbsolute(repoPathArg)
@@ -67,6 +69,15 @@ program
         onProgress,
         logger,
       });
+
+      if (options.enrich) {
+        spinner.text = 'Enriching with LLM...';
+        for (const service of topology.services) {
+          await enrichService(service, topology.databases, {
+            onProgress: (msg) => { spinner.text = msg; },
+          });
+        }
+      }
 
       spinner.text = 'Writing output...';
 
@@ -110,6 +121,50 @@ program
       if (options.verbose) {
         console.error(error.stack);
       }
+      process.exit(1);
+    }
+  });
+
+program
+  .command('enrich <topology-path>')
+  .description('Enrich an existing topology.json with LLM descriptions (requires ANTHROPIC_API_KEY)')
+  .option('--no-pretty', 'Minify JSON output')
+  .option('--dry-run', 'Show what would be enriched without calling the API')
+  .action(async (topologyPathArg: string, options: { pretty: boolean; dryRun?: boolean }) => {
+    const topologyPath = isAbsolute(topologyPathArg)
+      ? topologyPathArg
+      : resolve(process.cwd(), topologyPathArg);
+
+    if (!existsSync(topologyPath)) {
+      console.error(chalk.red(`File not found: ${topologyPath}`));
+      process.exit(1);
+    }
+
+    const raw = JSON.parse(require('fs').readFileSync(topologyPath, 'utf-8'));
+    // Support both raw SystemTopology and StoredTopology (wrapped)
+    const topology = raw.topology ?? raw;
+    const spinner = ora({ text: 'Starting enrichment...', color: 'cyan' }).start();
+
+    try {
+      for (const service of topology.services) {
+        await enrichService(service, topology.databases, {
+          dryRun: options.dryRun,
+          onProgress: (msg) => { spinner.text = msg; },
+        });
+      }
+
+      if (!options.dryRun) {
+        require('fs').writeFileSync(
+          topologyPath,
+          JSON.stringify(raw, null, options.pretty ? 2 : 0),
+          'utf-8',
+        );
+        spinner.succeed(chalk.green(`Enriched topology written to: ${topologyPath}`));
+      } else {
+        spinner.succeed(chalk.yellow('Dry run complete — no files written'));
+      }
+    } catch (err) {
+      spinner.fail(chalk.red(`Enrichment failed: ${(err as Error).message}`));
       process.exit(1);
     }
   });

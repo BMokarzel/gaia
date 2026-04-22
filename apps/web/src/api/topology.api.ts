@@ -3,8 +3,11 @@ import type {
   StoredTopologyMeta,
   PagedResult,
   AnalyzeRequest,
+  AnalyzeResponse,
+  MergeDecisionRequest,
   ListQuery,
 } from './types'
+import type { EcosystemIndex, ProvisionalFile } from '@/types/topology'
 
 const BASE = '/nest'
 
@@ -29,6 +32,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const topologyApi = {
+  // ── Topologies ──────────────────────────────────────────────────────────
+
   list(query?: ListQuery): Promise<PagedResult<StoredTopologyMeta>> {
     const params = new URLSearchParams()
     if (query?.name)   params.set('name', query.name)
@@ -49,8 +54,15 @@ export const topologyApi = {
     return request(`/topologies/${id}`)
   },
 
-  analyze(body: AnalyzeRequest): Promise<StoredTopology> {
+  analyze(body: AnalyzeRequest): Promise<AnalyzeResponse> {
     return request('/topologies/analyze', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
+  submitMergeDecisions(body: MergeDecisionRequest): Promise<AnalyzeResponse> {
+    return request('/topologies/analyze/merge-decision', {
       method: 'POST',
       body: JSON.stringify(body),
     })
@@ -65,5 +77,15 @@ export const topologyApi = {
 
   delete(id: string): Promise<void> {
     return request(`/topologies/${id}`, { method: 'DELETE' })
+  },
+
+  // ── Ecosystem ───────────────────────────────────────────────────────────
+
+  getEcosystem(): Promise<EcosystemIndex> {
+    return request('/ecosystem')
+  },
+
+  getProvisional(): Promise<ProvisionalFile> {
+    return request('/ecosystem/provisional')
   },
 }

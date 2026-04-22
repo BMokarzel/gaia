@@ -24,11 +24,20 @@ apps/api/dist/
 # Storage & cloned repos (runtime data)
 storage/
 repos/
+apps/api/data/
+
+# CLI output files
+topology.json
 
 # Logs
 *.log
+*.ndjson
 npm-debug.log*
 pnpm-debug.log*
+apps/api/logs/
+
+# Claude Code local config (machine-specific)
+.claude/settings.local.json
 
 # OS
 .DS_Store

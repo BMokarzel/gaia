@@ -14,7 +14,7 @@ export function extractAssignments(
 ): ProcessNode[] {
   const nodes: ProcessNode[] = [];
 
-  for (const node of findAll(rootNode, 'assignment_expression')) {
+  for (const node of findAll(rootNode, ['assignment_expression', 'augmented_assignment_expression'])) {
     const loc = toLocation(node, filePath);
 
     const left = node.childForFieldName('left');

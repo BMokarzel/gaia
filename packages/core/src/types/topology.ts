@@ -73,12 +73,11 @@ export interface ServiceNode {
   id: string;
   type: "service";
   name: string;
+  /** Kebab-case identifier derived from the service name, e.g. "user-service" */
+  code: string;
   metadata: {
-    code: string;
-    fullName: string;
     description?: string;
     team?: string;
-    owner?: string;
     repository?: {
       url?: string;
       branch?: string;
@@ -98,31 +97,34 @@ export interface ServiceNode {
     healthCheck?: string;
     dashboardUrl?: string;
     runbookUrl?: string;
-    coupling?: {
-      ca: number;
-      ce: number;
-      instability: number;
-      classes: {
-        name: string;
-        ca: number;
-        ce: number;
-        instability: number;
-      }[];
-    };
+    llm?: LLMEnrichment;
   };
   endpoints: EndpointNode[];
   functions: FunctionNode[];
   globals: DataNode[];
-  dependencies: ServiceDependency[];
+  /** All outbound dependencies: internal (db/broker/storage/service) and external HTTP. */
+  dependencies: Dependency[];
 }
 
-export interface ServiceDependency {
-  targetId: string;
-  targetType: "service" | "database" | "storage" | "broker";
-  kind: "sync" | "async" | "event" | "scheduled" | "stream";
+export interface Dependency {
+  /** Target ID: service/database/storage/broker id, or ExternalCallNode id for external_http */
+  id: string;
+  /** Display name of the target */
+  name?: string;
+  /** Nature of the target */
+  targetKind: "service" | "database" | "storage" | "broker" | "external_http";
+  /** Communication pattern */
+  callKind: "sync" | "async" | "event" | "scheduled" | "stream";
   protocol?: string;
-  description?: string;
   critical: boolean;
+  /** Resolution status — set only for external_http dependencies */
+  mergeStatus?: "resolved" | "pending_review" | "unresolvable";
+  /** EndpointNode ID this resolves to, when mergeStatus === 'resolved' */
+  resolvedEndpointId?: string;
+  /** Confidence of the cross-service merge match, 0–1 */
+  mergeConfidence?: number;
+  /** ExternalCallNode IDs that map to this service dependency */
+  via?: string[];
 }
 
 // --------------- Database ---------------
@@ -166,6 +168,7 @@ export interface TableNode {
     schema?: string;
     databaseId: string;
     columns?: ColumnDef[];
+    columnNodes?: ColumnNode[];
     fields?: FieldDef[];
     primaryKey?: string[];
     indexes?: IndexDef[];
@@ -179,6 +182,7 @@ export interface TableNode {
 }
 
 export interface ColumnDef {
+  id?: string;
   name: string;
   /** Tipo completo: "uuid" | "varchar(255)" | "jsonb" | "int" | "decimal(10,2)" */
   type: string;
@@ -211,6 +215,25 @@ export interface ColumnDef {
   reference?: {
     tableId: string;
     column: string;
+  };
+  llm?: LLMEnrichment;
+}
+
+/** ColumnNode: rich version of ColumnDef used by LLM enrichment */
+export interface ColumnNode {
+  id: string;
+  name: string;
+  tableId: string;
+  metadata: {
+    dataType: string;
+    nullable: boolean;
+    primaryKey: boolean;
+    unique: boolean;
+    defaultValue?: string;
+    description?: string;
+    enumValues?: string[];
+    reference?: { tableId: string; column: string };
+    llm?: LLMEnrichment;
   };
 }
 
@@ -293,7 +316,7 @@ export type CodeNodeType =
   | "endpoint" | "function" | "call" | "event"
   | "dbProcess" | "process" | "flowControl"
   | "return" | "throw" | "data"
-  | "log" | "telemetry";
+  | "log" | "telemetry" | "externalCall";
 
 export interface SourceLocation {
   file: string;
@@ -323,6 +346,8 @@ export interface EndpointNode extends BaseCodeNode {
     framework?: string;
     middleware?: string[];
     controller?: string;
+    /** FunctionNode.id of the handler that implements this endpoint */
+    handlerFnId?: string;
     request: {
       params?: TypedField[];
       query?: TypedField[];
@@ -332,6 +357,7 @@ export interface EndpointNode extends BaseCodeNode {
       contentType?: string;
     };
     responses: EndpointResponse[];
+    llm?: LLMEnrichment;
   };
 }
 
@@ -376,6 +402,7 @@ export interface FunctionNode extends BaseCodeNode {
       throwsUnhandled: boolean;
     };
     inferredReturnShape?: TypedField[];
+    llm?: LLMEnrichment;
   };
 }
 
@@ -423,6 +450,7 @@ export interface DbProcessNode extends BaseCodeNode {
     relations?: string[];
     orderBy?: string;
     pagination?: { strategy: "offset" | "cursor"; limitField?: string; offsetField?: string };
+    resolvedColumnIds?: string[];
   };
 }
 
@@ -543,13 +571,43 @@ export interface DataNode extends BaseCodeNode {
   };
 }
 
+// -- External Call --
+
+export interface ExternalCallNode extends BaseCodeNode {
+  type: "externalCall";
+  metadata: {
+    /** HTTP method used */
+    method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS" | "HEAD";
+    /** Extracted path, e.g. /users/:id */
+    path: string;
+    /** Normalized path for matching: /users/:param */
+    pathNormalized?: string;
+    /** Base URL if detectable, e.g. https://api.example.com */
+    baseUrl?: string;
+    /** HTTP client library name (axios, fetch, got, …) */
+    httpClient?: string;
+    /** Body/query fields observed in the call arguments */
+    bodyFields?: string[];
+    /** Whether the call is awaited */
+    awaited?: boolean;
+    /** Merge lifecycle status */
+    mergeStatus?: "provisional" | "resolved" | "pending_review" | "unresolvable";
+    /** Confidence of merge match, 0–1 */
+    mergeConfidence?: number;
+    /** Merge reasoning (from LLM or rule) */
+    mergeReason?: string;
+    /** EndpointNode ID this call resolved to after cross-service merge */
+    resolvedEndpointId?: string;
+  };
+}
+
 // -- Code node union --
 
 export type CodeNode =
   | EndpointNode | FunctionNode | CallNode | EventNode
   | DbProcessNode | ProcessNode | FlowControlNode
   | ReturnNode | ThrowNode | DataNode
-  | LogNode | TelemetryNode;
+  | LogNode | TelemetryNode | ExternalCallNode;
 
 // ========================
 // LAYER 4 — FRONTEND
@@ -645,6 +703,8 @@ export interface ParamInfo {
   defaultValue?: string;
   destructured: boolean;
   decorators?: string[];
+  /** Resolved fields when param is a typed object/DTO */
+  resolvedFields?: TypedField[];
 }
 
 export interface ErrorDescriptor {
@@ -692,7 +752,7 @@ export type EdgeKind =
   | "calls" | "uses" | "emits" | "listens" | "returns"
   | "throws" | "catches" | "imports" | "extends" | "logs" | "traces"
   | "depends_on" | "publishes_to" | "consumes_from" | "reads_from" | "writes_to"
-  | "renders" | "navigates_to" | "fetches_from" | "triggers";
+  | "renders" | "navigates_to" | "fetches_from" | "triggers" | "resolves_to";
 
 export interface Edge {
   source: string;
@@ -747,6 +807,162 @@ export interface Diagnostic {
   message: string;
   location?: SourceLocation;
   rule?: string;
+}
+
+// ========================
+// ECOSYSTEM INDEX (ecosystem.json)
+// ========================
+
+export interface EcosystemIndex {
+  version: string;
+  updatedAt: string;
+  services: EcosystemServiceEntry[];
+  databases: EcosystemDatabaseEntry[];
+  edges: EcosystemEdge[];
+}
+
+export interface EcosystemServiceEntry {
+  /** = repoName, e.g. "auth-service" */
+  id: string;
+  name: string;
+  language: string;
+  framework: string;
+  team?: string;
+  repoUrl?: string;
+  /** Relative path: "topologies/auth-service.json" */
+  topologyFile: string;
+  endpointCount: number;
+  status: "active" | "provisional";
+}
+
+export interface EcosystemDatabaseEntry {
+  /** "{repoName}:{databaseName}" */
+  id: string;
+  name: string;
+  kind: string;
+  topologyFile: string;
+  connectionCount: number;
+  status: "active" | "provisional";
+}
+
+export interface EcosystemEdge {
+  from: string;
+  to: string;
+}
+
+// ========================
+// PROVISIONAL FILE (provisional.json)
+// ========================
+
+export interface ProvisionalFile {
+  version: string;
+  updatedAt: string;
+  entries: ProvisionalEntry[];
+}
+
+export interface ProvisionalEntry {
+  /** nanoid, stable */
+  id: string;
+  status: "pending" | "resolved";
+  resolvedTo?: string;
+  resolvedAt?: string;
+  provisionalService: {
+    name: string;
+    status: "provisional";
+  };
+  provisionalEndpoint: {
+    method: string;
+    path: string;
+    headers?: Record<string, string>;
+    params?: string[];
+    bodyFields?: string[];
+    /** LLM-generated description of what this call does */
+    context?: string;
+  };
+  callerServiceId: string;
+  callerServiceName: string;
+  callerEndpointId?: string;
+  externalCallNodeId: string;
+}
+
+// ========================
+// LLM ENRICHMENT
+// ========================
+
+export interface LLMEnrichment {
+  /** Short human-readable name (2–5 words) */
+  humanName?: string;
+  /** 2–5 sentence description of the node's purpose and flow */
+  description?: string;
+  summary?: string;
+  tags?: string[];
+  domain?: string;
+  complexity?: "low" | "medium" | "high";
+  notes?: string;
+  enrichedAt?: string;
+  /** Model ID that produced this enrichment */
+  enrichedBy?: string;
+  model?: string;
+}
+
+// ========================
+// GRAPH VALIDATION
+// ========================
+
+export interface GraphValidationIssue {
+  severity: "error" | "warning" | "info";
+  description: string;
+  suggestion?: string;
+  nodeId?: string;
+  edgeSource?: string;
+  edgeTarget?: string;
+  field?: string;
+}
+
+export interface GraphValidationResult {
+  serviceId: string;
+  issues: GraphValidationIssue[];
+  /** 0–100 coherence score from LLM */
+  coherenceScore: number;
+  validatedAt: string;
+}
+
+// ========================
+// PENDING MERGE (provisional.json)
+// ========================
+
+/** A candidate endpoint that may match an external call */
+export interface PendingMergeCandidate {
+  endpointId: string;
+  serviceId: string;
+  serviceName: string;
+  method: string;
+  path: string;
+  /** Confidence score 0–1 */
+  confidence: number;
+}
+
+/** A pending merge entry awaiting user decision */
+export interface PendingMergeEntry {
+  externalCallId: string;
+  context: {
+    callerServiceId: string;
+    callerServiceName: string;
+    method: string;
+    path: string;
+    bodyFields?: string[];
+  };
+  candidates: PendingMergeCandidate[];
+  llmReason?: string;
+  /** Resolved endpointId, 'unresolvable', or null (not yet decided) */
+  decision: string | null;
+}
+
+/** Root structure of pending-merges.json */
+export interface PendingMergesFile {
+  generatedAt: string;
+  topologyPath: string;
+  pendingMerges: PendingMergeEntry[];
 }
 
 // ========================

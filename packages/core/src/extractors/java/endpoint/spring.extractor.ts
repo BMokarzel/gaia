@@ -224,13 +224,13 @@ function extractAnnotationValue(annotation: SyntaxNode | undefined): string | nu
   const valueAttr = text.match(/value\s*=\s*["']([^"']+)["']/);
   if (valueAttr) return valueAttr[1];
 
-  // "/path" direto
-  const direct = text.match(/^["']([^"']+)["']$/);
-  if (direct) return direct[1];
-
   // { "/path" }
   const arrayDirect = text.match(/\{\s*["']([^"']+)["']/);
   if (arrayDirect) return arrayDirect[1];
+
+  // ("path") or "/path" — any quoted string inside the args
+  const direct = text.match(/["']([^"']+)["']/);
+  if (direct) return direct[1];
 
   return null;
 }

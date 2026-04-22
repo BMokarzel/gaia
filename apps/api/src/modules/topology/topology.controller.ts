@@ -8,6 +8,8 @@ import type { ITopologyService } from './interfaces/topology-service.interface';
 import { AnalyzeRequestDto } from './dto/analyze-request.dto';
 import { UpdateTopologyDto } from './dto/update-topology.dto';
 import { ListTopologiesDto } from './dto/list-topologies.dto';
+import { MergeDecisionDto } from './dto/merge-decision.dto';
+import { ExportDescribeDto } from './dto/export-describe.dto';
 
 @ApiTags('topologies')
 @Controller('topologies')
@@ -17,9 +19,21 @@ export class TopologyController {
   ) {}
 
   @Post('analyze')
-  @ApiOperation({ summary: 'Extrai e persiste uma topologia a partir de uma fonte' })
+  @ApiOperation({ summary: 'Extrai uma topologia. Retorna pendingMerges se houver decisões pendentes.' })
   analyze(@Body() dto: AnalyzeRequestDto) {
     return this.service.analyze(dto);
+  }
+
+  @Post('export/describe')
+  @ApiOperation({ summary: 'Gera descrição rica via LLM para exportação (draw.io + documento)' })
+  describe(@Body() dto: ExportDescribeDto) {
+    return this.service.describe(dto);
+  }
+
+  @Post('analyze/merge-decision')
+  @ApiOperation({ summary: 'Submete decisões de merge para uma extração em andamento' })
+  resolveMergeDecisions(@Body() dto: MergeDecisionDto) {
+    return this.service.resolveMergeDecisions(dto);
   }
 
   @Get()
@@ -47,9 +61,4 @@ export class TopologyController {
     return this.service.remove(id);
   }
 
-  @Get(':id/services')
-  @ApiOperation({ summary: 'Lista os ServiceNodes de uma topologia' })
-  getServices(@Param('id') id: string) {
-    return this.service.getServices(id);
-  }
 }

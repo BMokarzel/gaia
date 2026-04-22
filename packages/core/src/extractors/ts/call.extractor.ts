@@ -5,6 +5,13 @@ import {
 import { nodeId } from '../../utils/id';
 import type { CallNode } from '../../types/topology';
 
+// JS built-in single-word coercions that produce noise as flow nodes
+const JS_BUILTIN_CALLS = new Set([
+  'Number', 'String', 'Boolean', 'BigInt', 'Symbol',
+  'parseInt', 'parseFloat', 'isNaN', 'isFinite',
+  'decodeURI', 'encodeURI', 'decodeURIComponent', 'encodeURIComponent',
+])
+
 /**
  * Extrai chamadas de função/método de um arquivo TypeScript/JavaScript.
  * Detecta: chamadas diretas, chamadas de método, chamadas encadeadas, chamadas opcionais.
@@ -28,6 +35,8 @@ function buildCallNode(node: SyntaxNode, filePath: string): CallNode | null {
   const callee = calleeText(node);
 
   if (!callee || callee.length === 0) return null;
+  // Skip bare built-in coercions like Number(x), String(x) — they're noise, not service calls
+  if (!callee.includes('.') && JS_BUILTIN_CALLS.has(callee)) return null;
 
   const args = callArguments(node).map(a => a.slice(0, 200));
   const awaited = isAwaited(node);

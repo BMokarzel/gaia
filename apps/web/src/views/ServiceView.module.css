@@ -17,10 +17,25 @@
 .headerName {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.3px;
   margin-bottom: 6px;
+  position: relative;
+  display: inline-block;
+}
+
+.headerName::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  right: -8px;
+  top: 50%;
+  height: 100%;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, rgba(57,255,110,0.08) 0%, transparent 80%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .headerMeta {

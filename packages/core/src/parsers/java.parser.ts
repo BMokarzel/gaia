@@ -10,6 +10,7 @@ import { extractJavaFlowControl } from '../extractors/java/flow.extractor';
 import { extractJavaLogs } from '../extractors/java/log.extractor';
 import { extractJavaCalls } from '../extractors/java/call.extractor';
 import { extractJavaEvents } from '../extractors/java/event.extractor';
+import { extractJavaHttpClients } from '../extractors/java/http-client.extractor';
 import { serviceId as computeServiceId } from '../utils/id';
 
 function loadLanguage(name: string): unknown {
@@ -62,6 +63,9 @@ export class JavaParser implements LanguageParser {
       if (jpaResult.database.tables.length > 0) {
         databases.push(jpaResult.database);
       }
+
+      // HTTP client calls (ExternalCallNodes for cross-service merge)
+      codeNodes.push(...extractJavaHttpClients(root as any, path));
 
       codeNodes.push(...extractJavaFunctions(root as any, path));
       codeNodes.push(...extractJavaFlowControl(root as any, path));

@@ -66,14 +66,14 @@ export function buildEcoGraph(topology: SystemTopology): EcoGraph {
       e.kind === 'publishes_to' || e.kind === 'consumes_from' || e.kind === 'emits' ? 'async' :
       e.kind === 'reads_from' || e.kind === 'writes_to' || e.kind === 'uses' ? 'data' :
       'sync'
-    addLink(e.from, e.to, kind)
+    if (e.from && e.to) addLink(e.from, e.to, kind)
   }
 
   for (const s of topology.services) {
     for (const dep of s.dependencies) {
       const kind: EcoLink['kind'] =
-        dep.kind === 'async' || dep.kind === 'event' || dep.kind === 'stream' ? 'async' : 'sync'
-      addLink(s.id, dep.targetId, kind)
+        dep.callKind === 'async' || dep.callKind === 'event' || dep.callKind === 'stream' ? 'async' : 'sync'
+      addLink(s.id, dep.id, kind)
     }
   }
 

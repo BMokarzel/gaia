@@ -19,6 +19,7 @@ import { extractTelemetry } from '../extractors/ts/telemetry.extractor';
 import { extractDataNodes } from '../extractors/ts/data.extractor';
 import { extractFrontendNodes } from '../extractors/ts/frontend/screen.extractor';
 import { extractAssignments } from '../extractors/ts/assignment.extractor';
+import { extractHttpClients } from '../extractors/ts/http-client.extractor';
 import { serviceId as computeServiceId } from '../utils/id';
 
 // Lazy load das grammars para não crashar se não estiverem instaladas
@@ -130,6 +131,9 @@ export class TypeScriptParser implements LanguageParser {
       const eventResult = extractEvents(root as any, file.relativePath, serviceId);
       codeNodes.push(...eventResult.eventNodes);
       brokers.push(...eventResult.brokers);
+
+      // HTTP client calls (ExternalCallNodes for cross-service merge)
+      codeNodes.push(...extractHttpClients(root as any, file.relativePath));
 
       // Chamadas de função/método
       codeNodes.push(...extractCalls(root as any, file.relativePath));

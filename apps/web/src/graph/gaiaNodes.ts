@@ -324,6 +324,54 @@ export function createControlNode(id: string, label = 'if'): GaiaNode {
 }
 
 // ─────────────────────────────────────────────────────────────
+// DATA NODE (local variable/constant declaration in flow)
+// ─────────────────────────────────────────────────────────────
+export function createDataNode(id: string, label: string): GaiaNode {
+  const g = wrapNode('data')
+  g.setAttribute('data-id', id)
+  const textW = measure(label, '11px "JetBrains Mono"', 400).w
+  const w = Math.max(80, textW + 38)
+  const h = 24
+  const inner = el('g', { class: 'gn-node__inner' })
+  inner.appendChild(el('rect', { class: 'gn-node__body', x: -w/2, y: -h/2, width: w, height: h, rx: 4, fill: 'var(--accent-blue-dim)' }))
+  inner.appendChild(el('rect', { class: 'gn-node__flash', x: -w/2+1, y: -h/2+1, width: w-2, height: h-2, rx: 3 }))
+  const sym = el<SVGTextElement>('text', { x: -w/2+8, y: 0, style: 'font: 600 11px "JetBrains Mono"; fill: var(--accent-blue); dominant-baseline:central' })
+  sym.textContent = '≔'
+  inner.appendChild(sym)
+  const t = el<SVGTextElement>('text', { x: -w/2+22, y: 0, style: 'font: 400 11px "JetBrains Mono"; fill: var(--text-secondary); dominant-baseline:central; text-anchor:start' })
+  t.textContent = label
+  inner.appendChild(t)
+  g.appendChild(inner)
+  g.__bounds = { w, h, shape: 'rect' }
+  g.__anchor = (tx, ty) => rectAnchor(g.__x, g.__y, w, h, tx, ty)
+  return g
+}
+
+// ─────────────────────────────────────────────────────────────
+// PROCESS NODE (assignment / transformation in flow)
+// ─────────────────────────────────────────────────────────────
+export function createProcessNode(id: string, label: string): GaiaNode {
+  const g = wrapNode('process')
+  g.setAttribute('data-id', id)
+  const textW = measure(label, '11px "JetBrains Mono"', 400).w
+  const w = Math.max(90, textW + 40)
+  const h = 26
+  const inner = el('g', { class: 'gn-node__inner' })
+  inner.appendChild(el('rect', { class: 'gn-node__body', x: -w/2, y: -h/2, width: w, height: h, rx: 4, fill: 'var(--accent-purple-dim)' }))
+  inner.appendChild(el('rect', { class: 'gn-node__flash', x: -w/2+1, y: -h/2+1, width: w-2, height: h-2, rx: 3 }))
+  const sym = el<SVGTextElement>('text', { x: -w/2+8, y: 0, style: 'font: 600 11px "JetBrains Mono"; fill: var(--accent-purple); dominant-baseline:central' })
+  sym.textContent = '⟨'
+  inner.appendChild(sym)
+  const t = el<SVGTextElement>('text', { x: -w/2+20, y: 0, style: 'font: 400 11px "JetBrains Mono"; fill: var(--text-secondary); dominant-baseline:central; text-anchor:start' })
+  t.textContent = label
+  inner.appendChild(t)
+  g.appendChild(inner)
+  g.__bounds = { w, h, shape: 'rect' }
+  g.__anchor = (tx, ty) => rectAnchor(g.__x, g.__y, w, h, tx, ty)
+  return g
+}
+
+// ─────────────────────────────────────────────────────────────
 // RETURN NODE (status-coded pill)
 // ─────────────────────────────────────────────────────────────
 export function createReturnNode(id: string, status: 'ok' | 'err', code?: string): GaiaNode {
@@ -348,6 +396,41 @@ export function createReturnNode(id: string, status: 'ok' | 'err', code?: string
   g.__bounds = { w, h, shape: 'rect' }
   g.__anchor = (tx, ty) => rectAnchor(g.__x, g.__y, w, h, tx, ty)
   return g
+}
+
+// ─────────────────────────────────────────────────────────────
+// SUBTITLE — human name rendered inside the node card (rect nodes only)
+// Expands the card height by 14px and places subtitle in the new strip.
+// ─────────────────────────────────────────────────────────────
+export function setNodeSubtitle(node: GaiaNode, humanName: string | undefined): void {
+  if (!humanName) return
+  const inner = node.querySelector<SVGGElement>('.gn-node__inner')
+  if (!inner) return
+  const bounds = node.__bounds
+  if (bounds.shape !== 'rect') return
+
+  const text = humanName.length > 34 ? humanName.slice(0, 32) + '…' : humanName
+  const oldH = bounds.h
+  const newH = oldH + 14
+
+  // Extend the body and flash rects downward
+  const body = inner.querySelector<SVGRectElement>('.gn-node__body')
+  const flash = inner.querySelector<SVGRectElement>('.gn-node__flash')
+  if (body) body.setAttribute('height', String(newH))
+  if (flash) flash.setAttribute('height', String(newH - 2))
+
+  // Subtitle at the vertical centre of the 14px extension
+  const t = el<SVGTextElement>('text', {
+    class: 'gn-node__meta',
+    y: String(oldH / 2 + 7),
+    style: 'font-size:9px; fill:var(--text-muted); text-anchor:middle; dominant-baseline:central; pointer-events:none',
+  })
+  t.textContent = text
+  inner.appendChild(t)
+
+  // Update bounds so edge anchors and fitContent use the new height
+  node.__bounds = { ...bounds, h: newH }
+  node.__anchor = (tx: number, ty: number) => rectAnchor(node.__x, node.__y, bounds.w, newH, tx, ty)
 }
 
 // ─────────────────────────────────────────────────────────────

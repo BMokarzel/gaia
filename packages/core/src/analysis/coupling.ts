@@ -1,8 +1,16 @@
 import type { ServiceNode, FunctionNode, Edge } from '../types/topology';
 
+export interface ServiceCoupling {
+  serviceId: string;
+  ca: number;
+  ce: number;
+  instability: number;
+  classes: { name: string; ca: number; ce: number; instability: number }[];
+}
+
 /**
  * Computa métricas de acoplamento Ca/Ce/Instabilidade por serviço.
- * Modifica service.metadata.coupling in-place.
+ * Retorna os dados sem modificar ServiceNode.
  *
  * Ca (afferent)  = quantas classes externas dependem desta
  * Ce (efferent)  = quantas classes externas esta depende
@@ -11,7 +19,8 @@ import type { ServiceNode, FunctionNode, Edge } from '../types/topology';
 export function computeCoupling(
   services: ServiceNode[],
   edges: Edge[],
-): void {
+): ServiceCoupling[] {
+  const result: ServiceCoupling[] = [];
   // Mapas auxiliares
   const fnToClass = new Map<string, string>();   // fnId → className
   const fnToService = new Map<string, string>(); // fnId → serviceId
@@ -65,16 +74,18 @@ export function computeCoupling(
     const ce = ceClasses.size;
     const instability = ca + ce === 0 ? 0 : ce / (ca + ce);
 
-    // Coupling por classe dentro do serviço (inclui dependências intra-serviço)
     const classes = computeClassCoupling(svc, edges, fnToClass);
 
-    svc.metadata.coupling = {
+    result.push({
+      serviceId: svc.id,
       ca,
       ce,
       instability: Math.round(instability * 100) / 100,
       classes,
-    };
+    });
   }
+
+  return result;
 }
 
 /**

@@ -10,6 +10,7 @@ import { extractGoLogs } from '../extractors/go/log.extractor';
 import { extractGoCalls } from '../extractors/go/call.extractor';
 import { extractGoEvents } from '../extractors/go/event.extractor';
 import { extractGORMOperations } from '../extractors/go/db/gorm.extractor';
+import { extractGoHttpClients } from '../extractors/go/http-client.extractor';
 import { serviceId as computeServiceId } from '../utils/id';
 
 function loadLanguage(name: string): unknown {
@@ -56,6 +57,9 @@ export class GoParser implements LanguageParser {
 
       // Endpoints (Gin, Chi, Mux)
       codeNodes.push(...extractGoEndpoints(root as any, path));
+
+      // HTTP client calls (ExternalCallNodes for cross-service merge)
+      codeNodes.push(...extractGoHttpClients(root as any, path));
 
       // Functions, flow, logs, calls
       codeNodes.push(...extractGoFunctions(root as any, path));

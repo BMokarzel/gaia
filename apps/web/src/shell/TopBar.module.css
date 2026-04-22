@@ -99,6 +99,13 @@
   box-shadow: var(--shadow-sm);
 }
 
+.divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border-strong);
+  flex-shrink: 0;
+}
+
 .iconBtn {
   background: none;
   border: none;

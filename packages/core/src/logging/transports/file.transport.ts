@@ -2,7 +2,7 @@ import {
   appendFileSync, mkdirSync, existsSync, statSync,
   readdirSync, unlinkSync, openSync, closeSync, chmodSync,
 } from 'fs';
-import { join, resolve, basename } from 'path';
+import { join, resolve, basename, sep } from 'path';
 import type { LogTransport, LogEntry } from '../types';
 import { safeStringify } from '../sanitize';
 
@@ -38,7 +38,7 @@ export class FileTransport implements LogTransport {
     const projectRoot = resolve(opts.projectRoot ?? process.cwd());
     const dir = resolve(opts.dir);
 
-    if (!dir.startsWith(projectRoot + '/') && dir !== projectRoot) {
+    if (!dir.startsWith(projectRoot + sep) && !dir.startsWith(projectRoot + '/') && dir !== projectRoot) {
       throw new Error(
         `FileTransport: log directory "${dir}" is outside the project root "${projectRoot}". ` +
         `Set projectRoot explicitly if this is intentional.`,

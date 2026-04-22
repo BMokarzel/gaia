@@ -1,5 +1,5 @@
 import type { SyntaxNode } from '../../../utils/ast-helpers';
-import { findAll, toLocation, memberChain, extractStringValue } from '../../../utils/ast-helpers';
+import { findAll, toLocation, extractStringValue } from '../../../utils/ast-helpers';
 import { nodeId } from '../../../utils/id';
 import type { EndpointNode } from '../../../types/topology';
 
@@ -7,15 +7,49 @@ const HTTP_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'
 const ROUTER_PATTERNS = [/\br\b/, /\brouter\b/, /\bRoute\b/, /\bapp\b/, /\bserver\b/, /\bapi\b/, /\bgroup\b/];
 
 /**
- * Extrai endpoints de frameworks Go (Gin, Echo, Fiber, Chi, net/http).
- * Detecta: r.GET("/path", handler), r.POST("/path", handler)
- * e também e.GET(), r.Get() (Chi), app.Get() (Fiber)
+ * Scans the AST for router.Group("/prefix") assignments and returns a map
+ * from variable name → path prefix.
+ * Handles: api := router.Group("/orders")  and  v1 := r.Group("/v1")
  */
+function buildGroupPrefixMap(rootNode: SyntaxNode): Map<string, string> {
+  const prefixMap = new Map<string, string>();
+
+  for (const decl of findAll(rootNode, 'short_var_declaration')) {
+    // tree-sitter-go uses 'left' and 'right' fields on short_var_declaration
+    const lhs = decl.childForFieldName('left') ??
+      decl.namedChildren.find(c => c.type === 'expression_list' || c.type === 'identifier_list');
+    const varName = lhs?.namedChildren[0]?.text;
+    if (!varName) continue;
+
+    const rhs = decl.childForFieldName('right') ??
+      decl.namedChildren.filter(c => c.type === 'expression_list')[1];
+    const call = rhs?.namedChildren.find(c => c.type === 'call_expression') ??
+      (rhs?.type === 'call_expression' ? rhs : null);
+    if (!call) continue;
+
+    const fn = call.childForFieldName('function');
+    if (!fn || fn.type !== 'selector_expression') continue;
+
+    const sel = fn.childForFieldName('field');
+    if (sel?.text !== 'Group') continue;
+
+    const args = call.childForFieldName('arguments');
+    const pathArg = args?.namedChildren[0];
+    const prefix = pathArg ? (extractStringValue(pathArg) ?? extractGoStringLit(pathArg)) : null;
+    if (prefix) prefixMap.set(varName, prefix);
+  }
+
+  return prefixMap;
+}
+
 export function extractGoEndpoints(
   rootNode: SyntaxNode,
   filePath: string,
 ): EndpointNode[] {
   const endpoints: EndpointNode[] = [];
+
+  // Build map of group variable → path prefix for group routing resolution
+  const groupPrefixMap = buildGroupPrefixMap(rootNode);
 
   // Go: call_expression → selector_expression
   const calls = findAll(rootNode, 'call_expression');
@@ -47,8 +81,15 @@ export function extractGoEndpoints(
 
     const argList = args.namedChildren;
     const pathArg = argList[0];
-    const path = pathArg ? (extractStringValue(pathArg) ?? extractGoStringLit(pathArg)) : null;
-    if (!path) continue;
+    const rawPath = pathArg ? (extractStringValue(pathArg) ?? extractGoStringLit(pathArg)) : null;
+    if (rawPath === null) continue;
+
+    // Resolve group prefix if the router variable is a Group() result
+    const groupPrefix = groupPrefixMap.get(objText) ?? '';
+    const resolvedPath = groupPrefix
+      ? '/' + [groupPrefix, rawPath].map(p => p.replace(/^\/+|\/+$/g, '')).filter(Boolean).join('/')
+      : (rawPath === '' ? '/' : rawPath);
+    const path = resolvedPath;
 
     // Handler — último argumento
     const handlerArg = argList[argList.length - 1];
