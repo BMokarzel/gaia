@@ -1,0 +1,620 @@
+{
+  "screens": [
+    {
+      "id": "screen:b8b2ab29",
+      "type": "screen",
+      "name": "CartPage",
+      "metadata": {
+        "kind": "page",
+        "route": "/cart",
+        "framework": "react",
+        "filePath": "pages/CartPage.tsx",
+        "authRequired": false
+      },
+      "components": [
+        {
+          "id": "component:b8b2ab29",
+          "type": "component",
+          "name": "CartPage",
+          "metadata": {
+            "kind": "widget",
+            "filePath": "pages/CartPage.tsx",
+            "exported": true,
+            "props": [],
+            "state": {
+              "local": [
+                {
+                  "name": "coupon",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "discount",
+                  "type": "number",
+                  "required": true
+                }
+              ],
+              "store": "redux"
+            },
+            "hooks": [
+              "useNavigate",
+              "useSelector",
+              "useDispatch",
+              "useState"
+            ]
+          },
+          "children": [],
+          "events": [
+            {
+              "id": "frontend_event:89675bfb",
+              "type": "frontend_event",
+              "name": "handleApplyCoupon",
+              "metadata": {
+                "trigger": "click",
+                "actions": [
+                  {
+                    "kind": "api_call",
+                    "endpointId": "",
+                    "method": "POST",
+                    "path": "/api/coupons/validate"
+                  },
+                  {
+                    "kind": "state_update",
+                    "field": "setDiscount"
+                  }
+                ]
+              },
+              "location": {
+                "file": "pages/CartPage.tsx",
+                "line": 21,
+                "column": 8,
+                "endLine": 24,
+                "endColumn": 3
+              }
+            },
+            {
+              "id": "frontend_event:e4ec1e0e",
+              "type": "frontend_event",
+              "name": "handleRemoveItem",
+              "metadata": {
+                "trigger": "click",
+                "actions": [
+                  {
+                    "kind": "api_call",
+                    "endpointId": "",
+                    "method": "DELETE",
+                    "path": "/api/cart/items/:param"
+                  },
+                  {
+                    "kind": "state_update",
+                    "field": "dispatch"
+                  }
+                ]
+              },
+              "location": {
+                "file": "pages/CartPage.tsx",
+                "line": 26,
+                "column": 8,
+                "endLine": 29,
+                "endColumn": 3
+              }
+            },
+            {
+              "id": "frontend_event:70877d52",
+              "type": "frontend_event",
+              "name": "handleCheckout",
+              "metadata": {
+                "trigger": "click",
+                "actions": [
+                  {
+                    "kind": "analytics",
+                    "provider": "analytics",
+                    "eventName": "checkout_started"
+                  },
+                  {
+                    "kind": "api_call",
+                    "endpointId": "",
+                    "method": "POST",
+                    "path": "/api/orders"
+                  },
+                  {
+                    "kind": "navigate",
+                    "targetScreenId": "/orders/:param/confirmation"
+                  }
+                ]
+              },
+              "location": {
+                "file": "pages/CartPage.tsx",
+                "line": 31,
+                "column": 8,
+                "endLine": 38,
+                "endColumn": 3
+              }
+            },
+            {
+              "id": "frontend_event:e5e7e845",
+              "type": "frontend_event",
+              "name": "handleContinueShopping",
+              "metadata": {
+                "trigger": "click",
+                "actions": [
+                  {
+                    "kind": "navigate",
+                    "targetScreenId": "/products"
+                  }
+                ]
+              },
+              "location": {
+                "file": "pages/CartPage.tsx",
+                "line": 40,
+                "column": 8,
+                "endLine": 42,
+                "endColumn": 3
+              }
+            }
+          ]
+        }
+      ],
+      "navigatesTo": [
+        "/orders/:param/confirmation",
+        "/products"
+      ]
+    },
+    {
+      "id": "screen:61446c0e",
+      "type": "screen",
+      "name": "ProductDetailPage",
+      "metadata": {
+        "kind": "page",
+        "route": "/productdetail",
+        "framework": "react",
+        "filePath": "pages/ProductDetailPage.tsx",
+        "authRequired": false
+      },
+      "components": [
+        {
+          "id": "component:61446c0e",
+          "type": "component",
+          "name": "ProductDetailPage",
+          "metadata": {
+            "kind": "widget",
+            "filePath": "pages/ProductDetailPage.tsx",
+            "exported": true,
+            "props": [],
+            "state": {
+              "local": [
+                {
+                  "name": "product",
+                  "type": "Product | null",
+                  "required": true
+                },
+                {
+                  "name": "quantity",
+                  "type": "number",
+                  "required": true
+                }
+              ]
+            },
+            "hooks": [
+              "useParams",
+              "useNavigate",
+              "useState",
+              "useEffect"
+            ]
+          },
+          "children": [],
+          "events": [
+            {
+              "id": "frontend_event:ff225603",
+              "type": "frontend_event",
+              "name": "handleAddToCart",
+              "metadata": {
+                "trigger": "click",
+                "actions": [
+                  {
+                    "kind": "api_call",
+                    "endpointId": "",
+                    "method": "POST",
+                    "path": "/api/cart/items"
+                  },
+                  {
+                    "kind": "navigate",
+                    "targetScreenId": "/cart"
+                  }
+                ]
+              },
+              "location": {
+                "file": "pages/ProductDetailPage.tsx",
+                "line": 24,
+                "column": 8,
+                "endLine": 27,
+                "endColumn": 3
+              }
+            },
+            {
+              "id": "frontend_event:a4ad8ca5",
+              "type": "frontend_event",
+              "name": "handleGoBack",
+              "metadata": {
+                "trigger": "click",
+                "actions": [
+                  {
+                    "kind": "navigate",
+                    "targetScreenId": "/products"
+                  }
+                ]
+              },
+              "location": {
+                "file": "pages/ProductDetailPage.tsx",
+                "line": 29,
+                "column": 8,
+                "endLine": 31,
+                "endColumn": 3
+              }
+            },
+            {
+              "id": "frontend_event:421d05b1",
+              "type": "frontend_event",
+              "name": "handleQuantityChange",
+              "metadata": {
+                "trigger": "change",
+                "actions": [
+                  {
+                    "kind": "state_update",
+                    "field": "setQuantity"
+                  }
+                ]
+              },
+              "location": {
+                "file": "pages/ProductDetailPage.tsx",
+                "line": 33,
+                "column": 8,
+                "endLine": 35,
+                "endColumn": 3
+              }
+            }
+          ]
+        },
+        {
+          "id": "component:ee45d5e6",
+          "type": "component",
+          "name": "ReviewList",
+          "metadata": {
+            "kind": "list",
+            "filePath": "components/ReviewList.tsx",
+            "exported": true,
+            "props": [],
+            "state": {
+              "local": [
+                {
+                  "name": "newReview",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "rating",
+                  "type": "number",
+                  "required": true
+                }
+              ]
+            },
+            "hooks": [
+              "useState",
+              "useQuery"
+            ],
+            "queries": [
+              {
+                "hookOrMethod": "useQuery",
+                "method": "GET",
+                "path": "/api/products/:param/reviews"
+              }
+            ]
+          },
+          "children": [],
+          "events": [
+            {
+              "id": "frontend_event:7720287e",
+              "type": "frontend_event",
+              "name": "handleSubmitReview",
+              "metadata": {
+                "trigger": "click",
+                "actions": [
+                  {
+                    "kind": "api_call",
+                    "endpointId": "",
+                    "method": "POST",
+                    "path": "/api/products/:param/reviews"
+                  },
+                  {
+                    "kind": "state_update",
+                    "field": "setNewReview"
+                  }
+                ]
+              },
+              "location": {
+                "file": "components/ReviewList.tsx",
+                "line": 18,
+                "column": 8,
+                "endLine": 24,
+                "endColumn": 3
+              }
+            },
+            {
+              "id": "frontend_event:c1ccc547",
+              "type": "frontend_event",
+              "name": "handleRatingChange",
+              "metadata": {
+                "trigger": "change",
+                "actions": [
+                  {
+                    "kind": "state_update",
+                    "field": "setRating"
+                  }
+                ]
+              },
+              "location": {
+                "file": "components/ReviewList.tsx",
+                "line": 26,
+                "column": 8,
+                "endLine": 28,
+                "endColumn": 3
+              }
+            }
+          ]
+        }
+      ],
+      "navigatesTo": [
+        "/cart",
+        "/products"
+      ]
+    },
+    {
+      "id": "screen:0383510d",
+      "type": "screen",
+      "name": "ProductListPage",
+      "metadata": {
+        "kind": "page",
+        "route": "/productlist",
+        "framework": "react",
+        "filePath": "pages/ProductListPage.tsx",
+        "authRequired": false
+      },
+      "components": [
+        {
+          "id": "component:0383510d",
+          "type": "component",
+          "name": "ProductListPage",
+          "metadata": {
+            "kind": "list",
+            "filePath": "pages/ProductListPage.tsx",
+            "exported": true,
+            "props": [],
+            "state": {
+              "local": [
+                {
+                  "name": "products",
+                  "type": "Product[]",
+                  "required": true
+                },
+                {
+                  "name": "search",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "loading",
+                  "type": "boolean",
+                  "required": true
+                }
+              ]
+            },
+            "hooks": [
+              "useState",
+              "useNavigate",
+              "useEffect"
+            ]
+          },
+          "children": [],
+          "events": [
+            {
+              "id": "frontend_event:4f03382c",
+              "type": "frontend_event",
+              "name": "handleSearch",
+              "metadata": {
+                "trigger": "custom",
+                "actions": [
+                  {
+                    "kind": "state_update",
+                    "field": "setSearch"
+                  },
+                  {
+                    "kind": "api_call",
+                    "endpointId": "",
+                    "method": "GET",
+                    "path": "/api/products?search=:param"
+                  },
+                  {
+                    "kind": "state_update",
+                    "field": "setProducts"
+                  }
+                ]
+              },
+              "location": {
+                "file": "pages/ProductListPage.tsx",
+                "line": 28,
+                "column": 8,
+                "endLine": 32,
+                "endColumn": 3
+              }
+            },
+            {
+              "id": "frontend_event:62937d10",
+              "type": "frontend_event",
+              "name": "handleProductClick",
+              "metadata": {
+                "trigger": "click",
+                "actions": [
+                  {
+                    "kind": "navigate",
+                    "targetScreenId": "/products/:param"
+                  }
+                ]
+              },
+              "location": {
+                "file": "pages/ProductListPage.tsx",
+                "line": 34,
+                "column": 8,
+                "endLine": 36,
+                "endColumn": 3
+              }
+            },
+            {
+              "id": "frontend_event:6da01d34",
+              "type": "frontend_event",
+              "name": "handleAddToCart",
+              "metadata": {
+                "trigger": "custom",
+                "actions": [
+                  {
+                    "kind": "api_call",
+                    "endpointId": "",
+                    "method": "POST",
+                    "path": "/api/cart/items"
+                  },
+                  {
+                    "kind": "navigate",
+                    "targetScreenId": "/cart"
+                  }
+                ]
+              },
+              "location": {
+                "file": "pages/ProductListPage.tsx",
+                "line": 38,
+                "column": 8,
+                "endLine": 41,
+                "endColumn": 3
+              }
+            }
+          ]
+        },
+        {
+          "id": "component:8d892b7c",
+          "type": "component",
+          "name": "SearchBar",
+          "metadata": {
+            "kind": "widget",
+            "filePath": "components/SearchBar.tsx",
+            "exported": true,
+            "props": [],
+            "state": {
+              "local": [
+                {
+                  "name": "query",
+                  "type": "string",
+                  "required": true
+                }
+              ]
+            },
+            "hooks": [
+              "useState"
+            ]
+          },
+          "children": [],
+          "events": [
+            {
+              "id": "frontend_event:ffa6e496",
+              "type": "frontend_event",
+              "name": "handleChange",
+              "metadata": {
+                "trigger": "change",
+                "actions": [
+                  {
+                    "kind": "state_update",
+                    "field": "setQuery"
+                  }
+                ]
+              },
+              "location": {
+                "file": "components/SearchBar.tsx",
+                "line": 10,
+                "column": 8,
+                "endLine": 12,
+                "endColumn": 3
+              }
+            },
+            {
+              "id": "frontend_event:a44fc4ee",
+              "type": "frontend_event",
+              "name": "handleSubmit",
+              "metadata": {
+                "trigger": "click",
+                "actions": []
+              },
+              "location": {
+                "file": "components/SearchBar.tsx",
+                "line": 14,
+                "column": 8,
+                "endLine": 16,
+                "endColumn": 3
+              }
+            }
+          ]
+        },
+        {
+          "id": "component:e7e15b8b",
+          "type": "component",
+          "name": "ProductCard",
+          "metadata": {
+            "kind": "widget",
+            "filePath": "components/ProductCard.tsx",
+            "exported": true,
+            "props": [],
+            "state": {
+              "local": []
+            }
+          },
+          "children": [],
+          "events": [
+            {
+              "id": "frontend_event:ecdd57ea",
+              "type": "frontend_event",
+              "name": "handleClick",
+              "metadata": {
+                "trigger": "click",
+                "actions": []
+              },
+              "location": {
+                "file": "components/ProductCard.tsx",
+                "line": 10,
+                "column": 8,
+                "endLine": 12,
+                "endColumn": 3
+              }
+            },
+            {
+              "id": "frontend_event:9e204051",
+              "type": "frontend_event",
+              "name": "handleAddToCart",
+              "metadata": {
+                "trigger": "click",
+                "actions": []
+              },
+              "location": {
+                "file": "components/ProductCard.tsx",
+                "line": 14,
+                "column": 8,
+                "endLine": 16,
+                "endColumn": 3
+              }
+            }
+          ]
+        }
+      ],
+      "navigatesTo": [
+        "/products/:param",
+        "/cart"
+      ]
+    }
+  ],
+  "orphanComponents": []
+}

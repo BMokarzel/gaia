@@ -1,4 +1,4 @@
-import type { AnalysisContext, SystemTopology, LogNode, TelemetryNode, CodeNode, ServiceNode } from '../types/topology';
+import type { AnalysisContext, SystemTopology, LogNode, TelemetryNode, CodeNode, ServiceNode, ComponentNode } from '../types/topology';
 import type { ServiceBoundary } from './walker';
 import type { Logger } from '../logging/types';
 import { NullLogger } from '../logging/null-logger';
@@ -21,6 +21,7 @@ import { buildErrorFlowMap } from '../builders/error-flow.builder';
 import { serviceId } from '../utils/id';
 import { detectUnused } from '../analysis/unused';
 import { runCrossServiceMerge } from '../analysis/service-merger';
+import { validateTopology } from '../analysis/topology-validator';
 import type { ExternalCallNode } from '../types/topology';
 
 export interface AnalysisOptions {
@@ -72,6 +73,8 @@ export async function analyzeRepository(
     edges: [],
     diagnostics: [],
     nodeIndex: new Map(),
+    frontendComponents: [],
+    screenComponentRefs: new Map(),
   };
 
   // 1. Detecta boundaries de serviços (monorepo vs single service)
@@ -86,6 +89,17 @@ export async function analyzeRepository(
     onProgress(`Analyzing service: ${boundary.name}`);
     log.info('Analyzing service', { service: boundary.name, path: boundary.rootPath });
     await analyzeService(boundary, context, { skipTests, includeFrontend, onProgress, logger: rawLogger });
+  }
+
+  // 2b. Link frontend components to screens (cross-file)
+  linkFrontendComponents(context);
+
+  // 2c. Fix service kind for frontend services (screens present, no endpoints)
+  for (const service of context.services) {
+    if (service.endpoints.length === 0 && service.metadata.kind === 'backend') {
+      const hasScreens = context.screens.some(s => s.serviceId === service.id);
+      if (hasScreens) (service.metadata as any).kind = 'frontend';
+    }
   }
 
   // 3. Consolida databases e brokers de todos os serviços
@@ -116,6 +130,24 @@ export async function analyzeRepository(
     edges.push(...mergeEdges);
     log.debug('Cross-service merge complete', { resolved: mergeEdges.length, total: externalCalls.length });
   }
+
+  // 5d. Topology validation (deterministic layers 1–3)
+  onProgress('Validating topology...');
+  const validationDiags = validateTopology({
+    schemaVersion: '3.0.0',
+    analyzedAt: new Date().toISOString(),
+    services: context.services,
+    databases: allDatabases,
+    storages: Array.from(context.storages.values()),
+    brokers: allBrokers,
+    screens: context.screens,
+    edges,
+    errorFlow: { paths: [], globalHandlers: [] },
+    observability: { logs: [], telemetry: [], coverage: { endpointsWithTracing: 0, endpointsTotal: 0, dbQueriesWithSpans: 0, dbQueriesTotal: 0, errorsWithLogging: 0, errorsTotal: 0, screensWithAnalytics: 0, screensTotal: 0 } },
+    diagnostics: [],
+  });
+  context.diagnostics.push(...validationDiags);
+  log.debug('Topology validation complete', { issues: validationDiags.length });
 
   // 6. Constrói error flow map
   onProgress('Mapping error flows...');
@@ -395,6 +427,38 @@ function calculateCoverage(
     screensWithAnalytics: 0,
     screensTotal: 0,
   };
+}
+
+/**
+ * Links orphan ComponentNodes to their parent ScreenNodes based on JSX references.
+ * Called after all files are processed — requires context.frontendComponents and
+ * context.screenComponentRefs to be populated by the TypeScript parser.
+ */
+function linkFrontendComponents(context: AnalysisContext): void {
+  if (context.frontendComponents.length === 0 || context.screenComponentRefs.size === 0) return;
+
+  // Build index: componentName → ComponentNode
+  const byName = new Map<string, import('../types/topology').ComponentNode>();
+  for (const comp of context.frontendComponents) {
+    if (!byName.has(comp.name)) byName.set(comp.name, comp);
+  }
+
+  for (const screen of context.screens) {
+    const refs = context.screenComponentRefs.get(screen.id);
+    if (!refs) continue;
+
+    // Already-attached component names (the page component itself)
+    const attached = new Set(screen.components.map(c => c.name));
+
+    for (const name of refs) {
+      if (attached.has(name)) continue;
+      const comp = byName.get(name);
+      if (comp) {
+        screen.components.push(comp);
+        attached.add(name);
+      }
+    }
+  }
 }
 
 function excludeFrontendExtensions(): string[] {

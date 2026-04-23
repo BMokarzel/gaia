@@ -84,9 +84,13 @@ export class TypeScriptParser implements LanguageParser {
 
       if (isFrontend) {
         // Arquivos de frontend: extrai screens, components, eventos
-        const { screens, components } = extractFrontendNodes(root as any, file.relativePath);
+        const { screens, components, screenComponentRefs } = extractFrontendNodes(root as any, file.relativePath);
+        for (const screen of screens) screen.serviceId = serviceId;
         context.screens.push(...screens);
-        // Components são parte das screens; não viram CodeNodes diretos
+        context.frontendComponents.push(...components);
+        for (const [screenId, names] of screenComponentRefs) {
+          context.screenComponentRefs.set(screenId, names);
+        }
         return emptyResult();
       }
 

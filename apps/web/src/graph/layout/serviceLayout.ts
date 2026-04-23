@@ -2,7 +2,7 @@ import type { ServiceNode, SystemTopology } from '@/types/topology'
 
 export interface ServiceLayoutNode {
   id: string
-  kind: 'endpoint' | 'database' | 'broker'
+  kind: 'endpoint' | 'database' | 'broker' | 'screen'
   label: string
   sub: string
   method?: string
@@ -66,8 +66,23 @@ export function buildServiceLayout(service: ServiceNode, topology: SystemTopolog
     }
   }
 
-  // ── Endpoint grid layout ──────────────────────────────────────
-  const epCount = service.endpoints.length
+  // ── Endpoint / Screen grid layout ────────────────────────────
+  const isFrontend = service.metadata.kind === 'frontend' || service.metadata.kind === 'microfrontend' || service.metadata.kind === 'mobile'
+
+  // For frontend services, use screens as primary nodes
+  const primaryItems: Array<{ id: string; kind: ServiceLayoutNode['kind']; label: string; sub: string; method?: string }> = isFrontend
+    ? (topology.screens ?? [])
+        .filter(s => !s.serviceId || s.serviceId === service.id)
+        .map(s => ({ id: s.id, kind: 'screen' as const, label: s.name, sub: s.metadata.route ?? '' }))
+    : service.endpoints.map(ep => ({
+        id: ep.id,
+        kind: 'endpoint' as const,
+        label: `${ep.metadata.method} ${ep.metadata.path}`,
+        sub: ep.metadata.framework ?? '',
+        method: ep.metadata.method,
+      }))
+
+  const epCount = primaryItems.length
   const numCols  = Math.max(1, Math.min(4, Math.ceil(epCount / MAX_PER_COL)))
   const perCol   = Math.ceil(epCount / numCols)
 
@@ -80,21 +95,13 @@ export function buildServiceLayout(service: ServiceNode, topology: SystemTopolog
   const containerW = gridW + CONTAINER_PAD * 2
   const containerH = gridH + CONTAINER_PAD * 2 + NODE_H
 
-  // Place endpoints: fill column-first (top→bottom, then next column)
-  service.endpoints.forEach((ep, i) => {
+  // Place primary nodes: fill column-first (top→bottom, then next column)
+  primaryItems.forEach((item, i) => {
     const col = Math.floor(i / perCol)
     const row = i % perCol
     const x = containerX + CONTAINER_PAD + col * (EP_COL_W + EP_COL_GAP) + EP_COL_W / 2
     const y = containerY + CONTAINER_PAD + NODE_H / 2 + row * ROW_GAP
-    nodes.push({
-      id: ep.id,
-      kind: 'endpoint',
-      label: `${ep.metadata.method} ${ep.metadata.path}`,
-      sub: ep.metadata.framework ?? '',
-      method: ep.metadata.method,
-      x,
-      y,
-    })
+    nodes.push({ ...item, x, y })
   })
 
   // ── Dependency nodes (right of container) ─────────────────────

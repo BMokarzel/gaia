@@ -13,6 +13,7 @@ export function extractJavaFlowControl(
     nodes.push(buildIfNode(node, filePath));
   }
 
+  // switch_expression (Java 14+) and switch_statement (traditional)
   for (const node of findAll(rootNode, 'switch_expression').concat(findAll(rootNode, 'switch_statement'))) {
     nodes.push(buildSwitchNode(node, filePath));
   }
@@ -32,6 +33,25 @@ export function extractJavaFlowControl(
 
   for (const node of findAll(rootNode, 'try_statement')) {
     nodes.push(...buildTryCatchNodes(node, filePath));
+  }
+  // try-with-resources
+  for (const node of findAll(rootNode, 'try_with_resources_statement')) {
+    nodes.push(...buildTryCatchNodes(node, filePath));
+  }
+
+  // Labeled statements: outer: for (...) { ... }
+  for (const node of findAll(rootNode, 'labeled_statement')) {
+    const labelIdent = node.namedChildren[0];
+    const label = labelIdent?.text ?? 'label';
+    const loc = toLocation(node, filePath);
+    nodes.push({
+      id: nodeId('flowControl', filePath, loc.line, `label_${label}`),
+      type: 'flowControl',
+      name: `${label}:`,
+      location: loc,
+      children: [],
+      metadata: { kind: 'label', condition: label },
+    });
   }
 
   for (const node of findAll(rootNode, 'return_statement')) {
@@ -67,7 +87,8 @@ function buildIfNode(node: SyntaxNode, filePath: string): FlowControlNode {
 
 function buildSwitchNode(node: SyntaxNode, filePath: string): FlowControlNode {
   const loc = toLocation(node, filePath);
-  const value = node.childForFieldName('condition');
+  // switch_expression uses 'condition' field; switch_statement uses 'value' in some grammars
+  const value = node.childForFieldName('condition') ?? node.childForFieldName('value');
   const valText = value ? nodeText(value).slice(0, 100) : undefined;
   const id = nodeId('flowControl', filePath, loc.line, 'switch');
 
@@ -76,10 +97,34 @@ function buildSwitchNode(node: SyntaxNode, filePath: string): FlowControlNode {
 
   if (body) {
     for (const child of body.namedChildren) {
-      if (child.type === 'switch_label') {
+      if (child.type === 'switch_block_statement_group') {
+        // Traditional: case X: statements...
+        // First namedChild(ren) are switch_label nodes
+        for (const label of child.namedChildren) {
+          if (label.type !== 'switch_label') continue;
+          const caseVal = label.namedChildren[0];
+          const labelText = caseVal
+            ? `case ${nodeText(caseVal).slice(0, 50)}`
+            : 'default';
+          cases.push({ label: labelText, children: [] });
+        }
+      } else if (child.type === 'switch_rule') {
+        // Java 14+ arrow: case X -> expression/block
+        const label = child.namedChildren.find(c => c.type === 'switch_label');
+        if (label) {
+          const caseVal = label.namedChildren[0];
+          const labelText = caseVal
+            ? `case ${nodeText(caseVal).slice(0, 50)}`
+            : 'default';
+          cases.push({ label: labelText, children: [] });
+        }
+      } else if (child.type === 'switch_label') {
+        // Some grammars put switch_label directly in switch_block
         const caseVal = child.namedChildren[0];
-        const label = caseVal ? `case ${nodeText(caseVal).slice(0, 50)}` : 'default';
-        cases.push({ label, children: [] });
+        const labelText = caseVal
+          ? `case ${nodeText(caseVal).slice(0, 50)}`
+          : 'default';
+        cases.push({ label: labelText, children: [] });
       }
     }
   }
@@ -100,11 +145,10 @@ function buildLoopNode(
   kind: FlowControlNode['metadata']['kind'],
 ): FlowControlNode {
   const loc = toLocation(node, filePath);
-  const id = nodeId('flowControl', filePath, loc.line, kind);
+  const id = nodeId('flowControl', filePath, loc.line, String(kind));
 
   let condition: string | undefined;
   if (kind === 'for_in') {
-    // enhanced_for_statement: for (Type var : iterable)
     const typeNode = node.childForFieldName('type');
     const nameNode = node.childForFieldName('name');
     const valueNode = node.childForFieldName('value');
@@ -117,7 +161,7 @@ function buildLoopNode(
   return {
     id,
     type: 'flowControl',
-    name: kind,
+    name: String(kind),
     location: loc,
     children: [],
     metadata: { kind, condition },
@@ -125,10 +169,10 @@ function buildLoopNode(
 }
 
 function buildTryCatchNodes(node: SyntaxNode, filePath: string): FlowControlNode[] {
-  const nodes: FlowControlNode[] = [];
+  const result: FlowControlNode[] = [];
   const loc = toLocation(node, filePath);
 
-  nodes.push({
+  result.push({
     id: nodeId('flowControl', filePath, loc.line, 'try'),
     type: 'flowControl',
     name: 'try',
@@ -137,12 +181,11 @@ function buildTryCatchNodes(node: SyntaxNode, filePath: string): FlowControlNode
     metadata: { kind: 'try' },
   });
 
-  // Java catch_clause
   for (const catchNode of findAll(node, 'catch_clause')) {
     const catchLoc = toLocation(catchNode, filePath);
     const param = catchNode.childForFieldName('catch_formal_parameter') ?? catchNode.namedChildren[0];
     const paramText = param?.text ?? 'Exception e';
-    nodes.push({
+    result.push({
       id: nodeId('flowControl', filePath, catchLoc.line, 'catch'),
       type: 'flowControl',
       name: `catch (${paramText})`,
@@ -155,7 +198,7 @@ function buildTryCatchNodes(node: SyntaxNode, filePath: string): FlowControlNode
   const finallyNode = node.childForFieldName('finally_clause') ?? findAll(node, 'finally_clause')[0];
   if (finallyNode) {
     const finallyLoc = toLocation(finallyNode, filePath);
-    nodes.push({
+    result.push({
       id: nodeId('flowControl', filePath, finallyLoc.line, 'finally'),
       type: 'flowControl',
       name: 'finally',
@@ -165,7 +208,7 @@ function buildTryCatchNodes(node: SyntaxNode, filePath: string): FlowControlNode
     });
   }
 
-  return nodes;
+  return result;
 }
 
 function buildReturnNode(node: SyntaxNode, filePath: string): ReturnNode {
@@ -224,13 +267,19 @@ function detectHttpStatusFromErrorClass(name: string): number | undefined {
     ResponseStatusException: 400,
     NotFoundException: 404,
     EntityNotFoundException: 404,
+    ResourceNotFoundException: 404,
     BadRequestException: 400,
     UnauthorizedException: 401,
     ForbiddenException: 403,
+    AccessDeniedException: 403,
     ConflictException: 409,
+    DataIntegrityViolationException: 409,
+    ValidationException: 422,
+    ConstraintViolationException: 422,
     InternalServerErrorException: 500,
     IllegalArgumentException: 400,
     IllegalStateException: 500,
+    UnsupportedOperationException: 501,
   };
   return map[name];
 }

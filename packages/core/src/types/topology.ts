@@ -476,7 +476,7 @@ export interface FlowControlNode extends BaseCodeNode {
       | "if" | "else" | "else_if" | "switch" | "case" | "default"
       | "for" | "for_of" | "for_in" | "while" | "do_while"
       | "try" | "catch" | "finally"
-      | "ternary" | "nullish_coalescing" | "optional_chain";
+      | "ternary" | "nullish_coalescing" | "optional_chain" | "label";
     condition?: string;
     branches?: { label: string; children: CodeNode[] }[];
   };
@@ -568,6 +568,12 @@ export interface DataNode extends BaseCodeNode {
     initialValue?: string;
     exported?: boolean;
     fields?: TypedField[];
+    /** For Java class DataNodes: qualified name of the superclass */
+    superClass?: string;
+    /** For Java class/interface DataNodes: names of implemented/extended interfaces */
+    implements?: string[];
+    /** For Java class DataNodes: the owning class name (for inner classes) */
+    className?: string;
   };
 }
 
@@ -617,6 +623,8 @@ export interface ScreenNode {
   id: string;
   type: "screen";
   name: string;
+  /** ID of the ServiceNode this screen belongs to */
+  serviceId?: string;
   metadata: {
     kind: "page" | "modal" | "drawer" | "sheet" | "dialog" | "tab" | "overlay";
     route?: string;
@@ -981,4 +989,8 @@ export interface AnalysisContext {
   diagnostics: Diagnostic[];
   /** Índice de nós por ID para resolução de edges */
   nodeIndex: Map<string, BaseCodeNode>;
+  /** All frontend ComponentNodes extracted across files — for cross-file screen linking */
+  frontendComponents: ComponentNode[];
+  /** Maps screenId → component names referenced in JSX — resolved in linking pass */
+  screenComponentRefs: Map<string, string[]>;
 }

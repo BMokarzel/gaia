@@ -123,7 +123,9 @@ function nestIntoFlowControls(nodes: CodeNode[]): void {
       const fl = fc.location;
       const nl = node.location;
       if (!fl.endLine) continue;
-      if (nl.file === fl.file && nl.line >= fl.line && nl.line <= fl.endLine) {
+      if (nl.file === fl.file &&
+          (nl.line > fl.line || (nl.line === fl.line && (nl.column ?? 0) > (fl.column ?? 0))) &&
+          nl.line <= fl.endLine) {
         const span = fl.endLine - fl.line;
         if (span < bestSpan) { bestSpan = span; best = fc; }
       }

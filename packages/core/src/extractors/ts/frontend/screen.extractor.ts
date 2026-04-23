@@ -6,6 +6,13 @@ import {
 import { nodeId } from '../../../utils/id';
 import type { ScreenNode, ComponentNode, FrontendEventNode, FrontendAction, TypedField } from '../../../types/topology';
 
+export interface FrontendExtractionResult {
+  screens: ScreenNode[];
+  components: ComponentNode[];
+  /** Maps screenId → component names used in JSX (for cross-file linking) */
+  screenComponentRefs: Map<string, string[]>;
+}
+
 /**
  * Extrai screens, components e eventos de frontend de um arquivo TypeScript/TSX.
  * Detecta: React pages/components, React Native screens, Vue components
@@ -13,9 +20,10 @@ import type { ScreenNode, ComponentNode, FrontendEventNode, FrontendAction, Type
 export function extractFrontendNodes(
   rootNode: SyntaxNode,
   filePath: string,
-): { screens: ScreenNode[]; components: ComponentNode[] } {
+): FrontendExtractionResult {
   const screens: ScreenNode[] = [];
   const components: ComponentNode[] = [];
+  const screenComponentRefs = new Map<string, string[]>();
 
   const isPage = isPageFile(filePath);
   const isScreen = isScreenFile(filePath);
@@ -55,8 +63,11 @@ export function extractFrontendNodes(
     const stateFields = extractLocalState(fnBody);
     const queries = extractComponentQueries(fnBody, filePath);
 
-    // Extrai eventos (handlers)
-    const events = extractFrontendEvents(fnBody, filePath, name);
+    // Fix 2: Mapa de handler → trigger inferido a partir dos atributos JSX
+    const jsxTriggerMap = buildJSXTriggerMap(fnBody);
+
+    // Extrai eventos (handlers) usando o mapa de triggers
+    const events = extractFrontendEvents(fnBody, filePath, name, jsxTriggerMap);
 
     const component: ComponentNode = {
       id: nodeId('component', filePath, loc.line, name),
@@ -84,7 +95,10 @@ export function extractFrontendNodes(
     if (isPage || isScreen || isNavigationPage(name, filePath)) {
       const route = inferRoute(filePath, name);
 
-      screens.push({
+      // Fix 5: quais componentes customizados são usados no JSX desta screen
+      const usedComponents = extractUsedComponentNames(fnBody);
+
+      const screen: ScreenNode = {
         id: nodeId('screen', filePath, loc.line, name),
         type: 'screen',
         name,
@@ -99,12 +113,125 @@ export function extractFrontendNodes(
         },
         components: [component],
         navigatesTo: extractNavigationTargets(fnBody),
-      });
+      };
+
+      screens.push(screen);
+      if (usedComponents.length > 0) {
+        screenComponentRefs.set(screen.id, usedComponents);
+      }
     }
   }
 
-  return { screens, components };
+  return { screens, components, screenComponentRefs };
 }
+
+// ── Fix 5: usedComponentNames ─────────────────────────────────────────────────
+
+function extractUsedComponentNames(body: SyntaxNode): string[] {
+  const names = new Set<string>();
+  const elements = [
+    ...findAll(body, 'jsx_element'),
+    ...findAll(body, 'jsx_self_closing_element'),
+  ];
+  for (const el of elements) {
+    let tagName: string | undefined;
+    if (el.type === 'jsx_element') {
+      tagName = el.childForFieldName('open_tag')?.childForFieldName('name')?.text;
+    } else {
+      tagName = el.childForFieldName('name')?.text;
+    }
+    // Only custom components (uppercase first letter), not HTML tags
+    if (tagName && /^[A-Z]/.test(tagName)) names.add(tagName);
+  }
+  return [...names];
+}
+
+// ── Fix 2: JSX trigger map ────────────────────────────────────────────────────
+
+const JSX_ATTR_TO_TRIGGER: Record<string, FrontendEventNode['metadata']['trigger']> = {
+  onClick: 'click',
+  onPress: 'click',
+  onSubmit: 'submit',
+  onChange: 'change',
+  onScroll: 'scroll',
+  onFocus: 'focus',
+  onBlur: 'blur',
+  onMouseEnter: 'hover',
+  onMouseLeave: 'hover',
+  onMouseOver: 'hover',
+  onKeyPress: 'keypress',
+  onKeyDown: 'keypress',
+  onKeyUp: 'keypress',
+  onDragStart: 'drag',
+  onDrop: 'drag',
+  onTouchStart: 'swipe',
+  onTouchEnd: 'swipe',
+  onLongPress: 'longpress',
+  onLoad: 'mount',
+  onIntersection: 'intersection',
+};
+
+/**
+ * Builds a map from handler function name → inferred trigger
+ * by scanning JSX attributes in the component body.
+ * e.g. onClick={handleSubmit} → Map { 'handleSubmit' → 'click' }
+ */
+function buildJSXTriggerMap(body: SyntaxNode): Map<string, FrontendEventNode['metadata']['trigger']> {
+  const map = new Map<string, FrontendEventNode['metadata']['trigger']>();
+  const attrs = findAll(body, 'jsx_attribute');
+
+  for (const attr of attrs) {
+    // tree-sitter: jsx_attribute_name is positional (no named field), use namedChildren[0]
+    const attrName = attr.namedChildren[0]?.text ?? '';
+    const trigger = JSX_ATTR_TO_TRIGGER[attrName];
+    if (!trigger) continue;
+
+    const handlerName = extractJSXHandlerRef(attr);
+    if (handlerName && !map.has(handlerName)) {
+      map.set(handlerName, trigger);
+    }
+  }
+
+  return map;
+}
+
+function extractJSXHandlerRef(attr: SyntaxNode): string | null {
+  // Value is a jsx_expression: {handleClick} or {() => handleClick(x)}
+  const jsxExpr = attr.namedChildren.find(c => c.type === 'jsx_expression');
+  if (!jsxExpr) return null;
+
+  for (const child of jsxExpr.namedChildren) {
+    if (child.type === 'identifier') return child.text;
+
+    // () => handleFn() or () => handleFn(arg)
+    if (child.type === 'arrow_function') {
+      const arrowBody = child.childForFieldName('body');
+      if (arrowBody) {
+        const call = findAll(arrowBody, 'call_expression')[0];
+        if (call) {
+          const fn = call.childForFieldName('function');
+          if (fn?.type === 'identifier') return fn.text;
+          // this.handleFn → member_expression
+          if (fn?.type === 'member_expression') {
+            return fn.childForFieldName('property')?.text ?? null;
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+// ── Fix 4: URL template literal normalization ────────────────────────────────
+
+/** Normalizes template literals and dynamic parts: ${x} → :param */
+function normalizeUrl(url: string): string {
+  return url
+    .replace(/\$\{[^}]*\}/g, ':param')  // ${expr} → :param
+    .replace(/\/\/+/g, '/');            // double slashes cleanup
+}
+
+// ── Existing helpers (with fixes) ─────────────────────────────────────────────
 
 function containsJSX(node: SyntaxNode): boolean {
   return (
@@ -138,10 +265,6 @@ function extractLocalState(body: SyntaxNode): TypedField[] {
 
     if (fn.text !== 'useState' && fn.text !== 'useReducer') continue;
 
-    const parent = call.parent;
-    if (!parent) continue;
-
-    // const [value, setValue] = useState(...)
     const declarator = findParentDeclarator(call);
     if (!declarator) continue;
 
@@ -164,6 +287,7 @@ function extractLocalState(body: SyntaxNode): TypedField[] {
   return fields;
 }
 
+// Fix 3: useQuery with queryFn support — search all nested call_expressions
 function extractComponentQueries(body: SyntaxNode, filePath: string) {
   const queries: ComponentNode['metadata']['queries'] = [];
   const calls = findAll(body, 'call_expression');
@@ -180,19 +304,56 @@ function extractComponentQueries(body: SyntaxNode, filePath: string) {
     const args = call.childForFieldName('arguments');
     if (!args) continue;
 
-    // Extrai URL do call (segundo argumento geralmente é uma função fetch)
+    let url = '';
+    let method = 'GET';
+
+    // Strategy A: direct string URL as first positional arg (useSWR('/api/things'))
+    const firstArg = args.namedChildren[0];
+    if (firstArg) {
+      const directUrl = extractStringValue(firstArg);
+      if (directUrl && directUrl.includes('/')) {
+        url = normalizeUrl(directUrl);
+      }
+    }
+
+    // Strategy B: look inside all nested axios/fetch call_expressions
+    // (covers queryFn: () => axios.get(`/api/...`))
+    if (!url) {
+      const nestedCalls = findAll(args, 'call_expression');
+      for (const nested of nestedCalls) {
+        const nestedFn = nested.childForFieldName('function');
+        if (!nestedFn) continue;
+        const fnText = nestedFn.text;
+
+        const axiosMethodMatch = /axios\.(get|post|put|patch|delete)/i.exec(fnText);
+        if (axiosMethodMatch) {
+          method = axiosMethodMatch[1].toUpperCase();
+          const nestedArgs = nested.childForFieldName('arguments');
+          const urlArg = nestedArgs?.namedChildren[0];
+          if (urlArg) {
+            const raw = extractStringValue(urlArg) ?? urlArg.text.replace(/^`|`$/g, '');
+            if (raw.includes('/')) { url = normalizeUrl(raw); break; }
+          }
+        }
+
+        if (fnText === 'fetch') {
+          const nestedArgs = nested.childForFieldName('arguments');
+          const urlArg = nestedArgs?.namedChildren[0];
+          if (urlArg) {
+            const raw = extractStringValue(urlArg) ?? urlArg.text.replace(/^`|`$/g, '');
+            if (raw.includes('/')) { url = normalizeUrl(raw); break; }
+          }
+        }
+      }
+    }
+
+    // Strategy C: explicit method field in object arg
     const argsText = args.text;
-    const urlMatch = argsText.match(/['"`]([^'"`]*\/[^'"`]*)['"`]/);
-    const url = urlMatch ? urlMatch[1] : '';
     const methodMatch = argsText.match(/method\s*:\s*['"`]([A-Z]+)['"`]/);
-    const method = methodMatch ? methodMatch[1] : 'GET';
+    if (methodMatch) method = methodMatch[1];
 
     if (url) {
-      queries.push({
-        hookOrMethod: hookName,
-        method,
-        path: url,
-      });
+      queries.push({ hookOrMethod: hookName, method, path: url });
     }
   }
 
@@ -203,6 +364,7 @@ function extractFrontendEvents(
   body: SyntaxNode,
   filePath: string,
   componentName: string,
+  jsxTriggerMap: Map<string, FrontendEventNode['metadata']['trigger']>,
 ): FrontendEventNode[] {
   const events: FrontendEventNode[] = [];
 
@@ -217,7 +379,9 @@ function extractFrontendEvents(
     if (!value) continue;
 
     const loc = toLocation(varNode, filePath);
-    const trigger = inferEventTrigger(name);
+
+    // Fix 2: use JSX-based trigger if found, else fall back to name inference
+    const trigger = jsxTriggerMap.get(name) ?? inferEventTrigger(name);
 
     const actions = extractEventActions(value, filePath);
 
@@ -248,7 +412,9 @@ function extractEventActions(handlerBody: SyntaxNode, filePath: string): Fronten
         || /api\.(get|post|put|patch|delete)/i.test(fnText)) {
       const args = call.childForFieldName('arguments');
       const urlArg = args?.namedChildren[0];
-      const url = urlArg ? (extractStringValue(urlArg) ?? urlArg.text) : '/api/unknown';
+      const rawUrl = urlArg ? (extractStringValue(urlArg) ?? urlArg.text) : '/api/unknown';
+      // Fix 4: normalize template literals in URLs
+      const url = normalizeUrl(rawUrl);
       const methodMatch = fnText.match(/\.(get|post|put|patch|delete)/i);
       const method = methodMatch ? methodMatch[1].toUpperCase() : 'GET';
 
@@ -261,7 +427,9 @@ function extractEventActions(handlerBody: SyntaxNode, filePath: string): Fronten
         || /navigation\.(navigate|push|replace)/i.test(fnText)) {
       const args = call.childForFieldName('arguments');
       const screenArg = args?.namedChildren[0];
-      const screen = screenArg ? (extractStringValue(screenArg) ?? screenArg.text) : 'unknown';
+      const rawScreen = screenArg ? (extractStringValue(screenArg) ?? screenArg.text) : 'unknown';
+      // Fix 4: normalize template literals in navigation targets
+      const screen = normalizeUrl(rawScreen);
       actions.push({ kind: 'navigate', targetScreenId: screen });
       continue;
     }
@@ -392,24 +560,26 @@ function extractNavigationTargets(body: SyntaxNode): string[] {
     const args = call.childForFieldName('arguments');
     const firstArg = args?.namedChildren[0];
     if (firstArg) {
-      const val = extractStringValue(firstArg);
-      if (val) targets.push(val);
+      const val = extractStringValue(firstArg) ?? firstArg.text;
+      // Fix 4: normalize template literals
+      targets.push(normalizeUrl(val));
     }
   }
   return [...new Set(targets)];
 }
 
+// Fix 1: lowercase + strip Page/Screen/View suffix from file-path-based route
 function inferRoute(filePath: string, componentName: string): string {
-  // /pages/users/[id].tsx → /users/:id
-  // /screens/Profile.tsx → /profile
   const match = filePath.match(/(?:pages|screens|views)\/(.+)\.[jt]sx?$/);
   if (match) {
     return '/' + match[1]
-      .replace(/\[([^\]]+)\]/g, ':$1')
+      .replace(/\[([^\]]+)\]/g, ':$1')      // Next.js [id] → :id
       .replace(/index$/, '')
-      .replace(/\/$/, '');
+      .replace(/\/$/, '')
+      .toLowerCase()
+      .replace(/(page|screen|view)$/, '');   // strip suffix (cartpage → cart)
   }
-  return '/' + componentName.replace(/Page|Screen|View/, '').toLowerCase();
+  return '/' + componentName.replace(/Page|Screen|View/g, '').toLowerCase();
 }
 
 function inferEventTrigger(name: string): FrontendEventNode['metadata']['trigger'] {

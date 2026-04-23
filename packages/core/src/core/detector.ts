@@ -30,6 +30,8 @@ export interface ServiceTechStack {
   brokerHints: BrokerHint[];
   hasGraphQL: boolean;
   hasGRPC: boolean;
+  hasFeign?: boolean;
+  javaVersion?: number;
   port?: number;
   basePath?: string;
 }
@@ -186,6 +188,26 @@ function detectNodeBrokers(deps: Record<string, string>): BrokerHint[] {
 
 // ---- Java / Kotlin ----
 
+function detectJavaVersion(rootPath: string, manifestType: 'maven' | 'gradle'): number {
+  try {
+    if (manifestType === 'gradle') {
+      const content = readFileSafe(join(rootPath, 'build.gradle'))
+        + readFileSafe(join(rootPath, 'build.gradle.kts'));
+      const scMatch = content.match(/sourceCompatibility\s*=\s*['"]?(\d+)['"]?/);
+      if (scMatch) return parseInt(scMatch[1], 10);
+      const jvMatch = content.match(/JavaVersion\.VERSION_(\d+)/);
+      if (jvMatch) return parseInt(jvMatch[1], 10);
+    } else {
+      const content = readFileSafe(join(rootPath, 'pom.xml'));
+      const jvMatch = content.match(/<java\.version>(\d+)<\/java\.version>/);
+      if (jvMatch) return parseInt(jvMatch[1], 10);
+      const srcMatch = content.match(/<source>(\d+)<\/source>/);
+      if (srcMatch) return parseInt(srcMatch[1], 10);
+    }
+  } catch {}
+  return 8;
+}
+
 function detectJavaStack(
   rootPath: string,
   manifestType: 'maven' | 'gradle',
@@ -194,6 +216,9 @@ function detectJavaStack(
   const framework = detectJavaFramework(rootPath, manifestType);
   const databaseHints = detectJavaDatabases(rootPath, manifestType);
   const brokerHints = detectJavaBrokers(rootPath, manifestType);
+  const content = manifestType === 'gradle'
+    ? readFileSafe(join(rootPath, 'build.gradle')) + readFileSafe(join(rootPath, 'build.gradle.kts'))
+    : readFileSafe(join(rootPath, 'pom.xml'));
 
   return {
     runtime: 'java',
@@ -205,6 +230,8 @@ function detectJavaStack(
     brokerHints,
     hasGraphQL: false,
     hasGRPC: hasGradleDep(rootPath, 'grpc') || hasMavenDep(rootPath, 'grpc'),
+    hasFeign: content.includes('openfeign'),
+    javaVersion: detectJavaVersion(rootPath, manifestType),
     port: 8080,
   };
 }

@@ -176,7 +176,6 @@ export function buildEdges(
     }
   }
 
-  // Function → Function call edges
   const allFunctions = services.flatMap(s => s.functions);
   const fnByName = new Map(allFunctions.map(f => [f.name, f]));
 
@@ -189,14 +188,27 @@ export function buildEdges(
     fnByMethodName.set(methodName, bucket);
   }
 
+  // Function → Function call edges (recursive — catches calls inside lambdas and flowControl)
   for (const service of services) {
     for (const fn of service.functions) {
-      for (const child of fn.children) {
-        if (child.type !== 'call') continue;
-        const callNode = child as CallNode;
+      for (const node of collectCallNodes(fn)) {
+        if (node.type !== 'call') continue;
+        const callNode = node as CallNode;
+        const callee = callNode.metadata.callee;
+
+        // method_reference: ClassName::method
+        if (callee.includes('::')) {
+          const [cls, method] = callee.split('::');
+          const fqn = `${cls}.${method}`;
+          const target = fnByName.get(fqn) ?? fnByMethodName.get(method ?? '')?.[0];
+          if (target && target.id !== fn.id) {
+            edges.push({ source: fn.id, target: target.id, kind: 'calls' });
+          }
+          continue;
+        }
 
         const target = resolveCallTarget(
-          callNode.metadata.callee,
+          callee,
           fn.metadata.className,
           fnByName,
           fnByMethodName,
@@ -232,7 +244,63 @@ export function buildEdges(
     }
   }
 
+  // DataNode extends/implements → structural edges
+  const dataByName = new Map<string, { id: string }>();
+  for (const svc of services) {
+    for (const g of svc.globals) {
+      if (g.type === 'data') dataByName.set(g.name, g);
+    }
+  }
+
+  for (const svc of services) {
+    for (const g of svc.globals) {
+      if (g.type !== 'data') continue;
+      const dn = g as DataNode;
+
+      const superClass = dn.metadata.superClass as string | undefined;
+      if (superClass) {
+        const target = dataByName.get(superClass) ?? (classToConstructor.get(superClass) ? { id: classToConstructor.get(superClass)!.id } : undefined);
+        if (target) edges.push({ source: dn.id, target: target.id, kind: 'extends' });
+      }
+
+      const implInterfaces = dn.metadata.implements as string[] | undefined;
+      if (implInterfaces) {
+        for (const iface of implInterfaces) {
+          const target = dataByName.get(iface);
+          if (target) edges.push({ source: dn.id, target: target.id, kind: 'uses' });
+        }
+      }
+    }
+  }
+
+  // ExternalCallNode → resolved Endpoint (resolves_to)
+  // Source is the parent container (function or endpoint) so it's always a top-level node ID.
+  const allContainers = services.flatMap(s => [...s.functions, ...s.endpoints as any[]]);
+  for (const container of allContainers) {
+    for (const node of collectCallNodes(container)) {
+      if (node.type !== 'externalCall') continue;
+      const ec = node as any;
+      if (ec.metadata?.mergeStatus === 'resolved' && ec.metadata?.resolvedEndpointId) {
+        edges.push({ source: container.id, target: ec.metadata.resolvedEndpointId, kind: 'resolves_to' });
+      }
+    }
+  }
+
   return deduplicateEdges(edges);
+}
+
+/**
+ * Recursively collects all child CodeNodes from a node's children tree.
+ * Returns all types — callers filter by .type as needed.
+ * This catches calls inside flowControl branches and lambda bodies.
+ */
+function collectCallNodes(node: { type: string; children: CodeNode[] }): CodeNode[] {
+  const results: CodeNode[] = [];
+  for (const child of node.children) {
+    results.push(child);
+    results.push(...collectCallNodes(child));
+  }
+  return results;
 }
 
 /**

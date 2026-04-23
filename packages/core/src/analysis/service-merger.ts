@@ -67,7 +67,7 @@ export async function runCrossServiceMerge(
 
     if (candidates.length === 1 && candidates[0].confidence >= 0.95) {
       // Alta confiança + único candidato → merge direto sem LLM
-      applyResolution(extCall, candidates[0].endpointId, candidates[0].serviceId, candidates[0].confidence, 'unique high-confidence match', edges);
+      applyResolution(extCall, candidates[0].endpointId, candidates[0].serviceId, candidates[0].confidence, 'unique high-confidence match', edges, services);
       continue;
     }
 
@@ -78,7 +78,7 @@ export async function runCrossServiceMerge(
 
       if (result.certain && result.resolvedEndpointId !== 'unresolvable') {
         const winnerServiceId = candidates.find(c => c.endpointId === result.resolvedEndpointId)?.serviceId ?? 'unknown';
-        applyResolution(extCall, result.resolvedEndpointId, winnerServiceId, result.confidence, result.reason, edges);
+        applyResolution(extCall, result.resolvedEndpointId, winnerServiceId, result.confidence, result.reason, edges, services);
       } else {
         extCall.metadata.mergeStatus = 'pending_review';
         extCall.metadata.mergeConfidence = result.confidence;
@@ -136,7 +136,7 @@ export function applyPendingMerges(
     }
 
     const targetSvcId = services.find(s => s.endpoints.some(ep => ep.id === entry.decision))?.id ?? 'unknown';
-    applyResolution(extCall, entry.decision, targetSvcId, 1.0, 'user decision', edges);
+    applyResolution(extCall, entry.decision, targetSvcId, 1.0, 'user decision', edges, services);
   }
 
   return edges;
@@ -307,18 +307,45 @@ function applyResolution(
   confidence: number,
   reason: string,
   edges: Edge[],
+  services: ServiceNode[],
 ): void {
   extCall.metadata.resolvedEndpointId = endpointId;
   extCall.metadata.mergeStatus = 'resolved';
   extCall.metadata.mergeConfidence = confidence;
   extCall.metadata.mergeReason = reason;
 
+  // Use parent function/endpoint ID as source so the edge references a top-level node
+  const sourceId = findParentContainerId(extCall, services) ?? extCall.id;
+
   edges.push({
-    source: extCall.id,
+    source: sourceId,
     target: endpointId,
     kind: 'resolves_to',
     metadata: { confidence, reason, targetServiceId },
   });
+}
+
+function findParentContainerId(
+  extCall: ExternalCallNode,
+  services: ServiceNode[],
+): string | undefined {
+  const file = extCall.location.file;
+  const line = extCall.location.line;
+  let best: { id: string; span: number } | undefined;
+
+  for (const svc of services) {
+    for (const container of [...svc.functions, ...svc.endpoints]) {
+      if (container.location.file !== file) continue;
+      const start = container.location.line;
+      const end = container.location.endLine ?? start;
+      if (line >= start && line <= end) {
+        const span = end - start;
+        if (!best || span < best.span) best = { id: container.id, span };
+      }
+    }
+  }
+
+  return best?.id;
 }
 
 function findCallerService(

@@ -94,6 +94,9 @@ export function ServiceView() {
         gNode = createEndpointNode(n.id, n.method ?? 'GET', n.label.replace((n.method ?? '') + ' ', ''))
         const ep = service?.endpoints.find(ep => ep.id === n.id)
         setNodeSubtitle(gNode, ep?.metadata?.llm?.humanName)
+      } else if (n.kind === 'screen') {
+        gNode = createEndpointNode(n.id, 'PAGE', n.label)
+        setNodeSubtitle(gNode, n.sub || undefined)
       } else if (n.kind === 'database') {
         gNode = createDatabaseNode(n.id, n.label, n.sub)
       } else {
@@ -146,7 +149,7 @@ export function ServiceView() {
       if (!ln) return
       const gNode = nodeMap.get(nodeId)
       if (gNode) triggerTap(gNode)
-      if (ln.kind !== 'endpoint') return
+      if (ln.kind !== 'endpoint' && ln.kind !== 'screen') return
 
       selectNode(nodeId)
       nodeMap.forEach((g, id) => setNodeState(g, id === nodeId ? 'selected' : 'default'))
@@ -255,7 +258,10 @@ export function ServiceView() {
         <div className={styles.headerMeta}>
           {service.metadata.language && <span className={styles.badge}>{service.metadata.language}</span>}
           {service.metadata.framework && <span className={styles.badge}>{service.metadata.framework}</span>}
-          <span className={styles.badge}>{service.endpoints.length} endpoints</span>
+          {service.metadata.kind === 'frontend' || service.metadata.kind === 'microfrontend' || service.metadata.kind === 'mobile'
+            ? <span className={styles.badge}>{activeTopology.screens?.filter(s => !s.serviceId || s.serviceId === service.id).length ?? 0} screens</span>
+            : <span className={styles.badge}>{service.endpoints.length} endpoints</span>
+          }
         </div>
       </div>
 

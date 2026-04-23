@@ -128,7 +128,7 @@ export function walkRepository(repoPath: string, options: WalkOptions = {}): Sou
       if (entry.endsWith('.min.js') || entry.endsWith('.bundle.js')) continue;
 
       // Ignora testes se skipTests=true
-      if (skipTests && isTestFile(entry, fullPath)) continue;
+      if (skipTests && isTestFile(entry, fullPath, repoPath)) continue;
 
       const language = EXT_TO_LANGUAGE[ext];
       if (!language) continue;
@@ -141,7 +141,10 @@ export function walkRepository(repoPath: string, options: WalkOptions = {}): Sou
       }
 
       // Final containment guard — ensures no path escapes the repo root
-      if (!fullPath.startsWith(repoPath)) continue;
+      // Normalize separators before comparison (Windows uses \ but repoPath may use /)
+      const normalizedFull = fullPath.replace(/\\/g, '/');
+      const normalizedRepo = repoPath.replace(/\\/g, '/');
+      if (!normalizedFull.startsWith(normalizedRepo)) continue;
 
       files.push({
         absolutePath: fullPath,
@@ -158,19 +161,24 @@ export function walkRepository(repoPath: string, options: WalkOptions = {}): Sou
   return files;
 }
 
-function isTestFile(filename: string, fullPath: string): boolean {
+function isTestFile(filename: string, fullPath: string, repoPath: string): boolean {
   const lower = filename.toLowerCase();
   // Extensões de teste
   if (lower.includes('.test.') || lower.includes('.spec.')) return true;
   if (lower.endsWith('_test.go') || lower.endsWith('_test.py')) return true;
   if (lower.startsWith('test_')) return true;
 
-  // Diretórios de teste
-  const normalized = fullPath.replace(/\\/g, '/');
-  if (normalized.includes('/test/') || normalized.includes('/tests/')) return true;
-  if (normalized.includes('/spec/') || normalized.includes('/specs/')) return true;
-  if (normalized.includes('/__tests__/')) return true;
-  if (normalized.includes('/e2e/')) return true;
+  // Diretórios de teste — checar apenas no path RELATIVO ao root do serviço,
+  // para não excluir projetos que vivem dentro de um diretório chamado "tests"
+  const normalizedFull = fullPath.replace(/\\/g, '/');
+  const normalizedRepo = repoPath.replace(/\\/g, '/').replace(/\/?$/, '/');
+  const pathWithinService = normalizedFull.startsWith(normalizedRepo)
+    ? normalizedFull.slice(normalizedRepo.length)
+    : normalizedFull;
+  if (pathWithinService.includes('/test/') || pathWithinService.includes('/tests/')) return true;
+  if (pathWithinService.includes('/spec/') || pathWithinService.includes('/specs/')) return true;
+  if (pathWithinService.includes('/__tests__/')) return true;
+  if (pathWithinService.includes('/e2e/')) return true;
 
   return false;
 }
