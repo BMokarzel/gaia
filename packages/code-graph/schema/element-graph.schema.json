@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://topology.dev/schemas/element-graph/1.0.0/element-graph.schema.json",
+  "title": "ElementGraph",
+  "description": "Serialized output of @topology/code-graph: language-agnostic graph of code Elements and typed Edges.",
+  "type": "object",
+  "required": ["graphSchemaVersion", "elements", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "graphSchemaVersion": {
+      "type": "string",
+      "description": "Semver of this schema. Major changes break consumers.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "elements": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Element" }
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Edge" }
+    },
+    "stats": {
+      "type": "object",
+      "description": "Optional, denormalized counts. Consumers may ignore.",
+      "additionalProperties": false,
+      "properties": {
+        "elementsByKind": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "edgesByKind": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "ElementKind": {
+      "type": "string",
+      "enum": [
+        "module",
+        "class",
+        "interface",
+        "type_alias",
+        "enum",
+        "method",
+        "function",
+        "constructor",
+        "getter",
+        "setter",
+        "arrow_function",
+        "branch",
+        "branch_then",
+        "branch_else",
+        "loop",
+        "loop_body",
+        "try_block",
+        "catch_block",
+        "finally_block",
+        "call_site",
+        "return_site",
+        "throw_site",
+        "assign_site",
+        "await_site",
+        "parameter",
+        "field",
+        "variable",
+        "import_binding",
+        "type_ref",
+        "decorator_ref"
+      ]
+    },
+    "EdgeKind": {
+      "type": "string",
+      "enum": [
+        "contains",
+        "calls",
+        "branches_to",
+        "loop_iterates",
+        "try_handles",
+        "imports",
+        "injects",
+        "extends",
+        "implements",
+        "returns_type",
+        "throws_type",
+        "typed_as",
+        "reads",
+        "writes"
+      ]
+    },
+    "SourceLocation": {
+      "type": "object",
+      "required": ["file", "startLine", "startCol", "endLine", "endCol"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "type": "string", "description": "Path relative to the analyzed root." },
+        "startLine": { "type": "integer", "minimum": 0 },
+        "startCol": { "type": "integer", "minimum": 0 },
+        "endLine": { "type": "integer", "minimum": 0 },
+        "endCol": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "Element": {
+      "type": "object",
+      "required": ["id", "kind", "location", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "$ref": "#/$defs/ElementKind" },
+        "location": { "$ref": "#/$defs/SourceLocation" },
+        "name": { "type": "string" },
+        "signature": { "type": "string" },
+        "text": { "type": "string" },
+        "meta": {
+          "type": "object",
+          "description": "Kind-dependent metadata. Open object — consumers should switch on `kind`."
+        }
+      }
+    },
+    "Edge": {
+      "type": "object",
+      "required": ["id", "from", "to", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "from": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 },
+        "kind": { "$ref": "#/$defs/EdgeKind" },
+        "meta": {
+          "type": "object",
+          "description": "Optional edge metadata.",
+          "properties": {
+            "label": { "type": "string" },
+            "conditionText": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

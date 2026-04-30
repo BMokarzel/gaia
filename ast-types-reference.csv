@@ -1,0 +1,118 @@
+sep=;
+type;categoria;criterio;descricao;exemplo
+!;Operador;Token literal !;Operador de negação lógica ou non-null assertion do TypeScript (x!.prop);!isValid
+${;Pontuação;Início de interpolação em template string;Token que marca o abertura de uma expressão interpolada dentro de uma template string;`Olá ${nome}`
+';Pontuação;Aspa simples delimitadora de string;Delimitador de string literal com aspas simples;'hello'
+(;Pontuação;Parêntese de abertura;Abre lista de argumentos, parâmetros formais ou expressão parenthesizada;foo(a, b)
+);Pontuação;Parêntese de fechamento;Fecha lista de argumentos, parâmetros formais ou expressão parenthesizada;foo(a, b)
+*;Operador;Token literal *;Operador de multiplicação ou wildcard em import namespace (import * as x);a * b
++;Operador;Token literal +;Operador de adição ou concatenação de strings;a + b
+,;Pontuação;Token vírgula;Separador de elementos em listas: parâmetros, argumentos, arrays, object pairs;foo(a, b)
+-;Operador;Token literal -;Operador de subtração ou negação unária numérica;a - b
+.;Pontuação;Token ponto;Separador de acesso a membro de objeto (member access);obj.prop
+...;Operador;Token spread/rest;Operador spread (expansão de iterável em array/args) ou rest (coleta de parâmetros);...args
+/;Operador;Token literal /;Operador de divisão ou delimitador de regex literal;a / b
+:;Pontuação;Token dois-pontos;Separador em type annotations, pares de objeto e operador ternário;x: number
+";";Pontuação;Ponto e vírgula terminador;Terminador de statement;const x = 1;
+<;Pontuação;Token menor-que;Abre lista de type arguments genéricos ou operador de comparação;Array<string>
+=;Operador;Token de atribuição;Operador de atribuição simples;x = 5
+===;Operador;Token de igualdade estrita;Operador de igualdade estrita sem coerção de tipo;a === b
+>;Pontuação;Token maior-que;Fecha lista de type arguments genéricos ou operador de comparação;Array<string>
+?.;Operador;Token optional chaining;Operador de acesso opcional — avalia como undefined se o lado esquerdo for null/undefined;obj?.prop
+??;Operador;Token nullish coalescing;Operador de coalescência nula — retorna o operando direito se o esquerdo for null ou undefined;val ?? 'default'
+@;Pontuação;Token arroba prefixo de decorator;Sempre seguido do nome/call do decorator; marca o início de uma anotação;@Injectable()
+[;Pontuação;Colchete de abertura;Abre literal de array ou expressão de subscript (acesso por índice/chave calculada);arr[0]
+];Pontuação;Colchete de fechamento;Fecha literal de array ou expressão de subscript;arr[0]
+`;Pontuação;Backtick delimitador de template string;Delimitador de template literal — a string pode conter interpolações ${};`Hello ${name}`
+{;Pontuação;Chave de abertura;Abre bloco de statements, corpo de função/classe ou literal de objeto;function f() { }
+|;Operador;Token pipe / separador de union type;Separador de tipos em union type do TypeScript;string | number
+};Pontuação;Chave de fechamento;Fecha bloco de statements, corpo ou literal de objeto;function f() { }
+accessibility_modifier;Modificador TypeScript;Token public/private/protected em parâmetro de construtor;Modificador de acesso em parâmetro de construtor que gera automaticamente uma propriedade de classe (parameter property);constructor(private name: string)
+any;Tipo primitivo TypeScript;Keyword any em posição de tipo;Tipo any do TypeScript — aceita qualquer valor sem checagem estática de tipo;let x: any
+arguments;Lista de argumentos;Nó ( ) filho de call_expression ou new_expression;Encapsula todos os argumentos passados em uma chamada de função ou método;foo(a, b, c)
+array;Literal de array;Expressão delimitada por [ ] com elementos separados por vírgula;Literal de array JavaScript/TypeScript;[1, 2, 3]
+array_type;Tipo TypeScript;Tipo seguido de [] em posição de anotação;Representa tipo de array no TypeScript: string[] é equivalente a Array<string>;string[]
+assignment_expression;Expressão;LHS = RHS fora de uma declaração de variável;Expressão de atribuição simples — diferente de lexical_declaration que declara a variável;x = 5
+async;Keyword;Token async antes de function ou arrow;Marca uma função como assíncrona, fazendo-a retornar implicitamente uma Promise;async function f() {}
+await;Keyword;Token await antes de expressão;Suspende a execução até a Promise resolver; válido apenas dentro de função async;await promise
+await_expression;Expressão;await seguido de qualquer expressão;Nó que representa a expressão completa de await, incluindo o operando;await fetchData()
+binary_expression;Expressão;Dois operandos com operador binário entre eles;Qualquer expressão com operador binário: +, -, *, /, ===, !==, &&, ||, etc.;a + b
+boolean;Tipo primitivo TypeScript;Keyword boolean em posição de tipo;Tipo boolean do TypeScript em uma anotação de tipo;let active: boolean
+call_expression;Expressão;Identificador/member_expression seguido de arguments ();Chamada de função ou método — tem campos internos function e arguments;foo()
+catch;Keyword;Token catch;Palavra-chave que inicia o bloco catch em um try/catch;try {} catch(e) {}
+catch_clause;Cláusula;catch (...) { } completo;Nó que representa o bloco catch inteiro incluindo parâmetro de erro e bloco de statements;try {} catch(e) { ... }
+class;Keyword;Token class;Palavra-chave que inicia uma declaração ou expressão de classe;class Foo {}
+class_body;Corpo de classe;Bloco { } filho direto de class_declaration;Contém todos os membros da classe: campos, métodos, construtores e decorators;class Foo { ... }
+class_declaration;Declaração;Inicia com keyword class seguido de nome;Declaração de classe nomeada no nível de statement — pode ter extends e implements;class UserService {}
+class_heritage;Herança de classe;Filho de class_declaration que contém extends e/ou implements;Agrupa as cláusulas extends e implements de uma classe;class A extends B implements C
+const;Keyword;Token const em declaração de variável;Palavra-chave de declaração de variável imutável (não permite reatribuição);const x = 1
+decorator;Decorator;Nó iniciado por @ seguido de identifier ou call_expression;Anotação aplicada a classe, método, propriedade ou parâmetro para modificar/metadatar o elemento;@Controller('/users')
+export;Keyword;Token export;Torna um símbolo acessível fora do módulo atual;export class Foo
+export_statement;Declaração;Statement iniciado por keyword export;Exporta uma declaração, expressão ou re-exporta de outro módulo;export { Foo } from './foo'
+expression_statement;Statement;Expressão usada como statement independente (linha com ;);Um statement que consiste apenas em uma expressão — ex: chamada de função cujo retorno é descartado;console.log(x);
+for;Keyword;Token for;Palavra-chave que inicia um loop for;for (const x of arr)
+for_in_statement;Statement;for...of ou for...in com bloco { };Loop que itera sobre itens de um iterável (of) ou propriedades enumeráveis de um objeto (in);for (const item of items) {}
+formal_parameters;Lista de parâmetros;Nó ( ) filho de function/method/arrow que declara parâmetros;Encapsula todos os parâmetros declarados — pode conter required_parameter, optional_parameter, rest_parameter;function f(a, b)
+from;Keyword;Token from em import/export;Palavra-chave que precede o caminho do módulo em import/export;import x from 'mod'
+function;Keyword;Token function;Palavra-chave que inicia uma declaração ou expressão de função;function foo() {}
+function_declaration;Declaração;Inicia com keyword function e possui nome identificador;Declaração de função nomeada no nível de statement (não como expressão atribuída a variável);function greet(name: string) {}
+generic_type;Tipo TypeScript;Tipo base seguido de < type_arguments >;Tipo genérico parametrizado com um ou mais type arguments entre < >;Promise<string>
+identifier;Identificador;Sequência alfanumérica/underscore que não é keyword reservada;Nome de variável, função, parâmetro ou classe — o identificador mais genérico no AST;userName
+if;Keyword;Token if;Palavra-chave do condicional if;if (x > 0) {}
+if_statement;Statement;if (...) { } com bloco e opcional else;Condicional completo — pode encadear else if ou ter bloco else;if (cond) {} else {}
+implements;Keyword;Token implements;Palavra-chave TypeScript que indica que uma classe satisfaz o contrato de uma ou mais interfaces;class Foo implements Bar
+implements_clause;Cláusula TypeScript;implements seguido de lista de type_identifier;Nó que lista todas as interfaces que a classe implementa;class A implements B, C
+import;Keyword;Token import;Palavra-chave de importação de módulo ES;import { Foo } from './foo'
+import_clause;Cláusula de import;Parte entre import e from;Especifica o que está sendo importado: default import, named imports ou namespace import;import Foo, { Bar }
+import_specifier;Especificador de import;Cada identificador dentro de named_imports;Cada símbolo individual importado dentro de chaves — pode ter alias com as;{ UserService as US }
+import_statement;Declaração;Statement completo iniciado por keyword import;Statement completo de importação de módulo ES incluindo import_clause e caminho do módulo;import { x } from 'mod'
+interface;Keyword;Token interface;Palavra-chave TypeScript que inicia declaração de interface;interface IUser {}
+interface_body;Corpo de interface;Bloco { } filho de interface_declaration;Contém as assinaturas de membros (method_signature, property_signature) de uma interface;interface I { name: string }
+interface_declaration;Declaração TypeScript;Inicia com keyword interface seguido de nome;Declaração de interface TypeScript — define um contrato estrutural sem implementação;interface IUserService {}
+lexical_declaration;Declaração;Inicia com const ou let;Declaração de variável com const/let — contém um ou mais variable_declarator filhos;const x = 1
+literal_type;Tipo TypeScript;Valor literal (string, number, boolean) usado em posição de tipo;Tipo que representa um valor literal exato — comum em union types literais e discriminated unions;type Dir = 'left' | 'right'
+member_expression;Expressão;objeto . propriedade em posição de expressão;Acesso a membro de objeto via ponto — o lado esquerdo pode ser qualquer expressão;this.userService
+method_definition;Definição de método;Membro de class_body com nome e corpo { };Define um método dentro do corpo de classe — inclui construtores, getters e setters;get name() { return this._name }
+method_signature;Assinatura de método;Membro de interface_body sem corpo (sem { });Assinatura de método em uma interface TypeScript — apenas declaração, sem implementação;findById(id: string): Promise<User>
+named_imports;Importação nomeada;{ } contendo import_specifiers dentro de import_clause;Lista de import specifiers entre chaves em um import ES;{ UserService, UserRepository }
+new;Keyword;Token new;Palavra-chave de instanciação de objeto via construtor;new Error('msg')
+new_expression;Expressão;new seguido de tipo/identificador e arguments ();Expressão que instancia uma classe usando o operador new;new UserService()
+null;Literal;Keyword null como valor;Valor literal null — representa ausência intencional de valor;return null
+number;Tipo primitivo TypeScript;Keyword number em posição de tipo (não literal numérico);Tipo number do TypeScript em anotação de tipo — literais numéricos geram nós separados;let count: number
+object;Literal de objeto;Expressão delimitada por { } contendo pairs/shorthand;Literal de objeto JavaScript/TypeScript com pares chave-valor;{ name: 'João', age: 30 }
+of;Keyword;Token of em for...of;Palavra-chave que separa a variável do iterável no loop for...of;for (const x of list)
+optional_chain;Expressão;Nó intermediário gerado pelo operador ?. em cadeia;Representa o operador ?. — avalia o restante da cadeia somente se o lado esquerdo não for null/undefined;obj?.user?.name
+pair;Par chave-valor;Filho de object com estrutura chave : valor;Par chave-valor dentro de um literal de objeto — a chave pode ser identifier, string ou computed;{ name: 'João' }
+parenthesized_expression;Expressão;Expressão envolta em ( ) fora de chamada de função;Expressão entre parênteses usada para controle explícito de precedência;(a + b) * c
+predefined_type;Tipo TypeScript;Palavras-chave de tipo primitivo: string, number, boolean, any, void, never, object, symbol, undefined, unknown;Tipos primitivos e predefinidos do TypeScript usados em anotações de tipo;param: string
+private;Keyword;Token private em modificador de classe/membro;Modificador de acesso que restringe a visibilidade ao escopo da própria classe;private readonly service
+program;Raiz;Nó raiz — sempre o nível mais alto da árvore;Representa o arquivo fonte completo — tem como filhos todos os statements de nível superior;(arquivo .ts inteiro)
+property_identifier;Identificador;Nome de propriedade em member_expression ou pair de objeto;Identificador que denota o nome de uma propriedade acessada — nunca uma variável independente;user.name → name
+public_field_definition;Campo de classe;Definição de propriedade diretamente no corpo de classe (fora de construtor);Define um campo com inicializador no corpo da classe — pode ter modificadores de acesso e readonly;private readonly repo: UserRepo
+readonly;Keyword;Token readonly em propriedade ou parâmetro;Modificador TypeScript que impede reatribuição após a inicialização — vale para campos e parâmetros;readonly id: string
+regex;Literal regex;Expressão iniciada por / e terminada por / seguida de flags opcionais;Literal de expressão regular completo — contém regex_pattern e opcionalmente regex_flags;/^\d+$/g
+regex_flags;Flags de regex;Texto alfanumérico imediatamente após a barra de fechamento de regex;Flags que modificam o comportamento da regex: g (global), i (case-insensitive), m (multiline), etc.;/pattern/gi → gi
+regex_pattern;Padrão de regex;Texto entre a barra de abertura e barra de fechamento de regex;O padrão da expressão regular sem os delimitadores e sem as flags;/^\d+$/ → ^\d+$
+required_parameter;Parâmetro;Filho de formal_parameters sem ? (não opcional) e sem valor padrão;Parâmetro obrigatório de função ou método — pode ter tipo, decorators e modificadores de acesso;constructor(private service: UserService)
+return;Keyword;Token return;Palavra-chave de retorno de função;return value
+return_statement;Statement;return seguido de expressão opcional e ;  ;Statement de retorno — encerra execução da função e opcionalmente devolve um valor;return this.users.find(u => u.id === id)
+shorthand_property_identifier;Identificador;Propriedade de objeto onde nome da variável = nome da chave (sem :);Atalho de propriedade onde o nome da variável local é reutilizado como chave do objeto;{ name } em { name, age }
+spread_element;Expressão;... seguido de expressão dentro de array literal ou arguments;Expande um iterável dentro de um array literal ou lista de argumentos de função;[...items]
+statement_block;Bloco;{ } filho de função, if, for, try, método, etc.;Bloco de statements delimitado por chaves — corpo de funções, condicionais, loops e try/catch;function f() { return 1; }
+string;Literal de string;Texto delimitado por aspas simples ou duplas;Nó de string literal — contém string_fragment com o texto; template strings são template_string;'hello'
+string_fragment;Fragmento de string;Texto literal dentro de string ou template_string entre os delimitadores;O conteúdo textual puro de uma string — não inclui as aspas/backticks do delimitador pai;hello em 'hello'
+subscript_expression;Expressão;expressão [ expressão ] em posição de acesso;Acesso a elemento por subscript — índice numérico em array ou chave calculada em objeto;arr[0]
+template_string;Template literal;Texto delimitado por backticks;String que pode conter interpolações (template_substitution) e texto estático (string_fragment);`Hello ${name}`
+template_substitution;Interpolação;${ expressão } dentro de template_string;A expressão interpolada dentro de uma template string — delimitada pelos tokens ${ e };${user.name}
+this;Keyword;Token this em método ou construtor;Referência ao objeto corrente dentro de um método ou construtor de classe;this.userRepository
+throw;Keyword;Token throw;Palavra-chave para lançar uma exceção;throw new Error()
+throw_statement;Statement;throw seguido de expressão;Statement que lança uma exceção — interrompe o fluxo normal e propaga o erro;throw new NotFoundException()
+true;Literal;Keyword true como valor booleano;Valor booleano literal true;return true
+try;Keyword;Token try;Palavra-chave que inicia o bloco try em tratamento de erros;try { } catch(e) { }
+try_statement;Statement;try { } seguido de catch e/ou finally;Statement completo de tratamento de erros — pode ter catch_clause e/ou bloco finally;try { await save() } catch(e) { ... }
+type_annotation;Anotação de tipo TypeScript;: seguido de tipo após identificador ou parâmetro;Anotação de tipo TypeScript — inclui o : e o nó de tipo que o segue;x: number → : number
+type_arguments;Argumentos de tipo TypeScript;< tipos > após identificador de tipo genérico;Lista de type arguments passados a um tipo ou função genérica entre < >;Array<string>
+type_identifier;Identificador de tipo;Identificador em posição de referência a tipo (classe, interface, type alias);Referencia um tipo nomeado em uma anotação de tipo — difere de identifier que é usado como valor;UserService em : UserService
+unary_expression;Expressão;Operador unário seguido de um único operando;Expressão com operador que age sobre um único operando: !, -, +, typeof, void, ~;!isActive
+union_type;Tipo TypeScript;Dois ou mais tipos separados por | em posição de tipo;Union type do TypeScript — o valor pode ser de qualquer um dos tipos listados;string | number | null
+variable_declarator;Declarador;Filho de lexical_declaration com nome e valor opcional após =;Cada variável individual dentro de uma declaração — contém o nome (identifier/pattern) e o inicializador;const name = value → name = value

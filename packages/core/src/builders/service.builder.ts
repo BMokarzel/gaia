@@ -4,6 +4,8 @@ import type { ServiceTechStack } from '../core/detector';
 import type { ServiceNode, EndpointNode, FunctionNode, DataNode, CodeNode, FlowControlNode } from '../types/topology';
 import { serviceId } from '../utils/id';
 import { computeFunctionMetrics } from '../analysis/metrics';
+import type { ElementGraph } from '@topology/code-graph';
+import { findEndpointElement, projectEndpointFlow } from '../projections/topology-projection';
 
 /**
  * Constrói um ServiceNode a partir da boundary detectada e da stack técnica.
@@ -14,6 +16,7 @@ export function buildServiceNode(
   boundary: ServiceBoundary,
   stack: ServiceTechStack,
   codeNodes: CodeNode[],
+  flowGraph?: ElementGraph,
 ): ServiceNode {
   const id = serviceId(boundary.rootPath);
   const name = boundary.name;
@@ -36,6 +39,13 @@ export function buildServiceNode(
   // Link each endpoint to its handler FunctionNode and populate endpoint.children
   linkEndpointHandlers(endpoints, functions);
 
+  // Se um ElementGraph (code-graph) está disponível, sobrescreve
+  // `endpoint.children` pela projeção da FlowTree profunda. Mantém o
+  // fallback dos extractors se a projeção retornar vazio para algum endpoint.
+  if (flowGraph) {
+    applyDeepFlowProjection(endpoints, flowGraph);
+  }
+
   return {
     id,
     type: 'service',
@@ -53,6 +63,23 @@ export function buildServiceNode(
     globals,
     dependencies: [],
   };
+}
+
+/**
+ * Para cada endpoint, localiza o `method` correspondente no ElementGraph
+ * e substitui `endpoint.children` pela projeção da FlowTree profunda
+ * (cadeia controller → service → repo, etc.). Endpoints sem match no
+ * grafo mantêm os children produzidos pelos extractors antigos.
+ */
+function applyDeepFlowProjection(endpoints: EndpointNode[], graph: ElementGraph): void {
+  for (const ep of endpoints) {
+    const el = findEndpointElement(graph, ep);
+    if (!el) continue;
+    const projected = projectEndpointFlow(graph, el.id);
+    if (projected.length > 0) {
+      ep.children = projected;
+    }
+  }
 }
 
 /**

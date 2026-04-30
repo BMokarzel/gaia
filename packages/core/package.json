@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",
+    "@topology/code-graph": "workspace:*",
     "glob": "^10.4.5",
     "nanoid": "^3.3.7",
     "tree-sitter": "^0.21.1",

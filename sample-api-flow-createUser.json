@@ -1,0 +1,44 @@
+{
+  "stats": {
+    "totalNodes": 3,
+    "maxDepth": 2,
+    "unresolvedCalls": 1,
+    "detectedCycles": []
+  },
+  "tree": {
+    "id": "a5094ea6ae6e489f",
+    "kind": "method",
+    "label": "method createUser(@Body() dto: CreateUserDto): Promise<UserResponseDto> [POST]",
+    "edgeKind": null,
+    "children": [
+      {
+        "id": "87acd0f54ed3ed7f",
+        "kind": "return_site",
+        "label": "return this.userService.createUser(dto)",
+        "edgeKind": "contains",
+        "children": [
+          {
+            "id": "35905e9d102eea7c",
+            "kind": "call_site",
+            "label": "this.userService.createUser(dto)",
+            "edgeKind": "contains",
+            "children": [
+              {
+                "id": "35905e9d102eea7c:external",
+                "kind": "call_site",
+                "label": "→ external: this.userService.createUser",
+                "edgeKind": "calls",
+                "edgeMeta": {
+                  "label": "this.userService.createUser",
+                  "external": true
+                },
+                "marker": "unresolved",
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

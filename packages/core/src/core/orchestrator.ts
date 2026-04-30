@@ -14,6 +14,7 @@ import { RustParser } from '../parsers/rust.parser';
 import { CSharpParser } from '../parsers/csharp.parser';
 import type { LanguageParser } from '../parsers/base';
 import { buildServiceNode } from '../builders/service.builder';
+import { buildServiceFlowGraph } from '../projections/topology-projection';
 import { mergeDatabases, buildDatabaseFromHint } from '../builders/database.builder';
 import { mergeBrokers, buildBrokerFromHint } from '../builders/broker.builder';
 import { buildEdges } from '../builders/edge.builder';
@@ -297,8 +298,23 @@ async function analyzeService(
     }
   }
 
+  // Constrói o ElementGraph profundo (code-graph) para projetar fluxos
+  // ricos nos endpoints. Erros de arquivos individuais não bloqueiam o
+  // pipeline — buildServiceFlowGraph passa `continueOnFileError: true`.
+  let flowGraph: ReturnType<typeof buildServiceFlowGraph> | undefined;
+  try {
+    flowGraph = buildServiceFlowGraph(files, boundary.rootPath);
+    log.debug('Flow graph built', {
+      service: boundary.name,
+      elements: flowGraph.size.elements,
+      edges: flowGraph.size.edges,
+    });
+  } catch (err) {
+    log.warn('Flow graph build failed', { service: boundary.name, error: String(err) });
+  }
+
   // Constrói ServiceNode
-  const service = buildServiceNode(boundary, stack, allCodeNodes);
+  const service = buildServiceNode(boundary, stack, allCodeNodes, flowGraph);
   context.services.push(service);
 
   // Indexa nós para resolução de edges

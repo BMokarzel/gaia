@@ -30,7 +30,7 @@ const H_GAP = 240  // horizontal gap between columns
 const V_GAP = 90   // vertical gap between rows (horizontal mode)
 const V_STEP = 120 // vertical step between rows (vertical mode)
 const START_X = 80 // left edge for endpoint node
-const MAX_DEPTH = 2 // max levels of inline function expansion
+const MAX_DEPTH = 12 // max levels of inline function expansion (cycles guarded by code-graph projection)
 
 // ─────────────────────────────────────────────────────────────
 // OUTCOME HELPERS (for short mode)
@@ -131,6 +131,12 @@ function addEdge(ctx: LayoutCtx, src: GaiaNode | GaiaRegion, tgt: GaiaNode | Gai
 // to the actual FunctionNode in svc.functions by name suffix match.
 // ─────────────────────────────────────────────────────────────
 function resolveHandlerFn(call: CallNode, functions: FunctionNode[]): FunctionNode | null {
+  // Prefer the inline `function` child injected by the deep flow projection
+  // (code-graph). It carries the fully expanded body, while `svc.functions`
+  // may still hold the shallow extractor version.
+  const inline = call.children.find(c => c.type === 'function') as FunctionNode | undefined
+  if (inline) return inline
+
   if (call.metadata.resolvedTo) {
     const found = functions.find(f => f.id === call.metadata.resolvedTo)
     if (found) return found
@@ -255,9 +261,10 @@ function buildOne(
 
     case 'call': {
       const c = node as CallNode
-      // Inline-expand resolved calls (one level deep) as sub-regions
-      if (c.metadata.resolvedTo && ctx.resolveDepth < 1) {
-        const fn = ctx.functions.find(f => f.id === c.metadata.resolvedTo)
+      // Inline-expand resolved calls as sub-regions
+      if (c.metadata.resolvedTo && ctx.resolveDepth < MAX_DEPTH) {
+        const inlineFn = c.children.find(ch => ch.type === 'function') as FunctionNode | undefined
+        const fn = inlineFn ?? ctx.functions.find(f => f.id === c.metadata.resolvedTo)
         if (fn) {
           const subCtx: LayoutCtx = { ...ctx, resolveDepth: ctx.resolveDepth + 1 }
           const subRegion = createFunctionRegion(fn.id + '-sub-' + c.id, fn.name)
@@ -511,7 +518,10 @@ function buildSeqV(
       maxEndX = Math.max(maxEndX, x)
 
       if (c.metadata.resolvedTo && ctx.resolveDepth < MAX_DEPTH) {
-        const fn = ctx.functions.find(f => f.id === c.metadata.resolvedTo)
+        // Prefer the inline `function` child (deep projection); fall back to
+        // svc.functions lookup for legacy/shallow topologies.
+        const inlineFn = c.children.find(ch => ch.type === 'function') as FunctionNode | undefined
+        const fn = inlineFn ?? ctx.functions.find(f => f.id === c.metadata.resolvedTo)
         if (fn) {
           const subCtx: LayoutCtx = { ...ctx, resolveDepth: ctx.resolveDepth + 1 }
           const hash = fn.id.split(':')[1] ?? fn.id
@@ -704,6 +714,14 @@ function buildExpandedFlow(
           prev = gNode
           x += H_GAP
         }
+      }
+    } else {
+      // Top-level return/throw/flowControl/data emitted by the deep flow
+      // projection — render inline so the controller's own outcome is visible.
+      const r = buildOne(child, x, cy, prev, null, ctx)
+      if (r.lastNode && r.lastNode !== prev) {
+        prev = r.lastNode
+        x = r.endX + H_GAP
       }
     }
   }

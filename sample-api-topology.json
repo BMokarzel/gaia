@@ -1,0 +1,5418 @@
+{
+  "schemaVersion": "3.0.0",
+  "analyzedAt": "2026-04-30T00:39:07.901Z",
+  "services": [
+    {
+      "id": "service:3d00ed0d",
+      "type": "service",
+      "name": "sample-api",
+      "code": "sample-api",
+      "metadata": {
+        "runtime": "node",
+        "language": "typescript",
+        "framework": "nest",
+        "protocol": "rest",
+        "kind": "backend"
+      },
+      "endpoints": [
+        {
+          "id": "endpoint:1f90d27a",
+          "type": "endpoint",
+          "name": "UsersController.getUser",
+          "location": {
+            "file": "src/users/controllers/users.controller.ts",
+            "line": 25,
+            "column": 2,
+            "endLine": 27,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "call:0b4f3663",
+              "type": "call",
+              "name": "this.userService.getUserById",
+              "location": {
+                "file": "src/users/controllers/users.controller.ts",
+                "line": 26,
+                "column": 11,
+                "endLine": 26,
+                "endColumn": 43
+              },
+              "children": [
+                {
+                  "id": "function:ef07a849",
+                  "type": "function",
+                  "name": "getUserById",
+                  "location": {
+                    "file": "src/users/services/user.service.ts",
+                    "line": 20,
+                    "column": 2,
+                    "endLine": 40,
+                    "endColumn": 3
+                  },
+                  "children": [
+                    {
+                      "id": "call:afb3ae06",
+                      "type": "call",
+                      "name": "this.userRepository.findById",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 21,
+                        "column": 23,
+                        "endLine": 21,
+                        "endColumn": 55
+                      },
+                      "children": [
+                        {
+                          "id": "function:3d59528a",
+                          "type": "function",
+                          "name": "findById",
+                          "location": {
+                            "file": "src/users/repositories/user.repository.ts",
+                            "line": 15,
+                            "column": 2,
+                            "endLine": 17,
+                            "endColumn": 3
+                          },
+                          "children": [
+                            {
+                              "id": "call:a7ea4cf3",
+                              "type": "call",
+                              "name": "this.ormRepo.findOne",
+                              "location": {
+                                "file": "src/users/repositories/user.repository.ts",
+                                "line": 16,
+                                "column": 11,
+                                "endLine": 16,
+                                "endColumn": 50
+                              },
+                              "children": [
+                                {
+                                  "id": "call:a7ea4cf3",
+                                  "type": "call",
+                                  "name": "this.ormRepo.findOne",
+                                  "location": {
+                                    "file": "src/users/repositories/user.repository.ts",
+                                    "line": 16,
+                                    "column": 11,
+                                    "endLine": 16,
+                                    "endColumn": 50
+                                  },
+                                  "children": [],
+                                  "metadata": {
+                                    "callee": "this.ormRepo.findOne",
+                                    "arguments": [
+                                      "{ where: { id } }"
+                                    ],
+                                    "awaited": false,
+                                    "chained": false,
+                                    "optional": false
+                                  }
+                                }
+                              ],
+                              "metadata": {
+                                "callee": "this.ormRepo.findOne",
+                                "arguments": [
+                                  "{ where: { id } }"
+                                ],
+                                "awaited": false,
+                                "chained": false,
+                                "optional": false
+                              }
+                            },
+                            {
+                              "id": "return:9cbc7f4c",
+                              "type": "return",
+                              "name": "return",
+                              "location": {
+                                "file": "src/users/repositories/user.repository.ts",
+                                "line": 16,
+                                "column": 4,
+                                "endLine": 16,
+                                "endColumn": 51
+                              },
+                              "children": [],
+                              "metadata": {
+                                "kind": "explicit",
+                                "value": "this.ormRepo.findOne({ where: { id } })"
+                              }
+                            }
+                          ],
+                          "metadata": {
+                            "kind": "method",
+                            "async": true,
+                            "generator": false,
+                            "params": [],
+                            "returnType": "Promise<User | null>",
+                            "visibility": "public",
+                            "decorators": [],
+                            "errorMap": []
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "callee": "this.userRepository.findById",
+                        "arguments": [
+                          "id"
+                        ],
+                        "awaited": true,
+                        "chained": false,
+                        "optional": false,
+                        "resolvedTo": "function:3d59528a"
+                      }
+                    },
+                    {
+                      "id": "flowControl:2ad9908b",
+                      "type": "flowControl",
+                      "name": "(!user)",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 23,
+                        "column": 4,
+                        "endLine": 25,
+                        "endColumn": 5
+                      },
+                      "children": [
+                        {
+                          "id": "throw:ff777b4a",
+                          "type": "throw",
+                          "name": "NotFoundException",
+                          "location": {
+                            "file": "src/users/services/user.service.ts",
+                            "line": 24,
+                            "column": 6,
+                            "endLine": 24,
+                            "endColumn": 68
+                          },
+                          "children": [],
+                          "metadata": {
+                            "kind": "throw",
+                            "errorClass": "NotFoundException",
+                            "message": "User with id \"${id}\" not found",
+                            "httpStatus": 404,
+                            "propagates": true
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "kind": "if",
+                        "condition": "(!user)"
+                      }
+                    },
+                    {
+                      "id": "flowControl:2e6a9048",
+                      "type": "flowControl",
+                      "name": "(!user.isActive)",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 27,
+                        "column": 4,
+                        "endLine": 29,
+                        "endColumn": 5
+                      },
+                      "children": [
+                        {
+                          "id": "throw:4acf0c1b",
+                          "type": "throw",
+                          "name": "NotFoundException",
+                          "location": {
+                            "file": "src/users/services/user.service.ts",
+                            "line": 28,
+                            "column": 6,
+                            "endLine": 28,
+                            "endColumn": 70
+                          },
+                          "children": [],
+                          "metadata": {
+                            "kind": "throw",
+                            "errorClass": "NotFoundException",
+                            "message": "User with id \"${id}\" is inactive",
+                            "httpStatus": 404,
+                            "propagates": true
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "kind": "if",
+                        "condition": "(!user.isActive)"
+                      }
+                    },
+                    {
+                      "id": "call:a9989cc5",
+                      "type": "call",
+                      "name": "this.extractGithubUsername",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 31,
+                        "column": 27,
+                        "endLine": 31,
+                        "endColumn": 65
+                      },
+                      "children": [
+                        {
+                          "id": "function:98e50307",
+                          "type": "function",
+                          "name": "extractGithubUsername",
+                          "location": {
+                            "file": "src/users/services/user.service.ts",
+                            "line": 74,
+                            "column": 2,
+                            "endLine": 77,
+                            "endColumn": 3
+                          },
+                          "children": [
+                            {
+                              "id": "data:90e591ee",
+                              "type": "data",
+                              "name": "localPart",
+                              "location": {
+                                "file": "src/users/services/user.service.ts",
+                                "line": 75,
+                                "column": 4,
+                                "endLine": 75,
+                                "endColumn": 42
+                              },
+                              "children": [],
+                              "metadata": {
+                                "kind": "constant",
+                                "mutable": false,
+                                "scope": "local",
+                                "initialValue": "email.split('@')[0]"
+                              }
+                            },
+                            {
+                              "id": "call:4cb21bac",
+                              "type": "call",
+                              "name": "localPart.replace",
+                              "location": {
+                                "file": "src/users/services/user.service.ts",
+                                "line": 76,
+                                "column": 11,
+                                "endLine": 76,
+                                "endColumn": 51
+                              },
+                              "children": [
+                                {
+                                  "id": "call:4cb21bac",
+                                  "type": "call",
+                                  "name": "localPart.replace",
+                                  "location": {
+                                    "file": "src/users/services/user.service.ts",
+                                    "line": 76,
+                                    "column": 11,
+                                    "endLine": 76,
+                                    "endColumn": 51
+                                  },
+                                  "children": [],
+                                  "metadata": {
+                                    "callee": "localPart.replace",
+                                    "arguments": [
+                                      "/[^a-zA-Z0-9-]/g",
+                                      "'-'"
+                                    ],
+                                    "awaited": false,
+                                    "chained": false,
+                                    "optional": false
+                                  }
+                                }
+                              ],
+                              "metadata": {
+                                "callee": "localPart.replace",
+                                "arguments": [
+                                  "/[^a-zA-Z0-9-]/g",
+                                  "'-'"
+                                ],
+                                "awaited": false,
+                                "chained": false,
+                                "optional": false
+                              }
+                            },
+                            {
+                              "id": "return:49b9cfd6",
+                              "type": "return",
+                              "name": "return",
+                              "location": {
+                                "file": "src/users/services/user.service.ts",
+                                "line": 76,
+                                "column": 4,
+                                "endLine": 76,
+                                "endColumn": 52
+                              },
+                              "children": [],
+                              "metadata": {
+                                "kind": "explicit",
+                                "value": "localPart.replace(/[^a-zA-Z0-9-]/g, '-')"
+                              }
+                            }
+                          ],
+                          "metadata": {
+                            "kind": "method",
+                            "async": false,
+                            "generator": false,
+                            "params": [],
+                            "returnType": "string",
+                            "visibility": "private",
+                            "decorators": [],
+                            "errorMap": []
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "callee": "this.extractGithubUsername",
+                        "arguments": [
+                          "user.email"
+                        ],
+                        "awaited": false,
+                        "chained": false,
+                        "optional": false,
+                        "resolvedTo": "function:98e50307"
+                      }
+                    },
+                    {
+                      "id": "call:b8bfa93b",
+                      "type": "call",
+                      "name": "this.githubClient.fetchProfile",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 32,
+                        "column": 32,
+                        "endLine": 32,
+                        "endColumn": 78
+                      },
+                      "children": [
+                        {
+                          "id": "function:269c5d9e",
+                          "type": "function",
+                          "name": "fetchProfile",
+                          "location": {
+                            "file": "src/users/services/github.client.ts",
+                            "line": 11,
+                            "column": 2,
+                            "endLine": 39,
+                            "endColumn": 3
+                          },
+                          "children": [
+                            {
+                              "id": "flowControl:c9773e1f",
+                              "type": "flowControl",
+                              "name": "try",
+                              "location": {
+                                "file": "src/users/services/github.client.ts",
+                                "line": 12,
+                                "column": 4,
+                                "endLine": 38,
+                                "endColumn": 5
+                              },
+                              "children": [
+                                {
+                                  "id": "call:306bc5b1",
+                                  "type": "call",
+                                  "name": "axios.get",
+                                  "location": {
+                                    "file": "src/users/services/github.client.ts",
+                                    "line": 13,
+                                    "column": 29,
+                                    "endLine": 19,
+                                    "endColumn": 8
+                                  },
+                                  "children": [
+                                    {
+                                      "id": "call:306bc5b1",
+                                      "type": "call",
+                                      "name": "axios.get",
+                                      "location": {
+                                        "file": "src/users/services/github.client.ts",
+                                        "line": 13,
+                                        "column": 29,
+                                        "endLine": 19,
+                                        "endColumn": 8
+                                      },
+                                      "children": [],
+                                      "metadata": {
+                                        "callee": "axios.get",
+                                        "arguments": [
+                                          "`${this.baseUrl}/users/${username}`",
+                                          "{\n        headers: {\n          Accept: 'application/vnd.github.v3+json',\n          'User-Agent': 'sample-api/1.0',\n        },\n        timeout: 5000,\n      }"
+                                        ],
+                                        "awaited": true,
+                                        "chained": false,
+                                        "optional": false
+                                      }
+                                    }
+                                  ],
+                                  "metadata": {
+                                    "callee": "axios.get",
+                                    "arguments": [
+                                      "`${this.baseUrl}/users/${username}`",
+                                      "{\n        headers: {\n          Accept: 'application/vnd.github.v3+json',\n          'User-Agent': 'sample-api/1.0',\n        },\n        timeout: 5000,\n      }"
+                                    ],
+                                    "awaited": true,
+                                    "chained": false,
+                                    "optional": false
+                                  }
+                                },
+                                {
+                                  "id": "data:a2b27bb3",
+                                  "type": "data",
+                                  "name": "data",
+                                  "location": {
+                                    "file": "src/users/services/github.client.ts",
+                                    "line": 21,
+                                    "column": 6,
+                                    "endLine": 21,
+                                    "endColumn": 33
+                                  },
+                                  "children": [],
+                                  "metadata": {
+                                    "kind": "constant",
+                                    "mutable": false,
+                                    "scope": "local",
+                                    "initialValue": "response.data"
+                                  }
+                                },
+                                {
+                                  "id": "return:605fbf5b",
+                                  "type": "return",
+                                  "name": "return",
+                                  "location": {
+                                    "file": "src/users/services/github.client.ts",
+                                    "line": 23,
+                                    "column": 6,
+                                    "endLine": 28,
+                                    "endColumn": 8
+                                  },
+                                  "children": [],
+                                  "metadata": {
+                                    "kind": "explicit",
+                                    "value": "{\n        login: data.login,\n        publicRepos: data.public_repos,\n        followers: data.followers,\n        avatarUrl: data.avatar_url,\n      }"
+                                  }
+                                },
+                                {
+                                  "id": "flowControl:8d5859a1",
+                                  "type": "flowControl",
+                                  "name": "catch",
+                                  "location": {
+                                    "file": "src/users/services/github.client.ts",
+                                    "line": 29,
+                                    "column": 6,
+                                    "endLine": 38,
+                                    "endColumn": 5
+                                  },
+                                  "children": [
+                                    {
+                                      "id": "flowControl:1cf21747",
+                                      "type": "flowControl",
+                                      "name": "(axios.isAxiosError(error))",
+                                      "location": {
+                                        "file": "src/users/services/github.client.ts",
+                                        "line": 30,
+                                        "column": 6,
+                                        "endLine": 36,
+                                        "endColumn": 7
+                                      },
+                                      "children": [
+                                        {
+                                          "id": "flowControl:735ceea0",
+                                          "type": "flowControl",
+                                          "name": "(error.response?.status === 404)",
+                                          "location": {
+                                            "file": "src/users/services/github.client.ts",
+                                            "line": 31,
+                                            "column": 8,
+                                            "endLine": 34,
+                                            "endColumn": 9
+                                          },
+                                          "children": [
+                                            {
+                                              "id": "call:6f938227",
+                                              "type": "call",
+                                              "name": "this.logger.warn",
+                                              "location": {
+                                                "file": "src/users/services/github.client.ts",
+                                                "line": 32,
+                                                "column": 10,
+                                                "endLine": 32,
+                                                "endColumn": 64
+                                              },
+                                              "children": [
+                                                {
+                                                  "id": "call:6f938227",
+                                                  "type": "call",
+                                                  "name": "this.logger.warn",
+                                                  "location": {
+                                                    "file": "src/users/services/github.client.ts",
+                                                    "line": 32,
+                                                    "column": 10,
+                                                    "endLine": 32,
+                                                    "endColumn": 64
+                                                  },
+                                                  "children": [],
+                                                  "metadata": {
+                                                    "callee": "this.logger.warn",
+                                                    "arguments": [
+                                                      "`GitHub user not found: ${username}`"
+                                                    ],
+                                                    "awaited": false,
+                                                    "chained": false,
+                                                    "optional": false
+                                                  }
+                                                }
+                                              ],
+                                              "metadata": {
+                                                "callee": "this.logger.warn",
+                                                "arguments": [
+                                                  "`GitHub user not found: ${username}`"
+                                                ],
+                                                "awaited": false,
+                                                "chained": false,
+                                                "optional": false
+                                              }
+                                            },
+                                            {
+                                              "id": "return:4bfc9fa0",
+                                              "type": "return",
+                                              "name": "return",
+                                              "location": {
+                                                "file": "src/users/services/github.client.ts",
+                                                "line": 33,
+                                                "column": 10,
+                                                "endLine": 33,
+                                                "endColumn": 22
+                                              },
+                                              "children": [],
+                                              "metadata": {
+                                                "kind": "explicit",
+                                                "value": "null"
+                                              }
+                                            }
+                                          ],
+                                          "metadata": {
+                                            "kind": "if",
+                                            "condition": "(error.response?.status === 404)"
+                                          }
+                                        },
+                                        {
+                                          "id": "call:a1773b2c",
+                                          "type": "call",
+                                          "name": "this.logger.error",
+                                          "location": {
+                                            "file": "src/users/services/github.client.ts",
+                                            "line": 35,
+                                            "column": 8,
+                                            "endLine": 35,
+                                            "endColumn": 63
+                                          },
+                                          "children": [
+                                            {
+                                              "id": "call:a1773b2c",
+                                              "type": "call",
+                                              "name": "this.logger.error",
+                                              "location": {
+                                                "file": "src/users/services/github.client.ts",
+                                                "line": 35,
+                                                "column": 8,
+                                                "endLine": 35,
+                                                "endColumn": 63
+                                              },
+                                              "children": [],
+                                              "metadata": {
+                                                "callee": "this.logger.error",
+                                                "arguments": [
+                                                  "`GitHub API error: ${error.message}`"
+                                                ],
+                                                "awaited": false,
+                                                "chained": false,
+                                                "optional": false
+                                              }
+                                            }
+                                          ],
+                                          "metadata": {
+                                            "callee": "this.logger.error",
+                                            "arguments": [
+                                              "`GitHub API error: ${error.message}`"
+                                            ],
+                                            "awaited": false,
+                                            "chained": false,
+                                            "optional": false
+                                          }
+                                        }
+                                      ],
+                                      "metadata": {
+                                        "kind": "if",
+                                        "condition": "(axios.isAxiosError(error))"
+                                      }
+                                    },
+                                    {
+                                      "id": "return:51ac7d06",
+                                      "type": "return",
+                                      "name": "return",
+                                      "location": {
+                                        "file": "src/users/services/github.client.ts",
+                                        "line": 37,
+                                        "column": 6,
+                                        "endLine": 37,
+                                        "endColumn": 18
+                                      },
+                                      "children": [],
+                                      "metadata": {
+                                        "kind": "explicit",
+                                        "value": "null"
+                                      }
+                                    }
+                                  ],
+                                  "metadata": {
+                                    "kind": "catch"
+                                  }
+                                }
+                              ],
+                              "metadata": {
+                                "kind": "try"
+                              }
+                            }
+                          ],
+                          "metadata": {
+                            "kind": "method",
+                            "async": true,
+                            "generator": false,
+                            "params": [],
+                            "returnType": "Promise<GithubProfileDto | null>",
+                            "visibility": "public",
+                            "decorators": [],
+                            "errorMap": []
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "callee": "this.githubClient.fetchProfile",
+                        "arguments": [
+                          "githubUsername"
+                        ],
+                        "awaited": true,
+                        "chained": false,
+                        "optional": false,
+                        "resolvedTo": "function:269c5d9e"
+                      }
+                    },
+                    {
+                      "id": "flowControl:6e47f135",
+                      "type": "flowControl",
+                      "name": "(githubProfile)",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 34,
+                        "column": 4,
+                        "endLine": 37,
+                        "endColumn": 5
+                      },
+                      "children": [
+                        {
+                          "id": "data:db4ad127",
+                          "type": "data",
+                          "name": "user.avatarUrl",
+                          "location": {
+                            "file": "src/users/services/user.service.ts",
+                            "line": 35,
+                            "column": 6,
+                            "endLine": 35,
+                            "endColumn": 46
+                          },
+                          "children": [],
+                          "metadata": {
+                            "kind": "variable",
+                            "mutable": true,
+                            "scope": "local",
+                            "initialValue": "githubProfile.avatarUrl"
+                          }
+                        },
+                        {
+                          "id": "call:d728cac4",
+                          "type": "call",
+                          "name": "this.userRepository.save",
+                          "location": {
+                            "file": "src/users/services/user.service.ts",
+                            "line": 36,
+                            "column": 12,
+                            "endLine": 36,
+                            "endColumn": 42
+                          },
+                          "children": [
+                            {
+                              "id": "function:2e765929",
+                              "type": "function",
+                              "name": "save",
+                              "location": {
+                                "file": "src/users/repositories/user.repository.ts",
+                                "line": 41,
+                                "column": 2,
+                                "endLine": 43,
+                                "endColumn": 3
+                              },
+                              "children": [
+                                {
+                                  "id": "call:adbb00cf",
+                                  "type": "call",
+                                  "name": "this.ormRepo.save",
+                                  "location": {
+                                    "file": "src/users/repositories/user.repository.ts",
+                                    "line": 42,
+                                    "column": 11,
+                                    "endLine": 42,
+                                    "endColumn": 34
+                                  },
+                                  "children": [
+                                    {
+                                      "id": "call:adbb00cf",
+                                      "type": "call",
+                                      "name": "this.ormRepo.save",
+                                      "location": {
+                                        "file": "src/users/repositories/user.repository.ts",
+                                        "line": 42,
+                                        "column": 11,
+                                        "endLine": 42,
+                                        "endColumn": 34
+                                      },
+                                      "children": [],
+                                      "metadata": {
+                                        "callee": "this.ormRepo.save",
+                                        "arguments": [
+                                          "user"
+                                        ],
+                                        "awaited": false,
+                                        "chained": false,
+                                        "optional": false
+                                      }
+                                    }
+                                  ],
+                                  "metadata": {
+                                    "callee": "this.ormRepo.save",
+                                    "arguments": [
+                                      "user"
+                                    ],
+                                    "awaited": false,
+                                    "chained": false,
+                                    "optional": false
+                                  }
+                                },
+                                {
+                                  "id": "return:b3983ebc",
+                                  "type": "return",
+                                  "name": "return",
+                                  "location": {
+                                    "file": "src/users/repositories/user.repository.ts",
+                                    "line": 42,
+                                    "column": 4,
+                                    "endLine": 42,
+                                    "endColumn": 35
+                                  },
+                                  "children": [],
+                                  "metadata": {
+                                    "kind": "explicit",
+                                    "value": "this.ormRepo.save(user)"
+                                  }
+                                }
+                              ],
+                              "metadata": {
+                                "kind": "method",
+                                "async": true,
+                                "generator": false,
+                                "params": [],
+                                "returnType": "Promise<User>",
+                                "visibility": "public",
+                                "decorators": [],
+                                "errorMap": []
+                              }
+                            }
+                          ],
+                          "metadata": {
+                            "callee": "this.userRepository.save",
+                            "arguments": [
+                              "user"
+                            ],
+                            "awaited": true,
+                            "chained": false,
+                            "optional": false,
+                            "resolvedTo": "function:2e765929"
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "kind": "if",
+                        "condition": "(githubProfile)"
+                      }
+                    },
+                    {
+                      "id": "call:42db131f",
+                      "type": "call",
+                      "name": "this.toResponseDto",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 39,
+                        "column": 11,
+                        "endLine": 39,
+                        "endColumn": 50
+                      },
+                      "children": [
+                        {
+                          "id": "function:8fba9ed2",
+                          "type": "function",
+                          "name": "toResponseDto",
+                          "location": {
+                            "file": "src/users/services/user.service.ts",
+                            "line": 79,
+                            "column": 2,
+                            "endLine": 89,
+                            "endColumn": 3
+                          },
+                          "children": [
+                            {
+                              "id": "return:17e741a4",
+                              "type": "return",
+                              "name": "return",
+                              "location": {
+                                "file": "src/users/services/user.service.ts",
+                                "line": 80,
+                                "column": 4,
+                                "endLine": 88,
+                                "endColumn": 7
+                              },
+                              "children": [],
+                              "metadata": {
+                                "kind": "explicit",
+                                "value": "new UserResponseDto({\n      id: user.id,\n      name: user.name,\n      email: user.email,\n      avatarUrl: user.avatarUrl ?? null,\n      isActive: user.isActive,\n      githubProfile: githubProfile ?? null,\n      createdAt: user.createdAt,\n    })"
+                              }
+                            }
+                          ],
+                          "metadata": {
+                            "kind": "method",
+                            "async": false,
+                            "generator": false,
+                            "params": [],
+                            "returnType": "UserResponseDto",
+                            "visibility": "private",
+                            "decorators": [],
+                            "errorMap": []
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "callee": "this.toResponseDto",
+                        "arguments": [
+                          "user",
+                          "githubProfile"
+                        ],
+                        "awaited": false,
+                        "chained": false,
+                        "optional": false,
+                        "resolvedTo": "function:8fba9ed2"
+                      }
+                    },
+                    {
+                      "id": "return:7e6e2bac",
+                      "type": "return",
+                      "name": "return",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 39,
+                        "column": 4,
+                        "endLine": 39,
+                        "endColumn": 51
+                      },
+                      "children": [],
+                      "metadata": {
+                        "kind": "explicit",
+                        "value": "this.toResponseDto(user, githubProfile)"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "kind": "method",
+                    "async": true,
+                    "generator": false,
+                    "params": [],
+                    "returnType": "Promise<UserResponseDto>",
+                    "visibility": "public",
+                    "decorators": [],
+                    "errorMap": []
+                  }
+                }
+              ],
+              "metadata": {
+                "callee": "this.userService.getUserById",
+                "arguments": [
+                  "id"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false,
+                "resolvedTo": "function:ef07a849"
+              }
+            },
+            {
+              "id": "return:16700b3e",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/controllers/users.controller.ts",
+                "line": 26,
+                "column": 4,
+                "endLine": 26,
+                "endColumn": 44
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "this.userService.getUserById(id)"
+              }
+            }
+          ],
+          "metadata": {
+            "method": "GET",
+            "path": "/users/:id",
+            "framework": "nest",
+            "middleware": [
+              "HttpCode(HttpStatus.OK)"
+            ],
+            "controller": "UsersController",
+            "request": {
+              "params": [
+                {
+                  "name": "id",
+                  "type": "string",
+                  "required": true
+                }
+              ]
+            },
+            "responses": [],
+            "handlerFnId": "function:1f90d27a"
+          },
+          "raw": "async getUser(@Param('id', ParseUUIDPipe) id: string): Promise<UserResponseDto> {\n    return this.userService.getUserById(id);\n  }"
+        },
+        {
+          "id": "endpoint:6bc9ded8",
+          "type": "endpoint",
+          "name": "UsersController.createUser",
+          "location": {
+            "file": "src/users/controllers/users.controller.ts",
+            "line": 31,
+            "column": 2,
+            "endLine": 33,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "call:bdf7ab03",
+              "type": "call",
+              "name": "this.userService.createUser",
+              "location": {
+                "file": "src/users/controllers/users.controller.ts",
+                "line": 32,
+                "column": 11,
+                "endLine": 32,
+                "endColumn": 43
+              },
+              "children": [
+                {
+                  "id": "function:577a5517",
+                  "type": "function",
+                  "name": "createUser",
+                  "location": {
+                    "file": "src/users/services/user.service.ts",
+                    "line": 42,
+                    "column": 2,
+                    "endLine": 55,
+                    "endColumn": 3
+                  },
+                  "children": [
+                    {
+                      "id": "call:deb5bbdd",
+                      "type": "call",
+                      "name": "this.userRepository.findByEmail",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 43,
+                        "column": 27,
+                        "endLine": 43,
+                        "endColumn": 69
+                      },
+                      "children": [
+                        {
+                          "id": "function:0ef54316",
+                          "type": "function",
+                          "name": "findByEmail",
+                          "location": {
+                            "file": "src/users/repositories/user.repository.ts",
+                            "line": 19,
+                            "column": 2,
+                            "endLine": 21,
+                            "endColumn": 3
+                          },
+                          "children": [
+                            {
+                              "id": "call:a7db3e9a",
+                              "type": "call",
+                              "name": "this.ormRepo.findOne",
+                              "location": {
+                                "file": "src/users/repositories/user.repository.ts",
+                                "line": 20,
+                                "column": 11,
+                                "endLine": 20,
+                                "endColumn": 53
+                              },
+                              "children": [
+                                {
+                                  "id": "call:a7db3e9a",
+                                  "type": "call",
+                                  "name": "this.ormRepo.findOne",
+                                  "location": {
+                                    "file": "src/users/repositories/user.repository.ts",
+                                    "line": 20,
+                                    "column": 11,
+                                    "endLine": 20,
+                                    "endColumn": 53
+                                  },
+                                  "children": [],
+                                  "metadata": {
+                                    "callee": "this.ormRepo.findOne",
+                                    "arguments": [
+                                      "{ where: { email } }"
+                                    ],
+                                    "awaited": false,
+                                    "chained": false,
+                                    "optional": false
+                                  }
+                                }
+                              ],
+                              "metadata": {
+                                "callee": "this.ormRepo.findOne",
+                                "arguments": [
+                                  "{ where: { email } }"
+                                ],
+                                "awaited": false,
+                                "chained": false,
+                                "optional": false
+                              }
+                            },
+                            {
+                              "id": "return:0bbfd080",
+                              "type": "return",
+                              "name": "return",
+                              "location": {
+                                "file": "src/users/repositories/user.repository.ts",
+                                "line": 20,
+                                "column": 4,
+                                "endLine": 20,
+                                "endColumn": 54
+                              },
+                              "children": [],
+                              "metadata": {
+                                "kind": "explicit",
+                                "value": "this.ormRepo.findOne({ where: { email } })"
+                              }
+                            }
+                          ],
+                          "metadata": {
+                            "kind": "method",
+                            "async": true,
+                            "generator": false,
+                            "params": [],
+                            "returnType": "Promise<User | null>",
+                            "visibility": "public",
+                            "decorators": [],
+                            "errorMap": []
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "callee": "this.userRepository.findByEmail",
+                        "arguments": [
+                          "dto.email"
+                        ],
+                        "awaited": true,
+                        "chained": false,
+                        "optional": false,
+                        "resolvedTo": "function:0ef54316"
+                      }
+                    },
+                    {
+                      "id": "flowControl:0ea06fed",
+                      "type": "flowControl",
+                      "name": "(existing)",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 45,
+                        "column": 4,
+                        "endLine": 47,
+                        "endColumn": 5
+                      },
+                      "children": [
+                        {
+                          "id": "throw:278c4243",
+                          "type": "throw",
+                          "name": "ConflictException",
+                          "location": {
+                            "file": "src/users/services/user.service.ts",
+                            "line": 46,
+                            "column": 6,
+                            "endLine": 46,
+                            "endColumn": 80
+                          },
+                          "children": [],
+                          "metadata": {
+                            "kind": "throw",
+                            "errorClass": "ConflictException",
+                            "message": "Email \"${dto.email}\" is already registered",
+                            "httpStatus": 409,
+                            "propagates": true
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "kind": "if",
+                        "condition": "(existing)"
+                      }
+                    },
+                    {
+                      "id": "call:64151d5f",
+                      "type": "call",
+                      "name": "this.validateUserData",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 49,
+                        "column": 22,
+                        "endLine": 49,
+                        "endColumn": 48
+                      },
+                      "children": [
+                        {
+                          "id": "function:5e330388",
+                          "type": "function",
+                          "name": "validateUserData",
+                          "location": {
+                            "file": "src/users/services/user.service.ts",
+                            "line": 57,
+                            "column": 2,
+                            "endLine": 72,
+                            "endColumn": 3
+                          },
+                          "children": [
+                            {
+                              "id": "data:c9306104",
+                              "type": "data",
+                              "name": "sanitized",
+                              "location": {
+                                "file": "src/users/services/user.service.ts",
+                                "line": 58,
+                                "column": 4,
+                                "endLine": 58,
+                                "endColumn": 33
+                              },
+                              "children": [],
+                              "metadata": {
+                                "kind": "constant",
+                                "mutable": false,
+                                "scope": "local",
+                                "initialValue": "{ ...dto }"
+                              }
+                            },
+                            {
+                              "id": "data:54d64274",
+                              "type": "data",
+                              "name": "sanitized.name",
+                              "location": {
+                                "file": "src/users/services/user.service.ts",
+                                "line": 60,
+                                "column": 4,
+                                "endLine": 60,
+                                "endColumn": 42
+                              },
+                              "children": [],
+                              "metadata": {
+                                "kind": "variable",
+                                "mutable": true,
+                                "scope": "local",
+                                "initialValue": "sanitized.name.trim()"
+                              }
+                            },
+                            {
+                              "id": "data:db726eee",
+                              "type": "data",
+                              "name": "sanitized.email",
+                              "location": {
+                                "file": "src/users/services/user.service.ts",
+                                "line": 61,
+                                "column": 4,
+                                "endLine": 61,
+                                "endColumn": 58
+                              },
+                              "children": [],
+                              "metadata": {
+                                "kind": "variable",
+                                "mutable": true,
+                                "scope": "local",
+                                "initialValue": "sanitized.email.toLowerCase().trim()"
+                              }
+                            },
+                            {
+                              "id": "data:0c70281b",
+                              "type": "data",
+                              "name": "forbiddenDomains",
+                              "location": {
+                                "file": "src/users/services/user.service.ts",
+                                "line": 63,
+                                "column": 4,
+                                "endLine": 63,
+                                "endColumn": 83
+                              },
+                              "children": [],
+                              "metadata": {
+                                "kind": "constant",
+                                "mutable": false,
+                                "scope": "local",
+                                "initialValue": "['tempmail.com', 'throwaway.email', 'mailinator.com']"
+                              }
+                            },
+                            {
+                              "id": "flowControl:08211927",
+                              "type": "flowControl",
+                              "name": "domain ← forbiddenDomains",
+                              "location": {
+                                "file": "src/users/services/user.service.ts",
+                                "line": 65,
+                                "column": 4,
+                                "endLine": 69,
+                                "endColumn": 5
+                              },
+                              "children": [
+                                {
+                                  "id": "flowControl:716a6aff",
+                                  "type": "flowControl",
+                                  "name": "(sanitized.email.endsWith(`@${domain}`))",
+                                  "location": {
+                                    "file": "src/users/services/user.service.ts",
+                                    "line": 66,
+                                    "column": 6,
+                                    "endLine": 68,
+                                    "endColumn": 7
+                                  },
+                                  "children": [
+                                    {
+                                      "id": "throw:79d3735b",
+                                      "type": "throw",
+                                      "name": "ConflictException",
+                                      "location": {
+                                        "file": "src/users/services/user.service.ts",
+                                        "line": 67,
+                                        "column": 8,
+                                        "endLine": 67,
+                                        "endColumn": 64
+                                      },
+                                      "children": [],
+                                      "metadata": {
+                                        "kind": "throw",
+                                        "errorClass": "ConflictException",
+                                        "message": "Email domain not allowed",
+                                        "httpStatus": 409,
+                                        "propagates": true
+                                      }
+                                    }
+                                  ],
+                                  "metadata": {
+                                    "kind": "if",
+                                    "condition": "(sanitized.email.endsWith(`@${domain}`))"
+                                  }
+                                }
+                              ],
+                              "metadata": {
+                                "kind": "for_of",
+                                "condition": "forbiddenDomains"
+                              }
+                            },
+                            {
+                              "id": "return:9d15c0aa",
+                              "type": "return",
+                              "name": "return",
+                              "location": {
+                                "file": "src/users/services/user.service.ts",
+                                "line": 71,
+                                "column": 4,
+                                "endLine": 71,
+                                "endColumn": 21
+                              },
+                              "children": [],
+                              "metadata": {
+                                "kind": "explicit",
+                                "value": "sanitized"
+                              }
+                            }
+                          ],
+                          "metadata": {
+                            "kind": "method",
+                            "async": false,
+                            "generator": false,
+                            "params": [],
+                            "returnType": "CreateUserDto",
+                            "visibility": "private",
+                            "decorators": [],
+                            "errorMap": []
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "callee": "this.validateUserData",
+                        "arguments": [
+                          "dto"
+                        ],
+                        "awaited": false,
+                        "chained": false,
+                        "optional": false,
+                        "resolvedTo": "function:5e330388"
+                      }
+                    },
+                    {
+                      "id": "call:808ad9e8",
+                      "type": "call",
+                      "name": "this.userRepository.create",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 50,
+                        "column": 23,
+                        "endLine": 50,
+                        "endColumn": 60
+                      },
+                      "children": [
+                        {
+                          "id": "function:25be38bb",
+                          "type": "function",
+                          "name": "create",
+                          "location": {
+                            "file": "src/users/repositories/user.repository.ts",
+                            "line": 32,
+                            "column": 2,
+                            "endLine": 39,
+                            "endColumn": 3
+                          },
+                          "children": [
+                            {
+                              "id": "call:b7875301",
+                              "type": "call",
+                              "name": "this.ormRepo.create",
+                              "location": {
+                                "file": "src/users/repositories/user.repository.ts",
+                                "line": 33,
+                                "column": 17,
+                                "endLine": 37,
+                                "endColumn": 6
+                              },
+                              "children": [
+                                {
+                                  "id": "call:b7875301",
+                                  "type": "call",
+                                  "name": "this.ormRepo.create",
+                                  "location": {
+                                    "file": "src/users/repositories/user.repository.ts",
+                                    "line": 33,
+                                    "column": 17,
+                                    "endLine": 37,
+                                    "endColumn": 6
+                                  },
+                                  "children": [],
+                                  "metadata": {
+                                    "callee": "this.ormRepo.create",
+                                    "arguments": [
+                                      "{\n      name: dto.name,\n      email: dto.email,\n      isActive: true,\n    }"
+                                    ],
+                                    "awaited": false,
+                                    "chained": false,
+                                    "optional": false
+                                  }
+                                }
+                              ],
+                              "metadata": {
+                                "callee": "this.ormRepo.create",
+                                "arguments": [
+                                  "{\n      name: dto.name,\n      email: dto.email,\n      isActive: true,\n    }"
+                                ],
+                                "awaited": false,
+                                "chained": false,
+                                "optional": false
+                              }
+                            },
+                            {
+                              "id": "call:e9723cd9",
+                              "type": "call",
+                              "name": "this.ormRepo.save",
+                              "location": {
+                                "file": "src/users/repositories/user.repository.ts",
+                                "line": 38,
+                                "column": 11,
+                                "endLine": 38,
+                                "endColumn": 34
+                              },
+                              "children": [
+                                {
+                                  "id": "call:e9723cd9",
+                                  "type": "call",
+                                  "name": "this.ormRepo.save",
+                                  "location": {
+                                    "file": "src/users/repositories/user.repository.ts",
+                                    "line": 38,
+                                    "column": 11,
+                                    "endLine": 38,
+                                    "endColumn": 34
+                                  },
+                                  "children": [],
+                                  "metadata": {
+                                    "callee": "this.ormRepo.save",
+                                    "arguments": [
+                                      "user"
+                                    ],
+                                    "awaited": false,
+                                    "chained": false,
+                                    "optional": false
+                                  }
+                                }
+                              ],
+                              "metadata": {
+                                "callee": "this.ormRepo.save",
+                                "arguments": [
+                                  "user"
+                                ],
+                                "awaited": false,
+                                "chained": false,
+                                "optional": false
+                              }
+                            },
+                            {
+                              "id": "return:38a77199",
+                              "type": "return",
+                              "name": "return",
+                              "location": {
+                                "file": "src/users/repositories/user.repository.ts",
+                                "line": 38,
+                                "column": 4,
+                                "endLine": 38,
+                                "endColumn": 35
+                              },
+                              "children": [],
+                              "metadata": {
+                                "kind": "explicit",
+                                "value": "this.ormRepo.save(user)"
+                              }
+                            }
+                          ],
+                          "metadata": {
+                            "kind": "method",
+                            "async": true,
+                            "generator": false,
+                            "params": [],
+                            "returnType": "Promise<User>",
+                            "visibility": "public",
+                            "decorators": [],
+                            "errorMap": []
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "callee": "this.userRepository.create",
+                        "arguments": [
+                          "validated"
+                        ],
+                        "awaited": true,
+                        "chained": false,
+                        "optional": false,
+                        "resolvedTo": "function:25be38bb"
+                      }
+                    },
+                    {
+                      "id": "call:9ca54a29",
+                      "type": "call",
+                      "name": "this.logger.log",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 52,
+                        "column": 4,
+                        "endLine": 52,
+                        "endColumn": 63
+                      },
+                      "children": [
+                        {
+                          "id": "call:9ca54a29",
+                          "type": "call",
+                          "name": "this.logger.log",
+                          "location": {
+                            "file": "src/users/services/user.service.ts",
+                            "line": 52,
+                            "column": 4,
+                            "endLine": 52,
+                            "endColumn": 63
+                          },
+                          "children": [],
+                          "metadata": {
+                            "callee": "this.logger.log",
+                            "arguments": [
+                              "`User created: ${user.id} (${user.email})`"
+                            ],
+                            "awaited": false,
+                            "chained": false,
+                            "optional": false
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "callee": "this.logger.log",
+                        "arguments": [
+                          "`User created: ${user.id} (${user.email})`"
+                        ],
+                        "awaited": false,
+                        "chained": false,
+                        "optional": false
+                      }
+                    },
+                    {
+                      "id": "call:1c9bb34a",
+                      "type": "call",
+                      "name": "this.toResponseDto",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 54,
+                        "column": 11,
+                        "endLine": 54,
+                        "endColumn": 41
+                      },
+                      "children": [
+                        {
+                          "id": "function:8fba9ed2",
+                          "type": "function",
+                          "name": "toResponseDto",
+                          "location": {
+                            "file": "src/users/services/user.service.ts",
+                            "line": 79,
+                            "column": 2,
+                            "endLine": 89,
+                            "endColumn": 3
+                          },
+                          "children": [
+                            {
+                              "id": "return:17e741a4",
+                              "type": "return",
+                              "name": "return",
+                              "location": {
+                                "file": "src/users/services/user.service.ts",
+                                "line": 80,
+                                "column": 4,
+                                "endLine": 88,
+                                "endColumn": 7
+                              },
+                              "children": [],
+                              "metadata": {
+                                "kind": "explicit",
+                                "value": "new UserResponseDto({\n      id: user.id,\n      name: user.name,\n      email: user.email,\n      avatarUrl: user.avatarUrl ?? null,\n      isActive: user.isActive,\n      githubProfile: githubProfile ?? null,\n      createdAt: user.createdAt,\n    })"
+                              }
+                            }
+                          ],
+                          "metadata": {
+                            "kind": "method",
+                            "async": false,
+                            "generator": false,
+                            "params": [],
+                            "returnType": "UserResponseDto",
+                            "visibility": "private",
+                            "decorators": [],
+                            "errorMap": []
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "callee": "this.toResponseDto",
+                        "arguments": [
+                          "user",
+                          "null"
+                        ],
+                        "awaited": false,
+                        "chained": false,
+                        "optional": false,
+                        "resolvedTo": "function:8fba9ed2"
+                      }
+                    },
+                    {
+                      "id": "return:445d5202",
+                      "type": "return",
+                      "name": "return",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 54,
+                        "column": 4,
+                        "endLine": 54,
+                        "endColumn": 42
+                      },
+                      "children": [],
+                      "metadata": {
+                        "kind": "explicit",
+                        "value": "this.toResponseDto(user, null)"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "kind": "method",
+                    "async": true,
+                    "generator": false,
+                    "params": [],
+                    "returnType": "Promise<UserResponseDto>",
+                    "visibility": "public",
+                    "decorators": [],
+                    "errorMap": []
+                  }
+                }
+              ],
+              "metadata": {
+                "callee": "this.userService.createUser",
+                "arguments": [
+                  "dto"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false,
+                "resolvedTo": "function:577a5517"
+              }
+            },
+            {
+              "id": "return:1cd70059",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/controllers/users.controller.ts",
+                "line": 32,
+                "column": 4,
+                "endLine": 32,
+                "endColumn": 44
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "this.userService.createUser(dto)"
+              }
+            }
+          ],
+          "metadata": {
+            "method": "POST",
+            "path": "/users",
+            "framework": "nest",
+            "middleware": [
+              "HttpCode(HttpStatus.CREATED)"
+            ],
+            "controller": "UsersController",
+            "request": {
+              "body": [
+                {
+                  "name": "dto",
+                  "type": "CreateUserDto",
+                  "required": true
+                }
+              ],
+              "bodyType": "CreateUserDto"
+            },
+            "responses": [],
+            "handlerFnId": "function:6bc9ded8"
+          },
+          "raw": "async createUser(@Body() dto: CreateUserDto): Promise<UserResponseDto> {\n    return this.userService.createUser(dto);\n  }"
+        }
+      ],
+      "functions": [
+        {
+          "id": "function:ac11dca8",
+          "type": "function",
+          "name": "bootstrap",
+          "location": {
+            "file": "src/main.ts",
+            "line": 6,
+            "column": 0,
+            "endLine": 20,
+            "endColumn": 1
+          },
+          "children": [
+            {
+              "id": "dbProcess:1a7b201a",
+              "type": "dbProcess",
+              "name": "NestFactory.create",
+              "location": {
+                "file": "src/main.ts",
+                "line": 7,
+                "column": 20,
+                "endLine": 7,
+                "endColumn": 49
+              },
+              "children": [],
+              "metadata": {
+                "operation": "create",
+                "databaseId": "database:35595a70",
+                "tableId": "table:710a8d3a",
+                "orm": "sequelize"
+              },
+              "raw": "NestFactory.create(AppModule)"
+            },
+            {
+              "id": "call:1a7b201a",
+              "type": "call",
+              "name": "NestFactory.create",
+              "location": {
+                "file": "src/main.ts",
+                "line": 7,
+                "column": 20,
+                "endLine": 7,
+                "endColumn": 49
+              },
+              "children": [],
+              "metadata": {
+                "callee": "NestFactory.create",
+                "arguments": [
+                  "AppModule"
+                ],
+                "awaited": true,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "data:246d5458",
+              "type": "data",
+              "name": "app",
+              "location": {
+                "file": "src/main.ts",
+                "line": 7,
+                "column": 8,
+                "endLine": 7,
+                "endColumn": 49
+              },
+              "children": [],
+              "metadata": {
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "exported": false,
+                "initialValue": "await NestFactory.create(AppModule)"
+              }
+            },
+            {
+              "id": "call:9f95891d",
+              "type": "call",
+              "name": "app.useGlobalPipes",
+              "location": {
+                "file": "src/main.ts",
+                "line": 9,
+                "column": 2,
+                "endLine": 15,
+                "endColumn": 3
+              },
+              "children": [],
+              "metadata": {
+                "callee": "app.useGlobalPipes",
+                "arguments": [
+                  "new ValidationPipe({\n      whitelist: true,\n      forbidNonWhitelisted: true,\n      transform: true,\n    })"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "data:2d9d5943",
+              "type": "data",
+              "name": "port",
+              "location": {
+                "file": "src/main.ts",
+                "line": 17,
+                "column": 8,
+                "endLine": 17,
+                "endColumn": 39
+              },
+              "children": [],
+              "metadata": {
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "exported": false,
+                "initialValue": "process.env.PORT ?? 3001"
+              }
+            },
+            {
+              "id": "call:705a3961",
+              "type": "call",
+              "name": "app.listen",
+              "location": {
+                "file": "src/main.ts",
+                "line": 18,
+                "column": 8,
+                "endLine": 18,
+                "endColumn": 24
+              },
+              "children": [],
+              "metadata": {
+                "callee": "app.listen",
+                "arguments": [
+                  "port"
+                ],
+                "awaited": true,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "call:9e2887be",
+              "type": "call",
+              "name": "console.log",
+              "location": {
+                "file": "src/main.ts",
+                "line": 19,
+                "column": 2,
+                "endLine": 19,
+                "endColumn": 51
+              },
+              "children": [],
+              "metadata": {
+                "callee": "console.log",
+                "arguments": [
+                  "`Sample API running on port ${port}`"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "log:eeb313a0",
+              "type": "log",
+              "name": "console.log",
+              "location": {
+                "file": "src/main.ts",
+                "line": 19,
+                "column": 2,
+                "endLine": 19,
+                "endColumn": 51
+              },
+              "children": [],
+              "metadata": {
+                "level": "log",
+                "library": "console",
+                "message": "Sample API running on port ${port}",
+                "hasStructuredData": false,
+                "includesTraceId": false,
+                "includesUserId": false,
+                "includesRequestId": false,
+                "category": "general"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "declaration",
+            "async": true,
+            "generator": false,
+            "params": [],
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 14
+            },
+            "sideEffects": {
+              "performsIO": true,
+              "throwsUnhandled": true
+            }
+          }
+        },
+        {
+          "id": "function:1f90d27a",
+          "type": "function",
+          "name": "UsersController.getUser",
+          "location": {
+            "file": "src/users/controllers/users.controller.ts",
+            "line": 25,
+            "column": 2,
+            "endLine": 27,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "call:713d3db9",
+              "type": "call",
+              "name": "Param",
+              "location": {
+                "file": "src/users/controllers/users.controller.ts",
+                "line": 25,
+                "column": 17,
+                "endLine": 25,
+                "endColumn": 43
+              },
+              "children": [],
+              "metadata": {
+                "callee": "Param",
+                "arguments": [
+                  "'id'",
+                  "ParseUUIDPipe"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "call:ee7bed72",
+              "type": "call",
+              "name": "this.userService.getUserById",
+              "location": {
+                "file": "src/users/controllers/users.controller.ts",
+                "line": 26,
+                "column": 11,
+                "endLine": 26,
+                "endColumn": 43
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.userService.getUserById",
+                "arguments": [
+                  "id"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false,
+                "resolvedTo": "function:c8da48b5"
+              }
+            },
+            {
+              "id": "return:d1e8bb5a",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/controllers/users.controller.ts",
+                "line": 26,
+                "column": 4,
+                "endLine": 26,
+                "endColumn": 44
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "this.userService.getUserById(id)"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "method",
+            "async": true,
+            "generator": false,
+            "params": [
+              {
+                "name": "id",
+                "type": "string",
+                "optional": false,
+                "destructured": false,
+                "decorators": [
+                  "Param"
+                ]
+              }
+            ],
+            "returnType": "Promise<UserResponseDto>",
+            "visibility": "public",
+            "decorators": [
+              "HttpCode"
+            ],
+            "className": "UsersController",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 2
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        },
+        {
+          "id": "function:6bc9ded8",
+          "type": "function",
+          "name": "UsersController.createUser",
+          "location": {
+            "file": "src/users/controllers/users.controller.ts",
+            "line": 31,
+            "column": 2,
+            "endLine": 33,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "call:2dff7d8d",
+              "type": "call",
+              "name": "Body",
+              "location": {
+                "file": "src/users/controllers/users.controller.ts",
+                "line": 31,
+                "column": 20,
+                "endLine": 31,
+                "endColumn": 26
+              },
+              "children": [],
+              "metadata": {
+                "callee": "Body",
+                "arguments": [],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "call:0b36f73f",
+              "type": "call",
+              "name": "this.userService.createUser",
+              "location": {
+                "file": "src/users/controllers/users.controller.ts",
+                "line": 32,
+                "column": 11,
+                "endLine": 32,
+                "endColumn": 43
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.userService.createUser",
+                "arguments": [
+                  "dto"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "return:992860d3",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/controllers/users.controller.ts",
+                "line": 32,
+                "column": 4,
+                "endLine": 32,
+                "endColumn": 44
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "this.userService.createUser(dto)"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "method",
+            "async": true,
+            "generator": false,
+            "params": [
+              {
+                "name": "dto",
+                "type": "CreateUserDto",
+                "optional": false,
+                "destructured": false,
+                "decorators": [
+                  "Body"
+                ]
+              }
+            ],
+            "returnType": "Promise<UserResponseDto>",
+            "visibility": "public",
+            "decorators": [
+              "HttpCode"
+            ],
+            "className": "UsersController",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 2
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        },
+        {
+          "id": "function:970f8bc6",
+          "type": "function",
+          "name": "UsersController.constructor",
+          "location": {
+            "file": "src/users/controllers/users.controller.ts",
+            "line": 18,
+            "column": 2,
+            "endLine": 21,
+            "endColumn": 6
+          },
+          "children": [
+            {
+              "id": "call:7d47acdd",
+              "type": "call",
+              "name": "Inject",
+              "location": {
+                "file": "src/users/controllers/users.controller.ts",
+                "line": 19,
+                "column": 5,
+                "endLine": 19,
+                "endColumn": 25
+              },
+              "children": [],
+              "metadata": {
+                "callee": "Inject",
+                "arguments": [
+                  "USER_SERVICE"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "constructor",
+            "async": false,
+            "generator": false,
+            "params": [
+              {
+                "name": "userService",
+                "type": "IUserService",
+                "optional": false,
+                "destructured": false,
+                "decorators": [
+                  "Inject"
+                ]
+              }
+            ],
+            "className": "UsersController",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 3
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        },
+        {
+          "id": "function:2da4902d",
+          "type": "function",
+          "name": "UserResponseDto.constructor",
+          "location": {
+            "file": "src/users/dto/user-response.dto.ts",
+            "line": 10,
+            "column": 2,
+            "endLine": 12,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "call:f88cbc75",
+              "type": "call",
+              "name": "Object.assign",
+              "location": {
+                "file": "src/users/dto/user-response.dto.ts",
+                "line": 11,
+                "column": 4,
+                "endLine": 11,
+                "endColumn": 32
+              },
+              "children": [],
+              "metadata": {
+                "callee": "Object.assign",
+                "arguments": [
+                  "this",
+                  "partial"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "constructor",
+            "async": false,
+            "generator": false,
+            "params": [
+              {
+                "name": "partial",
+                "type": "Partial<UserResponseDto>",
+                "optional": false,
+                "destructured": false
+              }
+            ],
+            "className": "UserResponseDto",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 2
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        },
+        {
+          "id": "function:d12bd401",
+          "type": "function",
+          "name": "UserRepository.constructor",
+          "location": {
+            "file": "src/users/repositories/user.repository.ts",
+            "line": 10,
+            "column": 2,
+            "endLine": 13,
+            "endColumn": 6
+          },
+          "children": [
+            {
+              "id": "call:06452480",
+              "type": "call",
+              "name": "InjectRepository",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 11,
+                "column": 5,
+                "endLine": 11,
+                "endColumn": 27
+              },
+              "children": [],
+              "metadata": {
+                "callee": "InjectRepository",
+                "arguments": [
+                  "User"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "constructor",
+            "async": false,
+            "generator": false,
+            "params": [
+              {
+                "name": "ormRepo",
+                "type": "Repository<User>",
+                "optional": false,
+                "destructured": false,
+                "decorators": [
+                  "InjectRepository"
+                ]
+              }
+            ],
+            "className": "UserRepository",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 3
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        },
+        {
+          "id": "function:326f680d",
+          "type": "function",
+          "name": "UserRepository.findById",
+          "location": {
+            "file": "src/users/repositories/user.repository.ts",
+            "line": 15,
+            "column": 2,
+            "endLine": 17,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "dbProcess:87961735",
+              "type": "dbProcess",
+              "name": "orm.findOne",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 16,
+                "column": 11,
+                "endLine": 16,
+                "endColumn": 50
+              },
+              "children": [],
+              "metadata": {
+                "operation": "findFirst",
+                "databaseId": "database:6b897987",
+                "tableId": "table:ef64dcf0",
+                "orm": "typeorm"
+              },
+              "raw": "this.ormRepo.findOne({ where: { id } })"
+            },
+            {
+              "id": "call:e0f5d09d",
+              "type": "call",
+              "name": "this.ormRepo.findOne",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 16,
+                "column": 11,
+                "endLine": 16,
+                "endColumn": 50
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.ormRepo.findOne",
+                "arguments": [
+                  "{ where: { id } }"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "return:3c472f6b",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 16,
+                "column": 4,
+                "endLine": 16,
+                "endColumn": 51
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "this.ormRepo.findOne({ where: { id } })"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "method",
+            "async": true,
+            "generator": false,
+            "params": [
+              {
+                "name": "id",
+                "type": "string",
+                "optional": false,
+                "destructured": false
+              }
+            ],
+            "returnType": "Promise<User | null>",
+            "className": "UserRepository",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 2
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        },
+        {
+          "id": "function:0a55c6a8",
+          "type": "function",
+          "name": "UserRepository.findByEmail",
+          "location": {
+            "file": "src/users/repositories/user.repository.ts",
+            "line": 19,
+            "column": 2,
+            "endLine": 21,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "dbProcess:2255050c",
+              "type": "dbProcess",
+              "name": "orm.findOne",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 20,
+                "column": 11,
+                "endLine": 20,
+                "endColumn": 53
+              },
+              "children": [],
+              "metadata": {
+                "operation": "findFirst",
+                "databaseId": "database:6b897987",
+                "tableId": "table:ef64dcf0",
+                "orm": "typeorm"
+              },
+              "raw": "this.ormRepo.findOne({ where: { email } })"
+            },
+            {
+              "id": "call:78722563",
+              "type": "call",
+              "name": "this.ormRepo.findOne",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 20,
+                "column": 11,
+                "endLine": 20,
+                "endColumn": 53
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.ormRepo.findOne",
+                "arguments": [
+                  "{ where: { email } }"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "return:ff84c0a3",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 20,
+                "column": 4,
+                "endLine": 20,
+                "endColumn": 54
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "this.ormRepo.findOne({ where: { email } })"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "method",
+            "async": true,
+            "generator": false,
+            "params": [
+              {
+                "name": "email",
+                "type": "string",
+                "optional": false,
+                "destructured": false
+              }
+            ],
+            "returnType": "Promise<User | null>",
+            "className": "UserRepository",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 2
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        },
+        {
+          "id": "function:78eda1e2",
+          "type": "function",
+          "name": "UserRepository.findAll",
+          "location": {
+            "file": "src/users/repositories/user.repository.ts",
+            "line": 23,
+            "column": 2,
+            "endLine": 30,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "data:cdb5ba1d",
+              "type": "data",
+              "name": "skip",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 24,
+                "column": 10,
+                "endLine": 24,
+                "endColumn": 35
+              },
+              "children": [],
+              "metadata": {
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "exported": false,
+                "initialValue": "(page - 1) * limit"
+              }
+            },
+            {
+              "id": "dbProcess:2a630855",
+              "type": "dbProcess",
+              "name": "orm.find",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 25,
+                "column": 11,
+                "endLine": 29,
+                "endColumn": 6
+              },
+              "children": [],
+              "metadata": {
+                "operation": "findMany",
+                "databaseId": "database:6b897987",
+                "tableId": "table:ef64dcf0",
+                "orm": "typeorm"
+              },
+              "raw": "this.ormRepo.find({\n      skip,\n      take: limit,\n      order: { createdAt: 'DESC' },\n    })"
+            },
+            {
+              "id": "call:1ab6a491",
+              "type": "call",
+              "name": "this.ormRepo.find",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 25,
+                "column": 11,
+                "endLine": 29,
+                "endColumn": 6
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.ormRepo.find",
+                "arguments": [
+                  "{\n      skip,\n      take: limit,\n      order: { createdAt: 'DESC' },\n    }"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "return:a8da2e53",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 25,
+                "column": 4,
+                "endLine": 29,
+                "endColumn": 7
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "this.ormRepo.find({\n      skip,\n      take: limit,\n      order: { createdAt: 'DESC' },\n    })"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "method",
+            "async": true,
+            "generator": false,
+            "params": [
+              {
+                "name": "page",
+                "type": "number",
+                "optional": false,
+                "destructured": false
+              },
+              {
+                "name": "limit",
+                "type": "number",
+                "optional": false,
+                "destructured": false
+              }
+            ],
+            "returnType": "Promise<User[]>",
+            "className": "UserRepository",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 7
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        },
+        {
+          "id": "function:95c5dd34",
+          "type": "function",
+          "name": "UserRepository.create",
+          "location": {
+            "file": "src/users/repositories/user.repository.ts",
+            "line": 32,
+            "column": 2,
+            "endLine": 39,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "dbProcess:9819778d",
+              "type": "dbProcess",
+              "name": "ormRepo.create",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 33,
+                "column": 17,
+                "endLine": 37,
+                "endColumn": 6
+              },
+              "children": [],
+              "metadata": {
+                "operation": "create",
+                "databaseId": "database:6f94de6b",
+                "tableId": "table:8958f291",
+                "orm": "prisma"
+              },
+              "raw": "this.ormRepo.create({\n      name: dto.name,\n      email: dto.email,\n      isActive: true,\n    })"
+            },
+            {
+              "id": "call:6e64f010",
+              "type": "call",
+              "name": "this.ormRepo.create",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 33,
+                "column": 17,
+                "endLine": 37,
+                "endColumn": 6
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.ormRepo.create",
+                "arguments": [
+                  "{\n      name: dto.name,\n      email: dto.email,\n      isActive: true,\n    }"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "data:13d7fb1c",
+              "type": "data",
+              "name": "user",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 33,
+                "column": 10,
+                "endLine": 37,
+                "endColumn": 6
+              },
+              "children": [],
+              "metadata": {
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "exported": false,
+                "initialValue": "this.ormRepo.create({\n      name: dto.name,\n      email: dto.email,\n      isActive: true,\n    })"
+              }
+            },
+            {
+              "id": "dbProcess:582bcc16",
+              "type": "dbProcess",
+              "name": "orm.save",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 38,
+                "column": 11,
+                "endLine": 38,
+                "endColumn": 34
+              },
+              "children": [],
+              "metadata": {
+                "operation": "upsert",
+                "databaseId": "database:6b897987",
+                "tableId": "table:ef64dcf0",
+                "orm": "typeorm"
+              },
+              "raw": "this.ormRepo.save(user)"
+            },
+            {
+              "id": "call:61af9923",
+              "type": "call",
+              "name": "this.ormRepo.save",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 38,
+                "column": 11,
+                "endLine": 38,
+                "endColumn": 34
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.ormRepo.save",
+                "arguments": [
+                  "user"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false,
+                "resolvedTo": "function:722e6d05"
+              }
+            },
+            {
+              "id": "return:67f3b477",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 38,
+                "column": 4,
+                "endLine": 38,
+                "endColumn": 35
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "this.ormRepo.save(user)"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "method",
+            "async": true,
+            "generator": false,
+            "params": [
+              {
+                "name": "dto",
+                "type": "CreateUserDto",
+                "optional": false,
+                "destructured": false
+              }
+            ],
+            "returnType": "Promise<User>",
+            "className": "UserRepository",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 7
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        },
+        {
+          "id": "function:722e6d05",
+          "type": "function",
+          "name": "UserRepository.save",
+          "location": {
+            "file": "src/users/repositories/user.repository.ts",
+            "line": 41,
+            "column": 2,
+            "endLine": 43,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "dbProcess:11358b8a",
+              "type": "dbProcess",
+              "name": "orm.save",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 42,
+                "column": 11,
+                "endLine": 42,
+                "endColumn": 34
+              },
+              "children": [],
+              "metadata": {
+                "operation": "upsert",
+                "databaseId": "database:6b897987",
+                "tableId": "table:ef64dcf0",
+                "orm": "typeorm"
+              },
+              "raw": "this.ormRepo.save(user)"
+            },
+            {
+              "id": "call:01fd1b02",
+              "type": "call",
+              "name": "this.ormRepo.save",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 42,
+                "column": 11,
+                "endLine": 42,
+                "endColumn": 34
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.ormRepo.save",
+                "arguments": [
+                  "user"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "return:6ebf39de",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/repositories/user.repository.ts",
+                "line": 42,
+                "column": 4,
+                "endLine": 42,
+                "endColumn": 35
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "this.ormRepo.save(user)"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "method",
+            "async": true,
+            "generator": false,
+            "params": [
+              {
+                "name": "user",
+                "type": "User",
+                "optional": false,
+                "destructured": false
+              }
+            ],
+            "returnType": "Promise<User>",
+            "className": "UserRepository",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 2
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        },
+        {
+          "id": "function:d2d5cd3a",
+          "type": "function",
+          "name": "GithubClient.fetchProfile",
+          "location": {
+            "file": "src/users/services/github.client.ts",
+            "line": 11,
+            "column": 2,
+            "endLine": 39,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "flowControl:5c87427b",
+              "type": "flowControl",
+              "name": "try",
+              "location": {
+                "file": "src/users/services/github.client.ts",
+                "line": 12,
+                "column": 4,
+                "endLine": 38,
+                "endColumn": 5
+              },
+              "children": [
+                {
+                  "id": "externalCall:670b1845",
+                  "type": "externalCall",
+                  "name": "GET /users/:param",
+                  "location": {
+                    "file": "src/users/services/github.client.ts",
+                    "line": 13,
+                    "column": 29,
+                    "endLine": 19,
+                    "endColumn": 8
+                  },
+                  "children": [],
+                  "raw": "axios.get(`${this.baseUrl}/users/${username}`, {\n        headers: {\n          Accept: 'application/vnd.github.v3+json',\n          'User-Agent': 'sample-api/1.0',\n        },\n        timeout: 5000,\n      })",
+                  "metadata": {
+                    "method": "GET",
+                    "path": "/users/:param",
+                    "pathNormalized": "/users/:param",
+                    "httpClient": "axios",
+                    "mergeStatus": "unresolvable"
+                  }
+                },
+                {
+                  "id": "call:cffb8be0",
+                  "type": "call",
+                  "name": "axios.get",
+                  "location": {
+                    "file": "src/users/services/github.client.ts",
+                    "line": 13,
+                    "column": 29,
+                    "endLine": 19,
+                    "endColumn": 8
+                  },
+                  "children": [],
+                  "metadata": {
+                    "callee": "axios.get",
+                    "arguments": [
+                      "`${this.baseUrl}/users/${username}`",
+                      "{\n        headers: {\n          Accept: 'application/vnd.github.v3+json',\n          'User-Agent': 'sample-api/1.0',\n        },\n        timeout: 5000,\n      }"
+                    ],
+                    "awaited": true,
+                    "chained": false,
+                    "optional": false
+                  }
+                },
+                {
+                  "id": "data:70bf28fd",
+                  "type": "data",
+                  "name": "response",
+                  "location": {
+                    "file": "src/users/services/github.client.ts",
+                    "line": 13,
+                    "column": 12,
+                    "endLine": 19,
+                    "endColumn": 8
+                  },
+                  "children": [],
+                  "metadata": {
+                    "kind": "constant",
+                    "mutable": false,
+                    "scope": "local",
+                    "exported": false,
+                    "initialValue": "await axios.get(`${this.baseUrl}/users/${username}`, {\n        headers: {\n          Accept: 'application/vnd.github.v3+json',\n          'User-Agent': 'sample-api/1.0',\n        },\n        timeout: 5000"
+                  }
+                },
+                {
+                  "id": "data:a1a9d3f8",
+                  "type": "data",
+                  "name": "data",
+                  "location": {
+                    "file": "src/users/services/github.client.ts",
+                    "line": 21,
+                    "column": 12,
+                    "endLine": 21,
+                    "endColumn": 32
+                  },
+                  "children": [],
+                  "metadata": {
+                    "kind": "constant",
+                    "mutable": false,
+                    "scope": "local",
+                    "exported": false,
+                    "initialValue": "response.data"
+                  }
+                },
+                {
+                  "id": "return:d2defed5",
+                  "type": "return",
+                  "name": "return",
+                  "location": {
+                    "file": "src/users/services/github.client.ts",
+                    "line": 23,
+                    "column": 6,
+                    "endLine": 28,
+                    "endColumn": 8
+                  },
+                  "children": [],
+                  "metadata": {
+                    "kind": "explicit",
+                    "value": "{\n        login: data.login,\n        publicRepos: data.public_repos,\n        followers: data.followers,\n        avatarUrl: data.avatar_url,\n      }"
+                  }
+                },
+                {
+                  "id": "flowControl:4d1aad5a",
+                  "type": "flowControl",
+                  "name": "catch (error)",
+                  "location": {
+                    "file": "src/users/services/github.client.ts",
+                    "line": 29,
+                    "column": 6,
+                    "endLine": 38,
+                    "endColumn": 5
+                  },
+                  "children": [
+                    {
+                      "id": "flowControl:66b8951b",
+                      "type": "flowControl",
+                      "name": "if ((axios.isAxiosError(error)))",
+                      "location": {
+                        "file": "src/users/services/github.client.ts",
+                        "line": 30,
+                        "column": 6,
+                        "endLine": 36,
+                        "endColumn": 7
+                      },
+                      "children": [
+                        {
+                          "id": "call:9d6d7337",
+                          "type": "call",
+                          "name": "axios.isAxiosError",
+                          "location": {
+                            "file": "src/users/services/github.client.ts",
+                            "line": 30,
+                            "column": 10,
+                            "endLine": 30,
+                            "endColumn": 35
+                          },
+                          "children": [],
+                          "metadata": {
+                            "callee": "axios.isAxiosError",
+                            "arguments": [
+                              "error"
+                            ],
+                            "awaited": false,
+                            "chained": false,
+                            "optional": false
+                          }
+                        },
+                        {
+                          "id": "flowControl:4f6a22a7",
+                          "type": "flowControl",
+                          "name": "if ((error.response?.status === 404))",
+                          "location": {
+                            "file": "src/users/services/github.client.ts",
+                            "line": 31,
+                            "column": 8,
+                            "endLine": 34,
+                            "endColumn": 9
+                          },
+                          "children": [
+                            {
+                              "id": "call:72355319",
+                              "type": "call",
+                              "name": "this.logger.warn",
+                              "location": {
+                                "file": "src/users/services/github.client.ts",
+                                "line": 32,
+                                "column": 10,
+                                "endLine": 32,
+                                "endColumn": 64
+                              },
+                              "children": [],
+                              "metadata": {
+                                "callee": "this.logger.warn",
+                                "arguments": [
+                                  "`GitHub user not found: ${username}`"
+                                ],
+                                "awaited": false,
+                                "chained": false,
+                                "optional": false
+                              }
+                            },
+                            {
+                              "id": "log:11a0025e",
+                              "type": "log",
+                              "name": "this.logger.warn",
+                              "location": {
+                                "file": "src/users/services/github.client.ts",
+                                "line": 32,
+                                "column": 10,
+                                "endLine": 32,
+                                "endColumn": 64
+                              },
+                              "children": [],
+                              "metadata": {
+                                "level": "warn",
+                                "library": "custom",
+                                "message": "GitHub user not found: ${username}",
+                                "hasStructuredData": false,
+                                "includesTraceId": false,
+                                "includesUserId": false,
+                                "includesRequestId": false,
+                                "category": "general"
+                              }
+                            },
+                            {
+                              "id": "return:94fa1449",
+                              "type": "return",
+                              "name": "return",
+                              "location": {
+                                "file": "src/users/services/github.client.ts",
+                                "line": 33,
+                                "column": 10,
+                                "endLine": 33,
+                                "endColumn": 22
+                              },
+                              "children": [],
+                              "metadata": {
+                                "kind": "explicit",
+                                "value": "null"
+                              }
+                            }
+                          ],
+                          "metadata": {
+                            "kind": "if",
+                            "condition": "(error.response?.status === 404)",
+                            "branches": [
+                              {
+                                "label": "then",
+                                "children": []
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "id": "call:4770c5e0",
+                          "type": "call",
+                          "name": "this.logger.error",
+                          "location": {
+                            "file": "src/users/services/github.client.ts",
+                            "line": 35,
+                            "column": 8,
+                            "endLine": 35,
+                            "endColumn": 63
+                          },
+                          "children": [],
+                          "metadata": {
+                            "callee": "this.logger.error",
+                            "arguments": [
+                              "`GitHub API error: ${error.message}`"
+                            ],
+                            "awaited": false,
+                            "chained": false,
+                            "optional": false
+                          }
+                        },
+                        {
+                          "id": "log:f211a124",
+                          "type": "log",
+                          "name": "this.logger.error",
+                          "location": {
+                            "file": "src/users/services/github.client.ts",
+                            "line": 35,
+                            "column": 8,
+                            "endLine": 35,
+                            "endColumn": 63
+                          },
+                          "children": [],
+                          "metadata": {
+                            "level": "error",
+                            "library": "custom",
+                            "message": "GitHub API error: ${error.message}",
+                            "hasStructuredData": false,
+                            "includesTraceId": false,
+                            "includesUserId": false,
+                            "includesRequestId": false,
+                            "category": "error"
+                          }
+                        }
+                      ],
+                      "metadata": {
+                        "kind": "if",
+                        "condition": "(axios.isAxiosError(error))",
+                        "branches": [
+                          {
+                            "label": "then",
+                            "children": []
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "id": "return:6aca7d05",
+                      "type": "return",
+                      "name": "return",
+                      "location": {
+                        "file": "src/users/services/github.client.ts",
+                        "line": 37,
+                        "column": 6,
+                        "endLine": 37,
+                        "endColumn": 18
+                      },
+                      "children": [],
+                      "metadata": {
+                        "kind": "explicit",
+                        "value": "null"
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "kind": "catch",
+                    "condition": "error"
+                  }
+                }
+              ],
+              "metadata": {
+                "kind": "try"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "method",
+            "async": true,
+            "generator": false,
+            "params": [
+              {
+                "name": "username",
+                "type": "string",
+                "optional": false,
+                "destructured": false
+              }
+            ],
+            "returnType": "Promise<GithubProfileDto | null>",
+            "className": "GithubClient",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 4,
+              "linesOfCode": 28
+            },
+            "sideEffects": {
+              "performsIO": true,
+              "throwsUnhandled": false
+            },
+            "inferredReturnShape": [
+              {
+                "name": "login",
+                "type": "unknown",
+                "required": true
+              },
+              {
+                "name": "publicRepos",
+                "type": "unknown",
+                "required": true
+              },
+              {
+                "name": "followers",
+                "type": "unknown",
+                "required": true
+              },
+              {
+                "name": "avatarUrl",
+                "type": "unknown",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "function:bd1faa8e",
+          "type": "function",
+          "name": "UserService.constructor",
+          "location": {
+            "file": "src/users/services/user.service.ts",
+            "line": 13,
+            "column": 2,
+            "endLine": 18,
+            "endColumn": 6
+          },
+          "children": [
+            {
+              "id": "call:c552bad4",
+              "type": "call",
+              "name": "Inject",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 14,
+                "column": 5,
+                "endLine": 14,
+                "endColumn": 28
+              },
+              "children": [],
+              "metadata": {
+                "callee": "Inject",
+                "arguments": [
+                  "USER_REPOSITORY"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "call:1fa25592",
+              "type": "call",
+              "name": "Inject",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 16,
+                "column": 5,
+                "endLine": 16,
+                "endColumn": 26
+              },
+              "children": [],
+              "metadata": {
+                "callee": "Inject",
+                "arguments": [
+                  "GITHUB_CLIENT"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "constructor",
+            "async": false,
+            "generator": false,
+            "params": [
+              {
+                "name": "userRepository",
+                "type": "IUserRepository",
+                "optional": false,
+                "destructured": false,
+                "decorators": [
+                  "Inject"
+                ]
+              },
+              {
+                "name": "githubClient",
+                "type": "IGithubClient",
+                "optional": false,
+                "destructured": false,
+                "decorators": [
+                  "Inject"
+                ]
+              }
+            ],
+            "className": "UserService",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 5
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        },
+        {
+          "id": "function:c8da48b5",
+          "type": "function",
+          "name": "UserService.getUserById",
+          "location": {
+            "file": "src/users/services/user.service.ts",
+            "line": 20,
+            "column": 2,
+            "endLine": 40,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "call:125b91b1",
+              "type": "call",
+              "name": "this.userRepository.findById",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 21,
+                "column": 23,
+                "endLine": 21,
+                "endColumn": 55
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.userRepository.findById",
+                "arguments": [
+                  "id"
+                ],
+                "awaited": true,
+                "chained": false,
+                "optional": false,
+                "resolvedTo": "function:326f680d"
+              }
+            },
+            {
+              "id": "data:8270d13d",
+              "type": "data",
+              "name": "user",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 21,
+                "column": 10,
+                "endLine": 21,
+                "endColumn": 55
+              },
+              "children": [],
+              "metadata": {
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "exported": false,
+                "initialValue": "await this.userRepository.findById(id)"
+              }
+            },
+            {
+              "id": "flowControl:c84d9c9d",
+              "type": "flowControl",
+              "name": "if ((!user))",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 23,
+                "column": 4,
+                "endLine": 25,
+                "endColumn": 5
+              },
+              "children": [
+                {
+                  "id": "throw:02f09d8e",
+                  "type": "throw",
+                  "name": "throw NotFoundException",
+                  "location": {
+                    "file": "src/users/services/user.service.ts",
+                    "line": 24,
+                    "column": 6,
+                    "endLine": 24,
+                    "endColumn": 68
+                  },
+                  "children": [],
+                  "metadata": {
+                    "kind": "throw",
+                    "errorClass": "NotFoundException",
+                    "message": "User with id \"${id}\" not found",
+                    "httpStatus": 404,
+                    "propagates": true
+                  }
+                }
+              ],
+              "metadata": {
+                "kind": "if",
+                "condition": "(!user)",
+                "branches": [
+                  {
+                    "label": "then",
+                    "children": []
+                  }
+                ]
+              }
+            },
+            {
+              "id": "flowControl:b43f27de",
+              "type": "flowControl",
+              "name": "if ((!user.isActive))",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 27,
+                "column": 4,
+                "endLine": 29,
+                "endColumn": 5
+              },
+              "children": [
+                {
+                  "id": "throw:1b0b91c3",
+                  "type": "throw",
+                  "name": "throw NotFoundException",
+                  "location": {
+                    "file": "src/users/services/user.service.ts",
+                    "line": 28,
+                    "column": 6,
+                    "endLine": 28,
+                    "endColumn": 70
+                  },
+                  "children": [],
+                  "metadata": {
+                    "kind": "throw",
+                    "errorClass": "NotFoundException",
+                    "message": "User with id \"${id}\" is inactive",
+                    "httpStatus": 404,
+                    "propagates": true
+                  }
+                }
+              ],
+              "metadata": {
+                "kind": "if",
+                "condition": "(!user.isActive)",
+                "branches": [
+                  {
+                    "label": "then",
+                    "children": []
+                  }
+                ]
+              }
+            },
+            {
+              "id": "call:c36e074d",
+              "type": "call",
+              "name": "this.extractGithubUsername",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 31,
+                "column": 27,
+                "endLine": 31,
+                "endColumn": 65
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.extractGithubUsername",
+                "arguments": [
+                  "user.email"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false,
+                "resolvedTo": "function:47281633"
+              }
+            },
+            {
+              "id": "data:537d0e34",
+              "type": "data",
+              "name": "githubUsername",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 31,
+                "column": 10,
+                "endLine": 31,
+                "endColumn": 65
+              },
+              "children": [],
+              "metadata": {
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "exported": false,
+                "initialValue": "this.extractGithubUsername(user.email)"
+              }
+            },
+            {
+              "id": "call:2d0b4122",
+              "type": "call",
+              "name": "this.githubClient.fetchProfile",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 32,
+                "column": 32,
+                "endLine": 32,
+                "endColumn": 78
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.githubClient.fetchProfile",
+                "arguments": [
+                  "githubUsername"
+                ],
+                "awaited": true,
+                "chained": false,
+                "optional": false,
+                "resolvedTo": "function:d2d5cd3a"
+              }
+            },
+            {
+              "id": "data:75e3eeef",
+              "type": "data",
+              "name": "githubProfile",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 32,
+                "column": 10,
+                "endLine": 32,
+                "endColumn": 78
+              },
+              "children": [],
+              "metadata": {
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "exported": false,
+                "initialValue": "await this.githubClient.fetchProfile(githubUsername)"
+              }
+            },
+            {
+              "id": "flowControl:848bed52",
+              "type": "flowControl",
+              "name": "if ((githubProfile))",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 34,
+                "column": 4,
+                "endLine": 37,
+                "endColumn": 5
+              },
+              "children": [
+                {
+                  "id": "process:ea0280c0",
+                  "type": "process",
+                  "name": "user.avatarUrl = githubProfile.avatarUrl",
+                  "location": {
+                    "file": "src/users/services/user.service.ts",
+                    "line": 35,
+                    "column": 6,
+                    "endLine": 35,
+                    "endColumn": 46
+                  },
+                  "children": [],
+                  "metadata": {
+                    "kind": "assignment",
+                    "operator": "=",
+                    "description": "user.avatarUrl = githubProfile.avatarUrl"
+                  }
+                },
+                {
+                  "id": "dbProcess:df729704",
+                  "type": "dbProcess",
+                  "name": "user.save",
+                  "location": {
+                    "file": "src/users/services/user.service.ts",
+                    "line": 36,
+                    "column": 12,
+                    "endLine": 36,
+                    "endColumn": 42
+                  },
+                  "children": [],
+                  "metadata": {
+                    "operation": "upsert",
+                    "databaseId": "database:6b897987",
+                    "tableId": "table:e81438cb",
+                    "orm": "typeorm"
+                  },
+                  "raw": "this.userRepository.save(user)"
+                },
+                {
+                  "id": "call:a4d15fc9",
+                  "type": "call",
+                  "name": "this.userRepository.save",
+                  "location": {
+                    "file": "src/users/services/user.service.ts",
+                    "line": 36,
+                    "column": 12,
+                    "endLine": 36,
+                    "endColumn": 42
+                  },
+                  "children": [],
+                  "metadata": {
+                    "callee": "this.userRepository.save",
+                    "arguments": [
+                      "user"
+                    ],
+                    "awaited": true,
+                    "chained": false,
+                    "optional": false,
+                    "resolvedTo": "function:722e6d05"
+                  }
+                }
+              ],
+              "metadata": {
+                "kind": "if",
+                "condition": "(githubProfile)",
+                "branches": [
+                  {
+                    "label": "then",
+                    "children": []
+                  }
+                ]
+              }
+            },
+            {
+              "id": "call:2f61d057",
+              "type": "call",
+              "name": "this.toResponseDto",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 39,
+                "column": 11,
+                "endLine": 39,
+                "endColumn": 50
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.toResponseDto",
+                "arguments": [
+                  "user",
+                  "githubProfile"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false,
+                "resolvedTo": "function:04bbaabc"
+              }
+            },
+            {
+              "id": "return:29498849",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 39,
+                "column": 4,
+                "endLine": 39,
+                "endColumn": 51
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "this.toResponseDto(user, githubProfile)"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "method",
+            "async": true,
+            "generator": false,
+            "params": [
+              {
+                "name": "id",
+                "type": "string",
+                "optional": false,
+                "destructured": false
+              }
+            ],
+            "returnType": "Promise<UserResponseDto>",
+            "className": "UserService",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 4,
+              "linesOfCode": 20
+            },
+            "sideEffects": {
+              "performsIO": true,
+              "throwsUnhandled": true
+            }
+          }
+        },
+        {
+          "id": "function:a53bd968",
+          "type": "function",
+          "name": "UserService.createUser",
+          "location": {
+            "file": "src/users/services/user.service.ts",
+            "line": 42,
+            "column": 2,
+            "endLine": 55,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "call:da626dfd",
+              "type": "call",
+              "name": "this.userRepository.findByEmail",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 43,
+                "column": 27,
+                "endLine": 43,
+                "endColumn": 69
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.userRepository.findByEmail",
+                "arguments": [
+                  "dto.email"
+                ],
+                "awaited": true,
+                "chained": false,
+                "optional": false,
+                "resolvedTo": "function:0a55c6a8"
+              }
+            },
+            {
+              "id": "data:b81c6f17",
+              "type": "data",
+              "name": "existing",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 43,
+                "column": 10,
+                "endLine": 43,
+                "endColumn": 69
+              },
+              "children": [],
+              "metadata": {
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "exported": false,
+                "initialValue": "await this.userRepository.findByEmail(dto.email)"
+              }
+            },
+            {
+              "id": "flowControl:50d98180",
+              "type": "flowControl",
+              "name": "if ((existing))",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 45,
+                "column": 4,
+                "endLine": 47,
+                "endColumn": 5
+              },
+              "children": [
+                {
+                  "id": "throw:3783807d",
+                  "type": "throw",
+                  "name": "throw ConflictException",
+                  "location": {
+                    "file": "src/users/services/user.service.ts",
+                    "line": 46,
+                    "column": 6,
+                    "endLine": 46,
+                    "endColumn": 80
+                  },
+                  "children": [],
+                  "metadata": {
+                    "kind": "throw",
+                    "errorClass": "ConflictException",
+                    "message": "Email \"${dto.email}\" is already registered",
+                    "httpStatus": 409,
+                    "propagates": true
+                  }
+                }
+              ],
+              "metadata": {
+                "kind": "if",
+                "condition": "(existing)",
+                "branches": [
+                  {
+                    "label": "then",
+                    "children": []
+                  }
+                ]
+              }
+            },
+            {
+              "id": "call:7e94bfa3",
+              "type": "call",
+              "name": "this.validateUserData",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 49,
+                "column": 22,
+                "endLine": 49,
+                "endColumn": 48
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.validateUserData",
+                "arguments": [
+                  "dto"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false,
+                "resolvedTo": "function:c3f41f45"
+              }
+            },
+            {
+              "id": "data:db4198dd",
+              "type": "data",
+              "name": "validated",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 49,
+                "column": 10,
+                "endLine": 49,
+                "endColumn": 48
+              },
+              "children": [],
+              "metadata": {
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "exported": false,
+                "initialValue": "this.validateUserData(dto)"
+              }
+            },
+            {
+              "id": "dbProcess:198c6fea",
+              "type": "dbProcess",
+              "name": "userRepository.create",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 50,
+                "column": 23,
+                "endLine": 50,
+                "endColumn": 60
+              },
+              "children": [],
+              "metadata": {
+                "operation": "create",
+                "databaseId": "database:6f94de6b",
+                "tableId": "table:5d196b49",
+                "orm": "prisma"
+              },
+              "raw": "this.userRepository.create(validated)"
+            },
+            {
+              "id": "call:8299b2e7",
+              "type": "call",
+              "name": "this.userRepository.create",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 50,
+                "column": 23,
+                "endLine": 50,
+                "endColumn": 60
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.userRepository.create",
+                "arguments": [
+                  "validated"
+                ],
+                "awaited": true,
+                "chained": false,
+                "optional": false,
+                "resolvedTo": "function:95c5dd34"
+              }
+            },
+            {
+              "id": "data:0f7b1ae2",
+              "type": "data",
+              "name": "user",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 50,
+                "column": 10,
+                "endLine": 50,
+                "endColumn": 60
+              },
+              "children": [],
+              "metadata": {
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "exported": false,
+                "initialValue": "await this.userRepository.create(validated)"
+              }
+            },
+            {
+              "id": "call:8487afe1",
+              "type": "call",
+              "name": "this.logger.log",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 52,
+                "column": 4,
+                "endLine": 52,
+                "endColumn": 63
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.logger.log",
+                "arguments": [
+                  "`User created: ${user.id} (${user.email})`"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "log:1335fde1",
+              "type": "log",
+              "name": "this.logger.log",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 52,
+                "column": 4,
+                "endLine": 52,
+                "endColumn": 63
+              },
+              "children": [],
+              "metadata": {
+                "level": "log",
+                "library": "custom",
+                "message": "User created: ${user.id} (${user.email})",
+                "hasStructuredData": false,
+                "includesTraceId": false,
+                "includesUserId": false,
+                "includesRequestId": false,
+                "category": "general"
+              }
+            },
+            {
+              "id": "call:1abd9755",
+              "type": "call",
+              "name": "this.toResponseDto",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 54,
+                "column": 11,
+                "endLine": 54,
+                "endColumn": 41
+              },
+              "children": [],
+              "metadata": {
+                "callee": "this.toResponseDto",
+                "arguments": [
+                  "user",
+                  "null"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false,
+                "resolvedTo": "function:04bbaabc"
+              }
+            },
+            {
+              "id": "return:048224ad",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 54,
+                "column": 4,
+                "endLine": 54,
+                "endColumn": 42
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "this.toResponseDto(user, null)"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "method",
+            "async": true,
+            "generator": false,
+            "params": [
+              {
+                "name": "dto",
+                "type": "CreateUserDto",
+                "optional": false,
+                "destructured": false
+              }
+            ],
+            "returnType": "Promise<UserResponseDto>",
+            "className": "UserService",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 2,
+              "linesOfCode": 13
+            },
+            "sideEffects": {
+              "performsIO": true,
+              "throwsUnhandled": true
+            }
+          }
+        },
+        {
+          "id": "function:c3f41f45",
+          "type": "function",
+          "name": "UserService.validateUserData",
+          "location": {
+            "file": "src/users/services/user.service.ts",
+            "line": 57,
+            "column": 2,
+            "endLine": 72,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "data:2a36a6dd",
+              "type": "data",
+              "name": "sanitized",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 58,
+                "column": 10,
+                "endLine": 58,
+                "endColumn": 32
+              },
+              "children": [],
+              "metadata": {
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "exported": false,
+                "initialValue": "{ ...dto }"
+              }
+            },
+            {
+              "id": "call:a6ab51a7",
+              "type": "call",
+              "name": "sanitized.name.trim",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 60,
+                "column": 21,
+                "endLine": 60,
+                "endColumn": 42
+              },
+              "children": [],
+              "metadata": {
+                "callee": "sanitized.name.trim",
+                "arguments": [],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "process:85b50616",
+              "type": "process",
+              "name": "sanitized.name = sanitized.name.trim()",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 60,
+                "column": 4,
+                "endLine": 60,
+                "endColumn": 42
+              },
+              "children": [],
+              "metadata": {
+                "kind": "assignment",
+                "operator": "=",
+                "description": "sanitized.name = sanitized.name.trim()"
+              }
+            },
+            {
+              "id": "call:5d0662cd",
+              "type": "call",
+              "name": "sanitized.email.toLowerCase().trim",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 61,
+                "column": 22,
+                "endLine": 61,
+                "endColumn": 58
+              },
+              "children": [],
+              "metadata": {
+                "callee": "sanitized.email.toLowerCase().trim",
+                "arguments": [],
+                "awaited": false,
+                "chained": true,
+                "optional": false
+              }
+            },
+            {
+              "id": "call:e6856015",
+              "type": "call",
+              "name": "sanitized.email.toLowerCase",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 61,
+                "column": 22,
+                "endLine": 61,
+                "endColumn": 51
+              },
+              "children": [],
+              "metadata": {
+                "callee": "sanitized.email.toLowerCase",
+                "arguments": [],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "process:a799a320",
+              "type": "process",
+              "name": "sanitized.email = sanitized.email.toLowerCase().trim()",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 61,
+                "column": 4,
+                "endLine": 61,
+                "endColumn": 58
+              },
+              "children": [],
+              "metadata": {
+                "kind": "assignment",
+                "operator": "=",
+                "description": "sanitized.email = sanitized.email.toLowerCase().trim()"
+              }
+            },
+            {
+              "id": "data:e1c74472",
+              "type": "data",
+              "name": "forbiddenDomains",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 63,
+                "column": 10,
+                "endLine": 63,
+                "endColumn": 82
+              },
+              "children": [],
+              "metadata": {
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "exported": false,
+                "initialValue": "['tempmail.com', 'throwaway.email', 'mailinator.com']"
+              }
+            },
+            {
+              "id": "flowControl:e69fe994",
+              "type": "flowControl",
+              "name": "for_in",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 65,
+                "column": 4,
+                "endLine": 69,
+                "endColumn": 5
+              },
+              "children": [
+                {
+                  "id": "flowControl:9bce7a11",
+                  "type": "flowControl",
+                  "name": "if ((sanitized.email.endsWith(`@${domain}`)))",
+                  "location": {
+                    "file": "src/users/services/user.service.ts",
+                    "line": 66,
+                    "column": 6,
+                    "endLine": 68,
+                    "endColumn": 7
+                  },
+                  "children": [
+                    {
+                      "id": "call:bf890f36",
+                      "type": "call",
+                      "name": "sanitized.email.endsWith",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 66,
+                        "column": 10,
+                        "endLine": 66,
+                        "endColumn": 48
+                      },
+                      "children": [],
+                      "metadata": {
+                        "callee": "sanitized.email.endsWith",
+                        "arguments": [
+                          "`@${domain}`"
+                        ],
+                        "awaited": false,
+                        "chained": false,
+                        "optional": false
+                      }
+                    },
+                    {
+                      "id": "throw:93ce99f0",
+                      "type": "throw",
+                      "name": "throw ConflictException",
+                      "location": {
+                        "file": "src/users/services/user.service.ts",
+                        "line": 67,
+                        "column": 8,
+                        "endLine": 67,
+                        "endColumn": 64
+                      },
+                      "children": [],
+                      "metadata": {
+                        "kind": "throw",
+                        "errorClass": "ConflictException",
+                        "message": "Email domain not allowed",
+                        "httpStatus": 409,
+                        "propagates": true
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "kind": "if",
+                    "condition": "(sanitized.email.endsWith(`@${domain}`))",
+                    "branches": [
+                      {
+                        "label": "then",
+                        "children": []
+                      }
+                    ]
+                  }
+                }
+              ],
+              "metadata": {
+                "kind": "for_in",
+                "condition": "domain in forbiddenDomains"
+              }
+            },
+            {
+              "id": "return:43efeb7d",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 71,
+                "column": 4,
+                "endLine": 71,
+                "endColumn": 21
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "sanitized"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "method",
+            "async": false,
+            "generator": false,
+            "params": [
+              {
+                "name": "dto",
+                "type": "CreateUserDto",
+                "optional": false,
+                "destructured": false
+              }
+            ],
+            "returnType": "CreateUserDto",
+            "visibility": "private",
+            "className": "UserService",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 3,
+              "linesOfCode": 15
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        },
+        {
+          "id": "function:47281633",
+          "type": "function",
+          "name": "UserService.extractGithubUsername",
+          "location": {
+            "file": "src/users/services/user.service.ts",
+            "line": 74,
+            "column": 2,
+            "endLine": 77,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "call:9e43148d",
+              "type": "call",
+              "name": "email.split",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 75,
+                "column": 22,
+                "endLine": 75,
+                "endColumn": 38
+              },
+              "children": [],
+              "metadata": {
+                "callee": "email.split",
+                "arguments": [
+                  "'@'"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "data:b2cb54f3",
+              "type": "data",
+              "name": "localPart",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 75,
+                "column": 10,
+                "endLine": 75,
+                "endColumn": 41
+              },
+              "children": [],
+              "metadata": {
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "exported": false,
+                "initialValue": "email.split('@')[0]"
+              }
+            },
+            {
+              "id": "call:6b6926ab",
+              "type": "call",
+              "name": "localPart.replace",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 76,
+                "column": 11,
+                "endLine": 76,
+                "endColumn": 51
+              },
+              "children": [],
+              "metadata": {
+                "callee": "localPart.replace",
+                "arguments": [
+                  "/[^a-zA-Z0-9-]/g",
+                  "'-'"
+                ],
+                "awaited": false,
+                "chained": false,
+                "optional": false
+              }
+            },
+            {
+              "id": "return:1e838757",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 76,
+                "column": 4,
+                "endLine": 76,
+                "endColumn": 52
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "localPart.replace(/[^a-zA-Z0-9-]/g, '-')"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "method",
+            "async": false,
+            "generator": false,
+            "params": [
+              {
+                "name": "email",
+                "type": "string",
+                "optional": false,
+                "destructured": false
+              }
+            ],
+            "returnType": "string",
+            "visibility": "private",
+            "className": "UserService",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 3
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        },
+        {
+          "id": "function:04bbaabc",
+          "type": "function",
+          "name": "UserService.toResponseDto",
+          "location": {
+            "file": "src/users/services/user.service.ts",
+            "line": 79,
+            "column": 2,
+            "endLine": 89,
+            "endColumn": 3
+          },
+          "children": [
+            {
+              "id": "return:b645b221",
+              "type": "return",
+              "name": "return",
+              "location": {
+                "file": "src/users/services/user.service.ts",
+                "line": 80,
+                "column": 4,
+                "endLine": 88,
+                "endColumn": 7
+              },
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "new UserResponseDto({\n      id: user.id,\n      name: user.name,\n      email: user.email,\n      avatarUrl: user.avatarUrl ?? null,\n      isActive: user.isActive,\n      githubProfile: githubProfile ?? n"
+              }
+            }
+          ],
+          "metadata": {
+            "kind": "method",
+            "async": false,
+            "generator": false,
+            "params": [
+              {
+                "name": "user",
+                "type": "User",
+                "optional": false,
+                "destructured": false
+              },
+              {
+                "name": "githubProfile",
+                "type": "any",
+                "optional": false,
+                "destructured": false
+              }
+            ],
+            "returnType": "UserResponseDto",
+            "visibility": "private",
+            "className": "UserService",
+            "errorMap": [],
+            "complexity": {
+              "cyclomatic": 1,
+              "linesOfCode": 10
+            },
+            "sideEffects": {
+              "performsIO": false,
+              "throwsUnhandled": false
+            }
+          }
+        }
+      ],
+      "globals": [
+        {
+          "id": "data:9940056a",
+          "type": "data",
+          "name": "IGithubClient",
+          "location": {
+            "file": "src/users/interfaces/github-client.interface.ts",
+            "line": 5,
+            "column": 7,
+            "endLine": 7,
+            "endColumn": 1
+          },
+          "children": [],
+          "metadata": {
+            "kind": "interface",
+            "mutable": false,
+            "scope": "module",
+            "exported": true,
+            "fields": [
+              {
+                "name": "fetchProfile",
+                "type": "Promise<GithubProfileDto | null>",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "data:dce0f1cd",
+          "type": "data",
+          "name": "GITHUB_CLIENT",
+          "location": {
+            "file": "src/users/interfaces/github-client.interface.ts",
+            "line": 3,
+            "column": 13,
+            "endLine": 3,
+            "endColumn": 44
+          },
+          "children": [],
+          "metadata": {
+            "kind": "constant",
+            "mutable": false,
+            "scope": "module",
+            "exported": true,
+            "initialValue": "'GITHUB_CLIENT'"
+          }
+        },
+        {
+          "id": "data:96827483",
+          "type": "data",
+          "name": "IUserRepository",
+          "location": {
+            "file": "src/users/interfaces/user-repository.interface.ts",
+            "line": 6,
+            "column": 7,
+            "endLine": 12,
+            "endColumn": 1
+          },
+          "children": [],
+          "metadata": {
+            "kind": "interface",
+            "mutable": false,
+            "scope": "module",
+            "exported": true,
+            "fields": [
+              {
+                "name": "findById",
+                "type": "Promise<User | null>",
+                "required": true
+              },
+              {
+                "name": "findByEmail",
+                "type": "Promise<User | null>",
+                "required": true
+              },
+              {
+                "name": "findAll",
+                "type": "Promise<User[]>",
+                "required": true
+              },
+              {
+                "name": "create",
+                "type": "Promise<User>",
+                "required": true
+              },
+              {
+                "name": "save",
+                "type": "Promise<User>",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "data:7aced1cd",
+          "type": "data",
+          "name": "USER_REPOSITORY",
+          "location": {
+            "file": "src/users/interfaces/user-repository.interface.ts",
+            "line": 4,
+            "column": 13,
+            "endLine": 4,
+            "endColumn": 48
+          },
+          "children": [],
+          "metadata": {
+            "kind": "constant",
+            "mutable": false,
+            "scope": "module",
+            "exported": true,
+            "initialValue": "'USER_REPOSITORY'"
+          }
+        },
+        {
+          "id": "data:7a31ab6a",
+          "type": "data",
+          "name": "IUserService",
+          "location": {
+            "file": "src/users/interfaces/user-service.interface.ts",
+            "line": 6,
+            "column": 7,
+            "endLine": 9,
+            "endColumn": 1
+          },
+          "children": [],
+          "metadata": {
+            "kind": "interface",
+            "mutable": false,
+            "scope": "module",
+            "exported": true,
+            "fields": [
+              {
+                "name": "getUserById",
+                "type": "Promise<UserResponseDto>",
+                "required": true
+              },
+              {
+                "name": "createUser",
+                "type": "Promise<UserResponseDto>",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "data:c61865f8",
+          "type": "data",
+          "name": "USER_SERVICE",
+          "location": {
+            "file": "src/users/interfaces/user-service.interface.ts",
+            "line": 4,
+            "column": 13,
+            "endLine": 4,
+            "endColumn": 42
+          },
+          "children": [],
+          "metadata": {
+            "kind": "constant",
+            "mutable": false,
+            "scope": "module",
+            "exported": true,
+            "initialValue": "'USER_SERVICE'"
+          }
+        }
+      ],
+      "dependencies": []
+    }
+  ],
+  "databases": [
+    {
+      "id": "database:35595a70",
+      "type": "database",
+      "name": "sequelize",
+      "metadata": {
+        "engine": "postgresql",
+        "category": "sql",
+        "connectionAlias": "sequelize"
+      },
+      "tables": [
+        {
+          "id": "table:710a8d3a",
+          "type": "table",
+          "name": "NestFactory",
+          "metadata": {
+            "kind": "table",
+            "databaseId": "database:35595a70",
+            "entityName": "NestFactory",
+            "hasTimestamps": true,
+            "hasSoftDelete": false,
+            "columns": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "database:6f94de6b",
+      "type": "database",
+      "name": "prisma",
+      "metadata": {
+        "engine": "postgresql",
+        "category": "sql",
+        "connectionAlias": "prisma"
+      },
+      "tables": [
+        {
+          "id": "table:8958f291",
+          "type": "table",
+          "name": "ormRepo",
+          "metadata": {
+            "kind": "table",
+            "databaseId": "database:6f94de6b",
+            "entityName": "OrmRepo",
+            "hasTimestamps": false,
+            "hasSoftDelete": false,
+            "columns": []
+          }
+        },
+        {
+          "id": "table:5d196b49",
+          "type": "table",
+          "name": "userRepository",
+          "metadata": {
+            "kind": "table",
+            "databaseId": "database:6f94de6b",
+            "entityName": "UserRepository",
+            "hasTimestamps": false,
+            "hasSoftDelete": false,
+            "columns": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "database:6b897987",
+      "type": "database",
+      "name": "typeorm",
+      "metadata": {
+        "engine": "postgresql",
+        "category": "sql",
+        "connectionAlias": "typeorm"
+      },
+      "tables": [
+        {
+          "id": "table:ef64dcf0",
+          "type": "table",
+          "name": "orm",
+          "metadata": {
+            "kind": "table",
+            "databaseId": "database:6b897987",
+            "entityName": "Orm",
+            "hasTimestamps": false,
+            "hasSoftDelete": false,
+            "columns": []
+          }
+        },
+        {
+          "id": "table:e81438cb",
+          "type": "table",
+          "name": "user",
+          "metadata": {
+            "kind": "table",
+            "databaseId": "database:6b897987",
+            "entityName": "User",
+            "hasTimestamps": false,
+            "hasSoftDelete": false,
+            "columns": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "database:6d64a5ee",
+      "type": "database",
+      "name": "sqlite",
+      "metadata": {
+        "engine": "sqlite",
+        "category": "sql",
+        "connectionAlias": "sqlite"
+      },
+      "tables": []
+    }
+  ],
+  "storages": [],
+  "brokers": [],
+  "screens": [],
+  "edges": [
+    {
+      "source": "endpoint:1f90d27a",
+      "target": "function:1f90d27a",
+      "kind": "calls"
+    },
+    {
+      "source": "endpoint:6bc9ded8",
+      "target": "function:6bc9ded8",
+      "kind": "calls"
+    },
+    {
+      "source": "function:1f90d27a",
+      "target": "function:c8da48b5",
+      "kind": "calls"
+    },
+    {
+      "source": "function:95c5dd34",
+      "target": "function:722e6d05",
+      "kind": "calls"
+    },
+    {
+      "source": "function:c8da48b5",
+      "target": "function:326f680d",
+      "kind": "calls"
+    },
+    {
+      "source": "function:c8da48b5",
+      "target": "function:47281633",
+      "kind": "calls"
+    },
+    {
+      "source": "function:c8da48b5",
+      "target": "function:d2d5cd3a",
+      "kind": "calls"
+    },
+    {
+      "source": "function:c8da48b5",
+      "target": "function:722e6d05",
+      "kind": "calls"
+    },
+    {
+      "source": "function:c8da48b5",
+      "target": "function:04bbaabc",
+      "kind": "calls"
+    },
+    {
+      "source": "function:a53bd968",
+      "target": "function:0a55c6a8",
+      "kind": "calls"
+    },
+    {
+      "source": "function:a53bd968",
+      "target": "function:c3f41f45",
+      "kind": "calls"
+    },
+    {
+      "source": "function:a53bd968",
+      "target": "function:95c5dd34",
+      "kind": "calls"
+    },
+    {
+      "source": "function:a53bd968",
+      "target": "function:04bbaabc",
+      "kind": "calls"
+    }
+  ],
+  "errorFlow": {
+    "paths": [
+      {
+        "origin": {
+          "nodeId": "throw:ff777b4a",
+          "errorClass": "NotFoundException",
+          "context": "src/users/services/user.service.ts"
+        },
+        "propagation": [],
+        "resolution": {
+          "kind": "unhandled",
+          "httpStatus": 404
+        }
+      },
+      {
+        "origin": {
+          "nodeId": "throw:4acf0c1b",
+          "errorClass": "NotFoundException",
+          "context": "src/users/services/user.service.ts"
+        },
+        "propagation": [],
+        "resolution": {
+          "kind": "unhandled",
+          "httpStatus": 404
+        }
+      },
+      {
+        "origin": {
+          "nodeId": "throw:278c4243",
+          "errorClass": "ConflictException",
+          "context": "src/users/services/user.service.ts"
+        },
+        "propagation": [],
+        "resolution": {
+          "kind": "unhandled",
+          "httpStatus": 409
+        }
+      },
+      {
+        "origin": {
+          "nodeId": "throw:79d3735b",
+          "errorClass": "ConflictException",
+          "context": "src/users/services/user.service.ts"
+        },
+        "propagation": [],
+        "resolution": {
+          "kind": "unhandled",
+          "httpStatus": 409
+        }
+      },
+      {
+        "origin": {
+          "nodeId": "throw:02f09d8e",
+          "errorClass": "NotFoundException",
+          "context": "src/users/services/user.service.ts"
+        },
+        "propagation": [],
+        "resolution": {
+          "kind": "unhandled",
+          "httpStatus": 404
+        }
+      },
+      {
+        "origin": {
+          "nodeId": "throw:1b0b91c3",
+          "errorClass": "NotFoundException",
+          "context": "src/users/services/user.service.ts"
+        },
+        "propagation": [],
+        "resolution": {
+          "kind": "unhandled",
+          "httpStatus": 404
+        }
+      },
+      {
+        "origin": {
+          "nodeId": "throw:3783807d",
+          "errorClass": "ConflictException",
+          "context": "src/users/services/user.service.ts"
+        },
+        "propagation": [],
+        "resolution": {
+          "kind": "unhandled",
+          "httpStatus": 409
+        }
+      },
+      {
+        "origin": {
+          "nodeId": "throw:93ce99f0",
+          "errorClass": "ConflictException",
+          "context": "src/users/services/user.service.ts"
+        },
+        "propagation": [],
+        "resolution": {
+          "kind": "unhandled",
+          "httpStatus": 409
+        }
+      }
+    ],
+    "globalHandlers": []
+  },
+  "observability": {
+    "logs": [
+      {
+        "id": "log:eeb313a0",
+        "type": "log",
+        "name": "console.log",
+        "location": {
+          "file": "src/main.ts",
+          "line": 19,
+          "column": 2,
+          "endLine": 19,
+          "endColumn": 51
+        },
+        "children": [],
+        "metadata": {
+          "level": "log",
+          "library": "console",
+          "message": "Sample API running on port ${port}",
+          "hasStructuredData": false,
+          "includesTraceId": false,
+          "includesUserId": false,
+          "includesRequestId": false,
+          "category": "general"
+        }
+      },
+      {
+        "id": "log:11a0025e",
+        "type": "log",
+        "name": "this.logger.warn",
+        "location": {
+          "file": "src/users/services/github.client.ts",
+          "line": 32,
+          "column": 10,
+          "endLine": 32,
+          "endColumn": 64
+        },
+        "children": [],
+        "metadata": {
+          "level": "warn",
+          "library": "custom",
+          "message": "GitHub user not found: ${username}",
+          "hasStructuredData": false,
+          "includesTraceId": false,
+          "includesUserId": false,
+          "includesRequestId": false,
+          "category": "general"
+        }
+      },
+      {
+        "id": "log:f211a124",
+        "type": "log",
+        "name": "this.logger.error",
+        "location": {
+          "file": "src/users/services/github.client.ts",
+          "line": 35,
+          "column": 8,
+          "endLine": 35,
+          "endColumn": 63
+        },
+        "children": [],
+        "metadata": {
+          "level": "error",
+          "library": "custom",
+          "message": "GitHub API error: ${error.message}",
+          "hasStructuredData": false,
+          "includesTraceId": false,
+          "includesUserId": false,
+          "includesRequestId": false,
+          "category": "error"
+        }
+      },
+      {
+        "id": "log:1335fde1",
+        "type": "log",
+        "name": "this.logger.log",
+        "location": {
+          "file": "src/users/services/user.service.ts",
+          "line": 52,
+          "column": 4,
+          "endLine": 52,
+          "endColumn": 63
+        },
+        "children": [],
+        "metadata": {
+          "level": "log",
+          "library": "custom",
+          "message": "User created: ${user.id} (${user.email})",
+          "hasStructuredData": false,
+          "includesTraceId": false,
+          "includesUserId": false,
+          "includesRequestId": false,
+          "category": "general"
+        }
+      }
+    ],
+    "telemetry": [],
+    "coverage": {
+      "endpointsTotal": 2,
+      "endpointsWithTracing": 0,
+      "dbQueriesTotal": 8,
+      "dbQueriesWithSpans": 0,
+      "errorsTotal": 0,
+      "errorsWithLogging": 0,
+      "screensWithAnalytics": 0,
+      "screensTotal": 0
+    }
+  },
+  "diagnostics": [
+    {
+      "level": "warning",
+      "message": "Function 'bootstrap' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/main.ts",
+        "line": 6,
+        "column": 0,
+        "endLine": 20,
+        "endColumn": 1
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Function 'UsersController.getUser' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/users/controllers/users.controller.ts",
+        "line": 25,
+        "column": 2,
+        "endLine": 27,
+        "endColumn": 3
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Function 'UsersController.createUser' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/users/controllers/users.controller.ts",
+        "line": 31,
+        "column": 2,
+        "endLine": 33,
+        "endColumn": 3
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Function 'UserRepository.findById' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/users/repositories/user.repository.ts",
+        "line": 15,
+        "column": 2,
+        "endLine": 17,
+        "endColumn": 3
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Function 'UserRepository.findByEmail' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/users/repositories/user.repository.ts",
+        "line": 19,
+        "column": 2,
+        "endLine": 21,
+        "endColumn": 3
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Function 'UserRepository.findAll' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/users/repositories/user.repository.ts",
+        "line": 23,
+        "column": 2,
+        "endLine": 30,
+        "endColumn": 3
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Function 'UserRepository.create' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/users/repositories/user.repository.ts",
+        "line": 32,
+        "column": 2,
+        "endLine": 39,
+        "endColumn": 3
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Function 'UserRepository.save' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/users/repositories/user.repository.ts",
+        "line": 41,
+        "column": 2,
+        "endLine": 43,
+        "endColumn": 3
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Function 'GithubClient.fetchProfile' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/users/services/github.client.ts",
+        "line": 11,
+        "column": 2,
+        "endLine": 39,
+        "endColumn": 3
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Function 'UserService.getUserById' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 20,
+        "column": 2,
+        "endLine": 40,
+        "endColumn": 3
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Function 'UserService.createUser' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 42,
+        "column": 2,
+        "endLine": 55,
+        "endColumn": 3
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Function 'UserService.validateUserData' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 57,
+        "column": 2,
+        "endLine": 72,
+        "endColumn": 3
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Function 'UserService.extractGithubUsername' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 74,
+        "column": 2,
+        "endLine": 77,
+        "endColumn": 3
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Function 'UserService.toResponseDto' appears to be unused (no incoming calls detected).",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 79,
+        "column": 2,
+        "endLine": 89,
+        "endColumn": 3
+      },
+      "rule": "unused-function"
+    },
+    {
+      "level": "warning",
+      "message": "Variable 'app' is declared but never read.",
+      "location": {
+        "file": "src/main.ts",
+        "line": 7,
+        "column": 8,
+        "endLine": 7,
+        "endColumn": 49
+      },
+      "rule": "unused-variable"
+    },
+    {
+      "level": "warning",
+      "message": "Variable 'port' is declared but never read.",
+      "location": {
+        "file": "src/main.ts",
+        "line": 17,
+        "column": 8,
+        "endLine": 17,
+        "endColumn": 39
+      },
+      "rule": "unused-variable"
+    },
+    {
+      "level": "warning",
+      "message": "Variable 'skip' is declared but never read.",
+      "location": {
+        "file": "src/users/repositories/user.repository.ts",
+        "line": 24,
+        "column": 10,
+        "endLine": 24,
+        "endColumn": 35
+      },
+      "rule": "unused-variable"
+    },
+    {
+      "level": "warning",
+      "message": "Variable 'user' is declared but never read.",
+      "location": {
+        "file": "src/users/repositories/user.repository.ts",
+        "line": 33,
+        "column": 10,
+        "endLine": 37,
+        "endColumn": 6
+      },
+      "rule": "unused-variable"
+    },
+    {
+      "level": "warning",
+      "message": "Variable 'user' is declared but never read.",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 21,
+        "column": 10,
+        "endLine": 21,
+        "endColumn": 55
+      },
+      "rule": "unused-variable"
+    },
+    {
+      "level": "warning",
+      "message": "Variable 'githubUsername' is declared but never read.",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 31,
+        "column": 10,
+        "endLine": 31,
+        "endColumn": 65
+      },
+      "rule": "unused-variable"
+    },
+    {
+      "level": "warning",
+      "message": "Variable 'githubProfile' is declared but never read.",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 32,
+        "column": 10,
+        "endLine": 32,
+        "endColumn": 78
+      },
+      "rule": "unused-variable"
+    },
+    {
+      "level": "warning",
+      "message": "Variable 'existing' is declared but never read.",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 43,
+        "column": 10,
+        "endLine": 43,
+        "endColumn": 69
+      },
+      "rule": "unused-variable"
+    },
+    {
+      "level": "warning",
+      "message": "Variable 'validated' is declared but never read.",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 49,
+        "column": 10,
+        "endLine": 49,
+        "endColumn": 48
+      },
+      "rule": "unused-variable"
+    },
+    {
+      "level": "warning",
+      "message": "Variable 'user' is declared but never read.",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 50,
+        "column": 10,
+        "endLine": 50,
+        "endColumn": 60
+      },
+      "rule": "unused-variable"
+    },
+    {
+      "level": "warning",
+      "message": "Variable 'sanitized' is declared but never read.",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 58,
+        "column": 10,
+        "endLine": 58,
+        "endColumn": 32
+      },
+      "rule": "unused-variable"
+    },
+    {
+      "level": "warning",
+      "message": "Variable 'forbiddenDomains' is declared but never read.",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 63,
+        "column": 10,
+        "endLine": 63,
+        "endColumn": 82
+      },
+      "rule": "unused-variable"
+    },
+    {
+      "level": "warning",
+      "message": "Variable 'localPart' is declared but never read.",
+      "location": {
+        "file": "src/users/services/user.service.ts",
+        "line": 75,
+        "column": 10,
+        "endLine": 75,
+        "endColumn": 41
+      },
+      "rule": "unused-variable"
+    }
+  ]
+}

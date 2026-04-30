@@ -25,3 +25,10 @@ export { extractHttpClients, normalizeHttpPath } from './extractors/ts/http-clie
 export { enrichService, computeResolvedDependencies } from './analysis/llm-enrichment';
 export type { EnrichmentConfig } from './analysis/llm-enrichment';
 export { runCrossServiceMerge, applyPendingMerges, writePendingMerges } from './analysis/service-merger';
+
+// Code-graph projection (deep flow trees for endpoints)
+export {
+  buildServiceFlowGraph,
+  findEndpointElement,
+  projectEndpointFlow,
+} from './projections/topology-projection';
