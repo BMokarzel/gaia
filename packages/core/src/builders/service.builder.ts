@@ -1,8 +1,11 @@
 import { basename } from 'path';
 import type { ServiceBoundary } from '../core/walker';
 import type { ServiceTechStack } from '../core/detector';
-import type { ServiceNode, EndpointNode, FunctionNode, DataNode, CodeNode, FlowControlNode } from '../types/topology';
-import { serviceId } from '../utils/id';
+import type {
+  ServiceNode, EndpointNode, FunctionNode, DataNode, CodeNode, FlowControlNode,
+  MiddlewareNode, MiddlewareDetail,
+} from '../types/topology';
+import { nodeId, serviceId } from '../utils/id';
 import { computeFunctionMetrics } from '../analysis/metrics';
 import type { ElementGraph } from '@topology/code-graph';
 import { findEndpointElement, projectEndpointFlow } from '../projections/topology-projection';
@@ -46,6 +49,12 @@ export function buildServiceNode(
     applyDeepFlowProjection(endpoints, flowGraph);
   }
 
+  // Materialize MiddlewareNode entries from `endpoint.metadata.middleware`
+  // and prepend them to `endpoint.children` so the flow tree shows the chain
+  // (guards/interceptors/pipes/filters or express middlewares) before the
+  // handler body. Done AFTER projection so the chain isn't overwritten.
+  prependMiddlewareNodes(endpoints, functions);
+
   return {
     id,
     type: 'service',
@@ -80,6 +89,66 @@ function applyDeepFlowProjection(endpoints: EndpointNode[], graph: ElementGraph)
       ep.children = projected;
     }
   }
+}
+
+/**
+ * Convert each `endpoint.metadata.middleware[]` entry into a `MiddlewareNode`
+ * and prepend the chain to `endpoint.children` in source order. Tries to wire
+ * `resolvedFnId` by name match against the service's FunctionNode list — for
+ * NestJS guards/pipes that happen to live in the same service this works;
+ * otherwise the field is left undefined (cross-service resolution is later).
+ */
+function prependMiddlewareNodes(
+  endpoints: EndpointNode[],
+  functions: FunctionNode[],
+): void {
+  if (functions.length === 0 && endpoints.every(ep => !ep.metadata.middleware?.length)) return;
+
+  // Index functions by trailing name segment (e.g. "AuthGuard" → handler)
+  // so middleware names can resolve when the class lives in the same service.
+  const fnByName = new Map<string, FunctionNode>();
+  for (const fn of functions) {
+    const last = fn.name.split('.').pop();
+    if (last) fnByName.set(last, fn);
+    fnByName.set(fn.name, fn);
+  }
+
+  for (const ep of endpoints) {
+    const chain = ep.metadata.middleware;
+    if (!chain || chain.length === 0) continue;
+
+    const mwNodes: MiddlewareNode[] = chain.map(detail => buildMiddlewareNode(detail, ep, fnByName));
+    ep.children = [...mwNodes, ...ep.children];
+  }
+}
+
+function buildMiddlewareNode(
+  detail: MiddlewareDetail,
+  ep: EndpointNode,
+  fnByName: Map<string, FunctionNode>,
+): MiddlewareNode {
+  const id = nodeId(
+    'middleware',
+    ep.location.file,
+    ep.location.line,
+    `${detail.kind}:${detail.name}:${detail.order}`,
+  );
+  const resolved = fnByName.get(detail.name);
+  return {
+    id,
+    type: 'middleware',
+    name: detail.name,
+    location: ep.location,
+    children: [],
+    metadata: {
+      kind: detail.kind,
+      framework: detail.framework,
+      name: detail.name,
+      order: detail.order,
+      source: detail.source,
+      resolvedFnId: resolved?.id,
+    },
+  };
 }
 
 /**

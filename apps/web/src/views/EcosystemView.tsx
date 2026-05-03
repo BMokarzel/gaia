@@ -38,6 +38,35 @@ function nodeRadius(inDegree: number, maxInDegree: number): number {
   return MIN_R + t * (MAX_R - MIN_R)
 }
 
+// ── Ownership color mode (Fase 3 UI) ────────────────────────────────
+// Deterministic owner → color mapping. djb2 hash → palette index so the
+// same owner gets the same color across reloads regardless of insertion
+// order. Palette uses theme accents to stay consistent with the rest of
+// the app; if the topology has more owners than palette entries, hashes
+// collide on color but never on identity.
+const OWNER_PALETTE = [
+  '#39ff6e', // accent-green
+  '#5fb3ff', // accent-blue
+  '#ff8c42', // accent-orange
+  '#b388ff', // accent-purple
+  '#ff5e7e', // accent-red
+  '#42d4d4', // accent-teal
+  '#ffd166', // amber
+  '#9aa5ff', // periwinkle
+]
+
+function djb2(str: string): number {
+  let h = 5381
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0
+  return Math.abs(h)
+}
+
+function ownerColor(ownerId: string): string {
+  return OWNER_PALETTE[djb2(ownerId) % OWNER_PALETTE.length]
+}
+
+type ColorMode = 'kind' | 'ownership'
+
 export function EcosystemView() {
   const {
     ecosystem, ecosystemStatus, ecosystemError,
@@ -51,6 +80,36 @@ export function EcosystemView() {
   const [zoom, setZoom] = useState(1)
   const [infoPanel, setInfoPanel] = useState<InfoPanel | null>(null)
   const [edgeInfoPanel, setEdgeInfoPanel] = useState<EdgeInfoPanel | null>(null)
+
+  // Ownership view state — persisted so toggling tabs preserves mode.
+  const [colorMode, setColorMode] = useState<ColorMode>(() => {
+    try { return (localStorage.getItem('gaia-eco-color-mode') as ColorMode) || 'kind' } catch { return 'kind' }
+  })
+  const [teamFilter, setTeamFilter] = useState<string>(() => {
+    try { return localStorage.getItem('gaia-eco-team-filter') || '' } catch { return '' }
+  })
+
+  const handleColorMode = useCallback((m: ColorMode) => {
+    setColorMode(m)
+    try { localStorage.setItem('gaia-eco-color-mode', m) } catch {}
+  }, [])
+  const handleTeamFilter = useCallback((t: string) => {
+    setTeamFilter(t)
+    try { localStorage.setItem('gaia-eco-team-filter', t) } catch {}
+  }, [])
+
+  // All distinct owners across the ecosystem — drives legend + filter dropdown.
+  const allOwners = React.useMemo(() => {
+    if (!ecosystem) return [] as { id: string; name: string }[]
+    const seen = new Map<string, string>()
+    for (const svc of ecosystem.services) {
+      for (const o of svc.owners ?? []) {
+        if (!seen.has(o.id)) seen.set(o.id, o.name)
+      }
+    }
+    return [...seen.entries()].map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [ecosystem])
 
   // Load ecosystem on mount
   useEffect(() => {
@@ -289,6 +348,79 @@ export function EcosystemView() {
     return () => { zp.destroy(); sim.stop() }
   }, [ecosystem]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Ownership styling pass (Fase 3 UI) ─────────────────────────
+  // Re-applied whenever ecosystem, colorMode or teamFilter changes.
+  // Updates fill/stroke per node and dims nodes outside the team filter.
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg || !ecosystem) return
+
+    const ownersByService = new Map<string, { id: string; name: string; kind: string }[]>()
+    for (const svc of ecosystem.services) ownersByService.set(svc.id, svc.owners ?? [])
+
+    svg.querySelectorAll<SVGGElement>('[data-id]').forEach(g => {
+      const id = g.getAttribute('data-id') ?? ''
+      const circle = g.querySelector('circle')
+      if (!circle) return
+
+      // Default kind-based palette
+      const isService = ownersByService.has(id)
+      let stroke = isService ? 'var(--accent-green)' : 'var(--accent-blue)'
+      let fill   = stroke
+
+      if (colorMode === 'ownership') {
+        const owners = ownersByService.get(id)
+        if (owners && owners.length > 0) {
+          // Dominant owner is first (updateEcosystem preserves order)
+          const dom = owners[0]
+          stroke = ownerColor(dom.id)
+          fill = stroke
+        } else if (isService) {
+          // Service without owners — neutral grey to stand out
+          stroke = 'var(--text-muted)'
+          fill = stroke
+        }
+      }
+
+      circle.setAttribute('stroke', stroke)
+      circle.setAttribute('fill', fill)
+
+      // Team filter — dim non-matching services. Databases follow their
+      // upstream services: a db is highlighted if ANY service depending on
+      // it matches the filter. We approximate by checking incoming edges.
+      let visible = true
+      if (teamFilter) {
+        if (isService) {
+          const owners = ownersByService.get(id) ?? []
+          visible = owners.some(o => o.id === teamFilter)
+        } else {
+          // Database — highlight if any source service matches.
+          visible = ecosystem.edges.some(e =>
+            e.to === id &&
+            (ownersByService.get(e.from) ?? []).some(o => o.id === teamFilter)
+          )
+        }
+      }
+      g.style.opacity = visible ? '1' : '0.18'
+    })
+
+    // Edges follow the same rule: dimmed if either endpoint is dimmed.
+    if (teamFilter) {
+      svg.querySelectorAll<SVGLineElement>('line').forEach(line => {
+        const src = line.getAttribute('data-src')
+        const tgt = line.getAttribute('data-tgt')
+        if (!src || !tgt) return
+        const srcMatch = (ownersByService.get(src) ?? []).some(o => o.id === teamFilter)
+        const tgtMatch = ownersByService.has(tgt)
+          ? (ownersByService.get(tgt) ?? []).some(o => o.id === teamFilter)
+          : srcMatch
+        line.style.opacity = srcMatch && tgtMatch ? '1' : '0.15'
+      })
+    } else {
+      svg.querySelectorAll<SVGLineElement>('line').forEach(line => { line.style.opacity = '1' })
+    }
+  }, [ecosystem, colorMode, teamFilter])
+
   // Reset edge/node highlights when selection cleared
   useEffect(() => {
     if (!highlightedNodeId) {
@@ -323,6 +455,46 @@ export function EcosystemView() {
   return (
     <div className={styles.container}>
       <svg ref={svgRef} className={styles.svg} viewBox="0 0 1200 800" />
+
+      {/* Ownership toolbar — only shown when there's something to color. */}
+      {ecosystem && allOwners.length > 0 && (
+        <div className={styles.toolbar}>
+          <span className={styles.toolbarLabel}>color:</span>
+          <button
+            className={`${styles.toolbarBtn} ${colorMode === 'kind' ? styles.toolbarBtnActive : ''}`}
+            onClick={() => handleColorMode('kind')}
+            title="Color by node kind (service / database)"
+          >kind</button>
+          <button
+            className={`${styles.toolbarBtn} ${colorMode === 'ownership' ? styles.toolbarBtnActive : ''}`}
+            onClick={() => handleColorMode('ownership')}
+            title="Color by owning team (CODEOWNERS)"
+          >ownership</button>
+          <span className={styles.toolbarLabel} style={{ marginLeft: 8 }}>team:</span>
+          <select
+            value={teamFilter}
+            onChange={(e) => handleTeamFilter(e.target.value)}
+            title="Highlight only services owned by this team"
+          >
+            <option value="">all</option>
+            {allOwners.map(o => (
+              <option key={o.id} value={o.id}>{o.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Owner legend — only meaningful in ownership color mode. */}
+      {ecosystem && colorMode === 'ownership' && allOwners.length > 0 && (
+        <div className={styles.ownerLegend}>
+          {allOwners.map(o => (
+            <div key={o.id}>
+              <span className={styles.ownerSwatch} style={{ background: ownerColor(o.id) }} />
+              <span>{o.name}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {!ecosystem && ecosystemStatus !== 'loading' && (
         <div className={styles.emptyState}>

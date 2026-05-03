@@ -1,0 +1,50 @@
+version: '3'
+
+tasks:
+  default:
+    cmds:
+      - task --list
+
+  api:dev:
+    desc: Run api service locally
+    dir: services/api
+    cmds:
+      - go run ./cmd/server
+
+  api:build:
+    desc: Build api service binary
+    dir: services/api
+    cmds:
+      - go build -o ../../bin/api ./cmd/server
+
+  api:test:
+    desc: Run api service tests
+    dir: services/api
+    cmds:
+      - go test ./...
+
+  api:fmt:
+    desc: Format Go sources in api service
+    dir: services/api
+    cmds:
+      - gofmt -l -w .
+
+  db:up:
+    desc: Start Postgres in background via compose
+    cmds:
+      - docker compose up -d postgres
+
+  db:down:
+    desc: Stop compose services
+    cmds:
+      - docker compose down
+
+  db:logs:
+    desc: Tail Postgres logs
+    cmds:
+      - docker compose logs -f postgres
+
+  db:psql:
+    desc: Open psql shell against the dev database
+    cmds:
+      - docker compose exec postgres psql -U gaia -d gaia

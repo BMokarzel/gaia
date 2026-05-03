@@ -20,6 +20,7 @@ import type {
   EnumMeta,
   BehavioralMeta,
   BranchMeta,
+  ConditionExpr,
   BranchSubBlockMeta,
   LoopMeta,
   LoopBodyMeta,
@@ -131,6 +132,7 @@ const CONTAINER_TYPES = new Set([
   'try_statement',
   'catch_clause',
   'finally_clause',
+  'else_clause',
   'statement_block',
   'expression_statement',
 ]);
@@ -234,7 +236,7 @@ export class TsAstWalker implements ASTWalker {
         return this.makeFromLexical(node, ctx);
 
       case 'if_statement':
-        return { element: this.makeBranch(node, parentId, 'if', ctx) };
+        return this.makeIfBranch(node, parentId, ctx);
       case 'switch_statement':
         return { element: this.makeBranch(node, parentId, 'switch', ctx) };
       case 'ternary_expression':
@@ -526,11 +528,13 @@ export class TsAstWalker implements ASTWalker {
     const isConst = node.children.some(c => c.type === 'const');
     const valueText = value?.text ?? '';
     const isAwait = value?.type === 'await_expression';
+    const sourceKind = classifyAssignSource(value);
     const meta: AssignSiteMeta = {
       targetText: target,
       valueText,
       isConst,
       isAwait,
+      sourceKind,
     };
     return {
       element: {
@@ -556,6 +560,7 @@ export class TsAstWalker implements ASTWalker {
         valueText: right?.text ?? '',
         isConst: false,
         isAwait: right?.type === 'await_expression',
+        sourceKind: classifyAssignSource(right),
       },
     };
   }
@@ -569,6 +574,7 @@ export class TsAstWalker implements ASTWalker {
     const conditionNode =
       node.childForFieldName('condition') ?? node.childForFieldName('value') ?? null;
     const conditionText = conditionNode?.text ?? '';
+    const conditionAst = conditionNode ? serializeConditionExpr(conditionNode) : undefined;
     const altNode = node.childForFieldName('alternative');
     const hasElse = !!altNode;
     const idx = ctx.branchIndexByParent.get(parentId) ?? 0;
@@ -578,7 +584,7 @@ export class TsAstWalker implements ASTWalker {
       kind: 'branch',
       location: this.locOf(ctx.file, node),
       name: conditionText.slice(0, 80),
-      meta: { branchKind, conditionText, hasElse, branchIndex: idx },
+      meta: { branchKind, conditionText, conditionAst, hasElse, branchIndex: idx },
     };
   }
 
@@ -593,6 +599,8 @@ export class TsAstWalker implements ASTWalker {
       label = v ? `case ${v}` : undefined;
     } else if (node.type === 'switch_default') {
       label = 'default';
+    } else {
+      label = kind === 'branch_then' ? 'then' : 'else';
     }
     return {
       id: this.idFor(ctx.file.path, node, kind),
@@ -601,6 +609,45 @@ export class TsAstWalker implements ASTWalker {
       name: label,
       meta: { label },
     };
+  }
+
+  /**
+   * if_statement → emit a `branch` element + explicit `branch_then`/`branch_else`
+   * sub-blocks, mirroring how switch_case/switch_default work. This gives the
+   * projection layer a stable structural pivot for `metadata.branches[]`.
+   *
+   * `else_clause` wraps the alternative in tree-sitter; we unwrap it so the
+   * else-body (which can itself be another `if_statement` for else-if chains)
+   * gets walked under the branch_else element.
+   */
+  private makeIfBranch(
+    node: SyntaxNode,
+    parentId: string,
+    ctx: WalkContext,
+  ): { element: Element; skipChildren: true } {
+    const branch = this.makeBranch(node, parentId, 'if', ctx);
+
+    const consequence = node.childForFieldName('consequence');
+    if (consequence) {
+      const thenEl = this.makeBranchSubBlock(consequence, 'branch_then', ctx);
+      ctx.elements.push(thenEl);
+      this.addContains(branch.id, thenEl.id, ctx);
+      this.descend(consequence, thenEl.id, ctx, false);
+    }
+
+    const altRaw = node.childForFieldName('alternative');
+    if (altRaw) {
+      // altRaw may be an else_clause that wraps the actual alternative, or
+      // the alternative statement itself (e.g. an inline `if (x) a else b`).
+      const altBody =
+        altRaw.type === 'else_clause' ? (altRaw.namedChildren[0] ?? altRaw) : altRaw;
+      const elseEl = this.makeBranchSubBlock(altBody, 'branch_else', ctx);
+      ctx.elements.push(elseEl);
+      this.addContains(branch.id, elseEl.id, ctx);
+      this.descend(altBody, elseEl.id, ctx, false);
+    }
+
+    return { element: branch, skipChildren: true };
   }
 
   private makeLoop(node: SyntaxNode, ctx: WalkContext): Element<LoopMeta> {
@@ -893,4 +940,236 @@ export class TsAstWalker implements ASTWalker {
 
   // Used to silence unused-import linter on ElementMeta in some targets
   private readonly _phantom?: ElementMeta;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Condition AST serializer
+//
+// Walks a tree-sitter expression node and produces a structured
+// ConditionExpr (subset only — see element.ts for the schema).
+// Anything we can't recognize collapses to { kind: 'unknown', text }.
+// ─────────────────────────────────────────────────────────────
+
+const COMPARISON_OPS = new Set(['===', '!==', '==', '!=', '<', '<=', '>', '>=']);
+const ARITHMETIC_OPS = new Set(['+', '-', '*', '/', '%']);
+const KEYWORD_BIN_OPS = new Set(['in', 'instanceof']);
+const LOGICAL_OPS    = new Set(['&&', '||', '??']);
+const UNARY_OPS      = new Set(['!', '-', '+', 'typeof', 'void']);
+
+export function serializeConditionExpr(node: SyntaxNode): ConditionExpr {
+  // Strip wrappers that don't change semantic value
+  switch (node.type) {
+    case 'parenthesized_expression': {
+      const inner = node.namedChildren[0];
+      return inner ? serializeConditionExpr(inner) : { kind: 'unknown', text: node.text };
+    }
+    case 'await_expression':
+    case 'non_null_expression': {
+      const inner = node.childForFieldName('argument') ?? node.namedChildren[0];
+      return inner ? serializeConditionExpr(inner) : { kind: 'unknown', text: node.text };
+    }
+    case 'as_expression':
+    case 'satisfies_expression':
+    case 'type_assertion': {
+      // value is the wrapped expression; type annotation is irrelevant for runtime
+      const inner = node.childForFieldName('value') ?? node.namedChildren[0];
+      return inner ? serializeConditionExpr(inner) : { kind: 'unknown', text: node.text };
+    }
+  }
+
+  switch (node.type) {
+    case 'identifier':
+    case 'shorthand_property_identifier':
+    case 'this':
+    case 'super':
+      return { kind: 'identifier', name: node.text };
+
+    case 'true':
+      return { kind: 'literal', value: true,  raw: node.text };
+    case 'false':
+      return { kind: 'literal', value: false, raw: node.text };
+    case 'null':
+      return { kind: 'literal', value: null,  raw: node.text };
+    case 'undefined':
+      return { kind: 'identifier', name: 'undefined' };
+    case 'number': {
+      const n = Number(node.text);
+      return { kind: 'literal', value: Number.isFinite(n) ? n : node.text, raw: node.text };
+    }
+    case 'string': {
+      // tree-sitter wraps the literal in quote tokens; strip them
+      const stripped = node.text.replace(/^['"`]|['"`]$/g, '');
+      return { kind: 'literal', value: stripped, raw: node.text };
+    }
+
+    case 'template_string': {
+      const quasis: string[] = [];
+      const expressions: ConditionExpr[] = [];
+      let pendingQuasi = '';
+      for (const child of node.children) {
+        if (child.type === 'template_substitution') {
+          quasis.push(pendingQuasi);
+          pendingQuasi = '';
+          const expr = child.namedChildren[0];
+          if (expr) expressions.push(serializeConditionExpr(expr));
+        } else if (child.type === 'string_fragment' || child.type === 'escape_sequence') {
+          pendingQuasi += child.text;
+        }
+      }
+      quasis.push(pendingQuasi);
+      return { kind: 'template', quasis, expressions };
+    }
+
+    case 'member_expression': {
+      const objectNode = node.childForFieldName('object');
+      const propNode   = node.childForFieldName('property');
+      if (!objectNode || !propNode) return { kind: 'unknown', text: node.text };
+      const optional = node.children.some(c => c.type === '?.' || c.type === 'optional_chain');
+      return {
+        kind: 'member',
+        object: serializeConditionExpr(objectNode),
+        property: propNode.text,
+        optional,
+      };
+    }
+
+    case 'subscript_expression': {
+      const objectNode = node.childForFieldName('object');
+      const indexNode  = node.childForFieldName('index');
+      if (!objectNode || !indexNode) return { kind: 'unknown', text: node.text };
+      // Stringify the index when it's a literal so callers can still match by name
+      const indexAst = serializeConditionExpr(indexNode);
+      const propStr = indexAst.kind === 'literal' ? String(indexAst.value) : indexNode.text;
+      return {
+        kind: 'member',
+        object: serializeConditionExpr(objectNode),
+        property: propStr,
+        computed: true,
+      };
+    }
+
+    case 'binary_expression': {
+      const left  = node.childForFieldName('left');
+      const right = node.childForFieldName('right');
+      const opNode = node.childForFieldName('operator');
+      if (!left || !right || !opNode) return { kind: 'unknown', text: node.text };
+      const op = opNode.text;
+      if (LOGICAL_OPS.has(op)) {
+        return {
+          kind: 'logical',
+          op: op as '&&' | '||' | '??',
+          left:  serializeConditionExpr(left),
+          right: serializeConditionExpr(right),
+        };
+      }
+      if (COMPARISON_OPS.has(op) || ARITHMETIC_OPS.has(op) || KEYWORD_BIN_OPS.has(op)) {
+        return {
+          kind: 'binary',
+          op: op as ConditionExpr extends { kind: 'binary'; op: infer O } ? O : never,
+          left:  serializeConditionExpr(left),
+          right: serializeConditionExpr(right),
+        };
+      }
+      return { kind: 'unknown', text: node.text };
+    }
+
+    case 'unary_expression': {
+      const opNode  = node.childForFieldName('operator');
+      const argNode = node.childForFieldName('argument');
+      if (!opNode || !argNode) return { kind: 'unknown', text: node.text };
+      const op = opNode.text;
+      if (!UNARY_OPS.has(op)) return { kind: 'unknown', text: node.text };
+      return {
+        kind: 'unary',
+        op: op as '!' | '-' | '+' | 'typeof' | 'void',
+        operand: serializeConditionExpr(argNode),
+      };
+    }
+
+    case 'call_expression': {
+      const calleeNode = node.childForFieldName('function');
+      const argsNode   = node.childForFieldName('arguments');
+      if (!calleeNode) return { kind: 'unknown', text: node.text };
+      const args: ConditionExpr[] = [];
+      if (argsNode) {
+        for (const child of argsNode.namedChildren) {
+          // skip type arguments (parsed as type_arguments node)
+          if (child.type === 'type_arguments') continue;
+          args.push(serializeConditionExpr(child));
+        }
+      }
+      return {
+        kind: 'call',
+        callee: serializeConditionExpr(calleeNode),
+        args,
+      };
+    }
+  }
+
+  return { kind: 'unknown', text: node.text };
+}
+
+/**
+ * Classify the RHS of a `const x = …` / `x = …` assignment so consumers can
+ * tell at a glance whether the variable holds a literal, a call result, an
+ * awaited call result, or something opaque. Used by the simulator to decide
+ * how to evaluate references to `x` further down the flow.
+ *
+ * Mirrors `AssignSiteMeta['sourceKind']`. Returns `undefined` for missing nodes.
+ */
+function classifyAssignSource(node: SyntaxNode | null | undefined): AssignSiteMeta['sourceKind'] {
+  if (!node) return undefined;
+
+  // Strip type-only wrappers so `const x = (await fn() as User)` still classifies as await_call.
+  let n: SyntaxNode | null = node;
+  while (n && (
+    n.type === 'parenthesized_expression' ||
+    n.type === 'as_expression' ||
+    n.type === 'satisfies_expression' ||
+    n.type === 'type_assertion' ||
+    n.type === 'non_null_expression'
+  )) {
+    n = (n.type === 'parenthesized_expression')
+      ? (n.namedChildren[0] ?? null)
+      : (n.childForFieldName('expression') ?? n.namedChildren[0] ?? null);
+  }
+  if (!n) return 'unknown';
+
+  switch (n.type) {
+    case 'await_expression': {
+      const inner = n.namedChildren[0];
+      if (inner && (inner.type === 'call_expression' || inner.type === 'new_expression')) {
+        return 'await_call';
+      }
+      return 'await_call';
+    }
+    case 'call_expression':
+    case 'new_expression':
+      return 'call';
+    case 'string':
+    case 'number':
+    case 'true':
+    case 'false':
+    case 'null':
+    case 'undefined':
+    case 'template_string':
+    case 'regex':
+      return 'literal';
+    case 'identifier':
+    case 'this':
+    case 'super':
+    case 'shorthand_property_identifier':
+      return 'identifier';
+    case 'member_expression':
+    case 'subscript_expression':
+      return 'member';
+    case 'object':
+    case 'object_pattern':
+      return 'object';
+    case 'array':
+    case 'array_pattern':
+      return 'array';
+    default:
+      return 'unknown';
+  }
 }

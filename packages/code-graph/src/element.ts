@@ -131,10 +131,30 @@ export interface BehavioralMeta {
   paramCount: number;
 }
 
+/**
+ * Structured AST of a branch condition. Mirrors @topology/core ConditionExpr
+ * (kept duplicated because code-graph is autonomous — no core dep).
+ * JSON-serializable; consumers (e.g. simulator) read this to evaluate the
+ * branch deterministically against an input scope.
+ */
+export type ConditionExpr =
+  | { kind: 'identifier'; name: string }
+  | { kind: 'literal'; value: string | number | boolean | null; raw: string }
+  | { kind: 'member'; object: ConditionExpr; property: string; computed?: boolean; optional?: boolean }
+  | { kind: 'binary'; op: '===' | '!==' | '==' | '!=' | '<' | '<=' | '>' | '>=' | '+' | '-' | '*' | '/' | '%' | 'in' | 'instanceof'; left: ConditionExpr; right: ConditionExpr }
+  | { kind: 'logical'; op: '&&' | '||' | '??'; left: ConditionExpr; right: ConditionExpr }
+  | { kind: 'unary'; op: '!' | '-' | '+' | 'typeof' | 'void'; operand: ConditionExpr }
+  | { kind: 'call'; callee: ConditionExpr; args: ConditionExpr[] }
+  | { kind: 'template'; quasis: string[]; expressions: ConditionExpr[] }
+  | { kind: 'unknown'; text: string };
+
 export interface BranchMeta {
   /** "if" | "else if" | "switch" | "ternary" — kind sintático do branch */
   branchKind: 'if' | 'else_if' | 'switch' | 'ternary';
   conditionText: string;
+  /** Structured AST of the condition. Absent for switch (the discriminator)
+   *  and for ternaries when serialization fails. */
+  conditionAst?: ConditionExpr;
   hasElse: boolean;
   /** Posição entre irmãos (0=primeiro if, 1=else if, ...). */
   branchIndex: number;
@@ -197,6 +217,22 @@ export interface AssignSiteMeta {
   valueText: string;
   isConst: boolean;
   isAwait: boolean;
+  /**
+   * Classification of the RHS expression. Used by the simulator to know
+   * whether a variable's value can be derived deterministically (literal,
+   * identifier alias) or comes from an external source (call, db, external)
+   * whose shape must be looked up via the call's resolution.
+   *
+   * 'await_call' = `await someFn()` — the value is the resolved result.
+   * 'call'       = bare call without await.
+   * 'literal'    = string/number/boolean/null/undefined literal.
+   * 'identifier' = bare identifier alias, e.g. `const x = y`.
+   * 'member'     = property access, e.g. `const x = req.body`.
+   * 'object'     = inline object literal.
+   * 'array'      = inline array literal.
+   * 'unknown'    = anything else.
+   */
+  sourceKind?: 'literal' | 'identifier' | 'member' | 'call' | 'await_call' | 'object' | 'array' | 'unknown';
 }
 
 export interface AwaitSiteMeta {

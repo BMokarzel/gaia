@@ -6,7 +6,7 @@ import { AppModule } from './app.module';
 import { TopologyLoggerService } from './common/logger/topology-logger.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
   app.useLogger(app.get(TopologyLoggerService));
 
   app.useGlobalPipes(

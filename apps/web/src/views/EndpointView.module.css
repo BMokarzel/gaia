@@ -57,3 +57,11 @@
   background: var(--bg-raised) !important;
   color: var(--text-primary) !important;
 }
+
+.divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border-strong);
+  margin: 0 6px;
+  display: inline-block;
+}

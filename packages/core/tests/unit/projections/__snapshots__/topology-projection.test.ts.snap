@@ -1,0 +1,131 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`topology-projection — Fase 0 features > matches normalized snapshot 1`] = `
+[
+  {
+    "children": [],
+    "metadata": {
+      "branches": [
+        {
+          "children": [
+            {
+              "children": [],
+              "metadata": {
+                "awaited": true,
+                "baseUrl": undefined,
+                "httpClient": "axios",
+                "method": "GET",
+                "path": "/api/users/:param",
+                "pathNormalized": "/api/users/:param",
+              },
+              "name": "GET /api/users/:param",
+              "type": "externalCall",
+            },
+            {
+              "children": [],
+              "metadata": {
+                "initialValue": "await axios.get(\`/api/users/\${input.id}\`)",
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "sourceKind": "await_call",
+                "sourceNodeId": "externalCall:74bd68f0",
+              },
+              "name": "fresh",
+              "type": "data",
+            },
+            {
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "fresh",
+              },
+              "name": "return",
+              "type": "return",
+            },
+          ],
+          "label": "then",
+        },
+        {
+          "children": [
+            {
+              "children": [],
+              "metadata": {
+                "awaited": true,
+                "baseUrl": "https://cache.example.com",
+                "httpClient": "fetch",
+                "method": "GET",
+                "path": "/orders",
+                "pathNormalized": "/orders",
+              },
+              "name": "GET /orders",
+              "type": "externalCall",
+            },
+            {
+              "children": [],
+              "metadata": {
+                "initialValue": "await fetch('https://cache.example.com/orders')",
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "sourceKind": "await_call",
+                "sourceNodeId": "externalCall:2895dbfe",
+              },
+              "name": "cached",
+              "type": "data",
+            },
+            {
+              "children": [],
+              "metadata": {
+                "databaseId": "prisma",
+                "operation": "findMany",
+                "orm": "prisma",
+                "tableId": "user",
+              },
+              "name": "this.prisma.user.findMany",
+              "type": "dbProcess",
+            },
+            {
+              "children": [],
+              "metadata": {
+                "initialValue": "await this.prisma.user.findMany({ where: { id: input.id } })",
+                "kind": "constant",
+                "mutable": false,
+                "scope": "local",
+                "sourceKind": "await_call",
+                "sourceNodeId": "dbProcess:26bce503",
+              },
+              "name": "users",
+              "type": "data",
+            },
+            {
+              "children": [],
+              "metadata": {
+                "kind": "explicit",
+                "value": "{ users, cached }",
+              },
+              "name": "return",
+              "type": "return",
+            },
+          ],
+          "label": "else",
+        },
+      ],
+      "condition": "(input.force)",
+      "conditionAst": {
+        "kind": "member",
+        "object": {
+          "kind": "identifier",
+          "name": "input",
+        },
+        "optional": false,
+        "property": "force",
+      },
+      "featureFlag": undefined,
+      "kind": "if",
+    },
+    "name": "(input.force)",
+    "type": "flowControl",
+  },
+]
+`;

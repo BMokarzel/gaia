@@ -11,7 +11,7 @@ export { labelFor, shortModuleLabel } from './labels';
 export type { ASTWalker, ElementBatch } from './walkers/ast-walker';
 export { emptyBatch, mergeBatches } from './walkers/ast-walker';
 export type { SourceFile } from './walkers/source-file';
-export { TsAstWalker } from './walkers/ts-ast-walker';
+export { TsAstWalker, serializeConditionExpr } from './walkers/ts-ast-walker';
 export { isAvailable as isTsParserAvailable } from './walkers/ts-parser-adapter';
 
 // Resolvers

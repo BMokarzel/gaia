@@ -31,6 +31,15 @@ export function extractDataNodes(
     nodes.push(buildEnumNode(node, filePath));
   }
 
+  // Class declarations — captured so DTOs (e.g. NestJS `@Body() dto: CreateUserDto`)
+  // and other field-bearing classes are reachable from `resolveSchema` when a
+  // request body / response type points at a class. Only public instance fields
+  // become TypedFields; methods and static/private fields are ignored because
+  // they aren't part of the data shape.
+  for (const node of findAll(rootNode, 'class_declaration')) {
+    nodes.push(buildClassNode(node, filePath));
+  }
+
   // Variable declarations (const/let) — módulo e escopo local
   for (const node of findAll(rootNode, 'lexical_declaration')) {
     const varNodes = buildVariableNodes(node, filePath, isModuleLevel(node));
@@ -116,6 +125,70 @@ function buildTypeNode(node: SyntaxNode, filePath: string): DataNode {
       exported: isExported(node),
     },
   };
+}
+
+function buildClassNode(node: SyntaxNode, filePath: string): DataNode {
+  const loc = toLocation(node, filePath);
+  const name = fieldText(node, 'name') ?? 'unknown';
+  const id = nodeId('data', filePath, loc.line, `class:${name}`);
+  const fields = extractClassFields(node);
+  return {
+    id,
+    type: 'data',
+    name,
+    location: loc,
+    children: [],
+    metadata: {
+      kind: 'class',
+      mutable: false,
+      scope: 'module',
+      exported: isExported(node),
+      fields,
+    },
+  };
+}
+
+/** Extract public instance fields of a class as TypedFields. */
+function extractClassFields(node: SyntaxNode): TypedField[] {
+  const fields: TypedField[] = [];
+  const body = node.childForFieldName('body');
+  if (!body) return fields;
+
+  for (const member of body.namedChildren) {
+    // tree-sitter-typescript uses `public_field_definition` for class properties.
+    if (member.type !== 'public_field_definition') continue;
+
+    // Skip static fields — they aren't part of an instance shape.
+    if (member.children.some(c => c.type === 'static')) continue;
+
+    // Skip fields explicitly marked private/protected.
+    const accessibility = member.children.find(c => c.type === 'accessibility_modifier');
+    if (accessibility && accessibility.text !== 'public') continue;
+
+    const namePart = member.childForFieldName('name');
+    if (!namePart) continue;
+    const fieldName = namePart.text;
+
+    const typeAnnotation = member.childForFieldName('type');
+    const type = typeAnnotation?.text?.replace(/^:\s*/, '') ?? 'unknown';
+
+    // tree-sitter marks optional fields with `?` after the name; the optional
+    // marker is a sibling token rather than a structured field, so we sniff
+    // the source text between the name and the type annotation.
+    const optional = member.text.includes(`${fieldName}?`);
+
+    const valueNode = member.childForFieldName('value');
+    const defaultValue = valueNode?.text?.slice(0, 200);
+
+    fields.push({
+      name: fieldName,
+      type,
+      required: !optional && defaultValue === undefined,
+      defaultValue,
+    });
+  }
+
+  return fields;
 }
 
 function buildEnumNode(node: SyntaxNode, filePath: string): DataNode {

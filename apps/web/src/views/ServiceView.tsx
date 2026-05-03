@@ -8,11 +8,13 @@ import {
   triggerTap, setNodeState, setNodeSubtitle, type GaiaNode, type GaiaEdge, type ZoomPanHandle,
 } from '@/graph/gaiaNodes'
 import { NodeDetailPanel, type NodeDetailInfo } from '@/detail/NodeDetailPanel'
+import { DocModal, type DocTarget } from '@/detail/DocModal'
+import { SnapshotsModal } from '@/detail/SnapshotsModal'
 import styles from './ServiceView.module.css'
 
 export function ServiceView() {
   const {
-    activeTopology, navigation,
+    activeTopology, activeTopologyId, navigation,
     loadService, serviceStatus, serviceError,
     navigateToEndpoint, selectNode, setExportReady,
   } = useTopologyStore()
@@ -28,6 +30,8 @@ export function ServiceView() {
   const zpRef = useRef<ZoomPanHandle | null>(null)
   const [zoom, setZoom] = useState(1)
   const [detailInfo, setDetailInfo] = useState<NodeDetailInfo | null>(null)
+  const [docTarget, setDocTarget] = useState<DocTarget | null>(null)
+  const [snapshotsOpen, setSnapshotsOpen] = useState(false)
 
   // Load topology if needed
   useEffect(() => {
@@ -262,6 +266,30 @@ export function ServiceView() {
             ? <span className={styles.badge}>{activeTopology.screens?.filter(s => !s.serviceId || s.serviceId === service.id).length ?? 0} screens</span>
             : <span className={styles.badge}>{service.endpoints.length} endpoints</span>
           }
+          {activeTopologyId && (
+            <button
+              className={styles.docBtn}
+              onClick={() => setDocTarget({
+                kind: 'service',
+                topologyId: activeTopologyId,
+                serviceId: service.id,
+                title: service.name,
+              })}
+              title="Generate service documentation via LLM"
+            >
+              ✨ generate doc
+            </button>
+          )}
+          {activeTopologyId && (
+            <button
+              className={styles.docBtn}
+              style={{ color: 'var(--accent-purple, #7c6ff7)', borderColor: 'var(--accent-purple, #7c6ff7)' }}
+              onClick={() => setSnapshotsOpen(true)}
+              title="View topology snapshots and diff between versions"
+            >
+              ↻ snapshots
+            </button>
+          )}
         </div>
       </div>
 
@@ -273,9 +301,30 @@ export function ServiceView() {
           info={detailInfo}
           onClose={() => setDetailInfo(null)}
           actions={detailInfo.kind === 'endpoint' && serviceId
-            ? [{ label: 'Ver fluxo', onClick: () => { navigateToEndpoint(serviceId, detailInfo.id); setDetailInfo(null) } }]
+            ? [
+                { label: 'Ver fluxo', onClick: () => { navigateToEndpoint(serviceId, detailInfo.id); setDetailInfo(null) } },
+                ...(activeTopologyId ? [{
+                  label: '✨ doc',
+                  onClick: () => {
+                    setDocTarget({
+                      kind: 'endpoint',
+                      topologyId: activeTopologyId,
+                      endpointId: detailInfo.id,
+                      title: detailInfo.humanName ?? detailInfo.label,
+                    })
+                  },
+                }] : []),
+              ]
             : undefined
           }
+        />
+      )}
+      {docTarget && <DocModal target={docTarget} onClose={() => setDocTarget(null)} />}
+      {snapshotsOpen && activeTopologyId && (
+        <SnapshotsModal
+          topologyId={activeTopologyId}
+          topologyName={service.name}
+          onClose={() => setSnapshotsOpen(false)}
         />
       )}
     </div>

@@ -4,7 +4,7 @@ import {
   extractStringValue, memberChain, isAsync,
 } from '../../../utils/ast-helpers';
 import { nodeId } from '../../../utils/id';
-import type { EndpointNode } from '../../../types/topology';
+import type { EndpointNode, MiddlewareDetail } from '../../../types/topology';
 
 /** Métodos HTTP do Express/Router */
 const HTTP_METHODS = new Set(['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'all']);
@@ -57,11 +57,18 @@ export function extractExpressEndpoints(
 
     const httpMethod = (methodName === 'all' ? 'GET' : methodName.toUpperCase()) as EndpointNode['metadata']['method'];
 
-    // Middleware: argumentos intermediários (exceto último, que é o handler)
+    // Middleware: argumentos intermediários (exceto último, que é o handler).
+    // Each becomes a MiddlewareDetail with kind=middleware, framework=express.
     const middlewareNodes = argNodes.slice(1, -1);
-    const middleware = middlewareNodes
-      .filter(n => n.type === 'identifier' || n.type === 'member_expression')
-      .map(n => n.text);
+    const middleware: MiddlewareDetail[] = middlewareNodes
+      .filter(n => n.type === 'identifier' || n.type === 'member_expression' || n.type === 'call_expression')
+      .map((n, i) => ({
+        kind: 'middleware' as const,
+        framework: 'express' as const,
+        name: n.text,
+        order: i,
+        source: `${objText}.${methodName}`,
+      }));
 
     const loc = toLocation(call, filePath);
 

@@ -23,6 +23,8 @@ import { serviceId } from '../utils/id';
 import { detectUnused } from '../analysis/unused';
 import { runCrossServiceMerge } from '../analysis/service-merger';
 import { validateTopology } from '../analysis/topology-validator';
+import { analyzeOwnership } from '../analysis/ownership';
+import { attachEndpointSchemas } from '../analysis/schema-resolver';
 import type { ExternalCallNode } from '../types/topology';
 
 export interface AnalysisOptions {
@@ -113,6 +115,15 @@ export async function analyzeRepository(
     enrichServiceDependencies(service, allDatabases, allBrokers);
   }
 
+  // 4b. Resolve recursive schemas for endpoint request bodies/queries/params.
+  // Walks each endpoint's `bodyType` against the service's DataNode globals so
+  // the simulator and UI have the full DTO tree without re-parsing source.
+  for (const service of context.services) {
+    for (const ep of service.endpoints) {
+      attachEndpointSchemas(ep, service.globals);
+    }
+  }
+
   // 5. Constrói edges globais
   onProgress('Building edges...');
   log.debug('Building edges');
@@ -150,6 +161,18 @@ export async function analyzeRepository(
   context.diagnostics.push(...validationDiags);
   log.debug('Topology validation complete', { issues: validationDiags.length });
 
+  // 5e. Ownership (Fase 3) — CODEOWNERS → OwnerNodes/edges. Silently skipped
+  // when no CODEOWNERS file is present; future sources (git blame, manual
+  // config) plug in by extending analyzeOwnership.
+  onProgress('Resolving ownership...');
+  const ownership = analyzeOwnership(context.services, repoPath);
+  if (ownership) {
+    log.debug('Ownership resolved', {
+      owners: ownership.owners.length,
+      edges: ownership.edges.length,
+    });
+  }
+
   // 6. Constrói error flow map
   onProgress('Mapping error flows...');
   const errorFlow = buildErrorFlowMap(context.services);
@@ -170,6 +193,7 @@ export async function analyzeRepository(
     screens: context.screens,
     edges,
     errorFlow,
+    ...(ownership ? { ownership } : {}),
     observability: {
       logs,
       telemetry,

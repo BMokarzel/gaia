@@ -13,5 +13,6 @@ import { TOPOLOGY_SERVICE } from './tokens';
     TopologyService,
     { provide: TOPOLOGY_SERVICE, useClass: TopologyService },
   ],
+  exports: [TOPOLOGY_SERVICE],
 })
 export class TopologyModule {}

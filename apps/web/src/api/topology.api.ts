@@ -6,8 +6,31 @@ import type {
   AnalyzeResponse,
   MergeDecisionRequest,
   ListQuery,
+  SnapshotsResponse,
+  TopologyDiff,
+  ChatRequest,
+  ChatResponse,
+  RuntimeMetrics,
+  SimulationResult,
+  SimulationOptions,
 } from './types'
-import type { EcosystemIndex, ProvisionalFile } from '@/types/topology'
+import type { EcosystemIndex, EndpointNode, FunctionNode, ProvisionalFile } from '@/types/topology'
+
+export interface EndpointFlowResult {
+  serviceId: string
+  service: { id: string; name: string; language?: string; framework?: string }
+  endpoint: EndpointNode
+  functions: FunctionNode[]
+}
+
+export interface SourceSnippet {
+  file: string
+  language: string
+  startLine: number
+  endLine: number
+  focusLine: number
+  lines: string[]
+}
 
 const BASE = '/nest'
 
@@ -54,6 +77,47 @@ export const topologyApi = {
     return request(`/topologies/${id}`)
   },
 
+  getEndpointFlow(topologyId: string, endpointId: string): Promise<EndpointFlowResult> {
+    return request(`/topologies/${topologyId}/endpoints/${endpointId}/flow`)
+  },
+
+  getSourceSnippet(
+    topologyId: string,
+    file: string,
+    line: number,
+    context = 12,
+  ): Promise<SourceSnippet> {
+    const qs = new URLSearchParams({
+      file,
+      line: String(line),
+      context: String(context),
+    })
+    return request(`/topologies/${topologyId}/source?${qs}`)
+  },
+
+  getServiceDoc(topologyId: string, serviceId: string): Promise<{ markdown: string }> {
+    return request(`/topologies/${topologyId}/docs/services/${encodeURIComponent(serviceId)}`)
+  },
+
+  getEndpointDoc(topologyId: string, endpointId: string): Promise<{ markdown: string }> {
+    return request(`/topologies/${topologyId}/docs/endpoints/${encodeURIComponent(endpointId)}`)
+  },
+
+  // ── Snapshots & diff (Fase 6) ──────────────────────────────────────────
+
+  getSnapshots(topologyId: string): Promise<SnapshotsResponse> {
+    return request(`/topologies/${topologyId}/snapshots`)
+  },
+
+  reanalyze(topologyId: string): Promise<AnalyzeResponse> {
+    return request(`/topologies/${topologyId}/reanalyze`, { method: 'POST' })
+  },
+
+  getDiff(topologyId: string, fromSha: string, toSha: string): Promise<TopologyDiff> {
+    const qs = new URLSearchParams({ from: fromSha, to: toSha })
+    return request(`/topologies/${topologyId}/diff?${qs}`)
+  },
+
   analyze(body: AnalyzeRequest): Promise<AnalyzeResponse> {
     return request('/topologies/analyze', {
       method: 'POST',
@@ -77,6 +141,48 @@ export const topologyApi = {
 
   delete(id: string): Promise<void> {
     return request(`/topologies/${id}`, { method: 'DELETE' })
+  },
+
+  // ── Chat (Fase 5b) ──────────────────────────────────────────────────────
+
+  chat(body: ChatRequest): Promise<ChatResponse> {
+    return request('/chat', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+
+  // ── Runtime metrics (Fase 4) ───────────────────────────────────────────
+
+  getRuntime(
+    topologyId: string,
+    opts: { windowMs?: number; seed?: number; chaos?: number } = {},
+  ): Promise<RuntimeMetrics> {
+    const params = new URLSearchParams()
+    if (opts.windowMs !== undefined) params.set('window', String(opts.windowMs))
+    if (opts.seed !== undefined) params.set('seed', String(opts.seed))
+    if (opts.chaos !== undefined) params.set('chaos', String(opts.chaos))
+    const qs = params.toString()
+    return request(`/topologies/${topologyId}/runtime${qs ? `?${qs}` : ''}`)
+  },
+
+  // ── Endpoint simulator (Fase 8) ────────────────────────────────────────
+
+  simulateEndpoint(
+    topologyId: string,
+    endpointId: string,
+    options: SimulationOptions = {},
+  ): Promise<SimulationResult> {
+    return request(
+      `/topologies/${topologyId}/endpoints/${endpointId}/simulate`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          toggles: options.toggles,
+          maxFunctionDepth: options.maxFunctionDepth,
+        }),
+      },
+    )
   },
 
   // ── Ecosystem ───────────────────────────────────────────────────────────

@@ -7,6 +7,7 @@ import {
 import { nodeId } from '../../../utils/id';
 import type {
   EndpointNode, FunctionNode, ParamInfo, TypedField,
+  MiddlewareDetail, MiddlewareKind,
 } from '../../../types/topology';
 
 // HTTP method decorators do NestJS
@@ -19,11 +20,20 @@ const PARAM_DECORATORS = new Set([
   'Param', 'Body', 'Query', 'Headers', 'Ip', 'HostParam', 'Session', 'UploadedFile', 'UploadedFiles',
 ]);
 
-// Decorators de middleware/segurança
-const MIDDLEWARE_DECORATORS = [
-  'UseGuards', 'UseInterceptors', 'UsePipes', 'UseFilters',
-  'HttpCode', 'Header', 'Redirect', 'Render', 'Version',
-];
+// Decorators that introduce middleware-style nodes (kind comes from the decorator name).
+const MIDDLEWARE_DECORATOR_KIND: Record<string, MiddlewareKind> = {
+  UseGuards: 'guard',
+  UseInterceptors: 'interceptor',
+  UsePipes: 'pipe',
+  UseFilters: 'filter',
+  // Response/config decorators — kept as `decorator` so they appear in the chain
+  // but can be filtered by kind.
+  HttpCode: 'decorator',
+  Header: 'decorator',
+  Redirect: 'decorator',
+  Render: 'decorator',
+  Version: 'decorator',
+};
 
 export interface NestExtractionResult {
   endpoints: EndpointNode[];
@@ -70,14 +80,35 @@ export function extractNestEndpoints(
 
       const methodName = fieldText(method, 'name') ?? 'unknown';
 
-      // Middleware/guards
-      const middleware = MIDDLEWARE_DECORATORS
-        .flatMap(name => getDecoratorsByName(method, name))
-        .map(d => {
-          const args = d.children.find(c => c.type === 'call_expression')
-            ?.childForFieldName('arguments')?.text ?? '';
-          return `${decoratorName(d)}${args}`;
-        });
+      // Middleware/guards — each decorator can list multiple classes
+      // (e.g. `@UseGuards(AuthGuard, RoleGuard)`). Each class becomes its own
+      // MiddlewareDetail entry; order tracks source position across all
+      // middleware decorators on this method.
+      const middleware: MiddlewareDetail[] = [];
+      let mwOrder = 0;
+      for (const d of getDecorators(method)) {
+        const dn = decoratorName(d);
+        const kind = MIDDLEWARE_DECORATOR_KIND[dn];
+        if (!kind) continue;
+        const callExpr = d.children.find(c => c.type === 'call_expression');
+        const argsNode = callExpr?.childForFieldName('arguments');
+        const argTexts: string[] = argsNode
+          ? argsNode.namedChildren.map(c => c.text)
+          : [];
+        if (argTexts.length === 0) {
+          middleware.push({ kind, framework: 'nest', name: dn, order: mwOrder++, source: dn });
+        } else {
+          for (const argText of argTexts) {
+            middleware.push({
+              kind,
+              framework: 'nest',
+              name: argText,
+              order: mwOrder++,
+              source: dn,
+            });
+          }
+        }
+      }
 
       // Parâmetros da requisição
       const request = extractNestRequestParams(method);

@@ -2,9 +2,15 @@ import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { ZoomControls } from '@/shell/ZoomControls'
 import { useCurrentEndpoint, useTopologyStore, type ExportGraph, type ExportNode, type ExportEdge } from '@/store/topologyStore'
 import { NodeDetailPanel, type NodeDetailInfo } from '@/detail/NodeDetailPanel'
+import { DocModal, type DocTarget } from '@/detail/DocModal'
+import { SnapshotsModal } from '@/detail/SnapshotsModal'
+import { SimulatorPanel } from './SimulatorPanel'
+import { WalkPathPanel } from './WalkPathPanel'
+import type { WalkResult } from '@/sim/compute-walk-order'
+import type { SimulationResult } from '@/api/types'
 import {
   createEndpointNode, createFunctionNode, createControlNode,
-  createReturnNode, createFunctionRegion, createDatabaseNode,
+  createReturnNode, createThrowNode, createFunctionRegion, createDatabaseNode,
   createDataNode, createProcessNode,
   createEdge, createGraphDefs,
   enableDrag, enableZoomPan, triggerTap, setNodeSubtitle,
@@ -35,7 +41,12 @@ const MAX_DEPTH = 12 // max levels of inline function expansion (cycles guarded 
 // ─────────────────────────────────────────────────────────────
 // OUTCOME HELPERS (for short mode)
 // ─────────────────────────────────────────────────────────────
-interface Outcome { type: 'return' | 'throw'; status: string }
+interface Outcome {
+  type: 'return' | 'throw'
+  status: string
+  errorClass?: string  // populated for throws so the chip can render as `createThrowNode`
+  httpStatus?: number  // populated for throws when inferable
+}
 
 function collectOutcomes(nodes: CodeNode[]): Outcome[] {
   const out: Outcome[] = []
@@ -45,7 +56,13 @@ function collectOutcomes(nodes: CodeNode[]): Outcome[] {
       out.push({ type: 'return', status: String(r.metadata.httpStatus ?? 200) })
     } else if (n.type === 'throw') {
       const t = n as ThrowNode
-      out.push({ type: 'throw', status: String(t.metadata.httpStatus ?? t.metadata.errorClass.slice(0, 8)) })
+      const status = String(t.metadata.httpStatus ?? t.metadata.errorClass.slice(0, 12))
+      out.push({
+        type: 'throw',
+        status,
+        errorClass: t.metadata.errorClass,
+        httpStatus: t.metadata.httpStatus,
+      })
     } else if (n.type === 'flowControl') {
       const fc = n as FlowControlNode
       if (fc.metadata.branches) {
@@ -62,7 +79,9 @@ function collectOutcomes(nodes: CodeNode[]): Outcome[] {
 function dedupeOutcomes(outcomes: Outcome[]): Outcome[] {
   const seen = new Set<string>()
   return outcomes.filter(o => {
-    const key = `${o.type}:${o.status}`
+    // Dedupe key includes errorClass so two distinct throw classes with the
+    // same httpStatus are still shown as separate chips.
+    const key = `${o.type}:${o.status}:${o.errorClass ?? ''}`
     if (seen.has(key)) return false
     seen.add(key)
     return true
@@ -311,12 +330,7 @@ function buildOne(
 
     case 'throw': {
       const thr = node as ThrowNode
-      // Show the error class name (sans Exception/Error suffix) so it reads as a throw,
-      // not as an HTTP return. Fall back to the status code if no class name.
-      const errName = thr.metadata.errorClass
-        .replace('Exception', '').replace('Error', '').trim().slice(0, 10)
-      const code = errName || (thr.metadata.httpStatus ? String(thr.metadata.httpStatus) : 'throw')
-      const gNode = createReturnNode(node.id, 'err', code)
+      const gNode = createThrowNode(node.id, thr.metadata.errorClass, thr.metadata.httpStatus)
       addNode(ctx, gNode, x, cy, region, thr)
       if (prev) addEdge(ctx, prev, gNode, edgeLabel)
       return { lastNode: gNode, endX: x }
@@ -794,16 +808,20 @@ function buildShortFlow(
     addNode(ctx, fnNode, START_X + H_GAP, fnY)
     addEdge(ctx, prev, fnNode)
 
+    const outcomeNode = (o: Outcome, id: string): GaiaNode =>
+      o.type === 'throw'
+        ? createThrowNode(id, o.errorClass ?? 'Error', o.httpStatus)
+        : createReturnNode(id, 'ok', o.status)
+
     if (outcomes.length === 0) {
       prev = fnNode
     } else if (outcomes.length === 1) {
-      const o = outcomes[0]
-      const out = createReturnNode(`${fn.id}-out-0`, o.type === 'throw' ? 'err' : 'ok', o.status)
+      const out = outcomeNode(outcomes[0], `${fn.id}-out-0`)
       addNode(ctx, out, START_X + H_GAP * 2, fnY)
       addEdge(ctx, fnNode, out)
       prev = fnNode
     } else {
-      // Multiple outcomes → control diamond + fanned returns
+      // Multiple outcomes → control diamond + fanned returns/throws
       const ctrl = createControlNode(`${fn.id}-ctrl`, `${outcomes.length} paths`)
       addNode(ctx, ctrl, START_X + H_GAP * 2, fnY)
       addEdge(ctx, fnNode, ctrl)
@@ -811,7 +829,7 @@ function buildShortFlow(
       const outStartY = fnY - (outcomes.length - 1) / 2 * V_GAP
       for (let i = 0; i < outcomes.length; i++) {
         const o = outcomes[i]
-        const out = createReturnNode(`${fn.id}-out-${i}`, o.type === 'throw' ? 'err' : 'ok', o.status)
+        const out = outcomeNode(o, `${fn.id}-out-${i}`)
         addNode(ctx, out, START_X + H_GAP * 3, outStartY + i * V_GAP)
         addEdge(ctx, ctrl, out, o.status)
       }
@@ -925,11 +943,160 @@ function extractFields(node: CodeNode): { key: string; value: string }[] {
 }
 
 // ─────────────────────────────────────────────────────────────
+// SWIMLANES (Fase 2 #5) — classify nodes by layer, snap Y to bands
+// ─────────────────────────────────────────────────────────────
+type Layer = 'controller' | 'service' | 'repository' | 'external' | 'misc'
+
+const LAYER_ORDER: Layer[] = ['controller', 'service', 'repository', 'external', 'misc']
+const LAYER_LABEL: Record<Layer, string> = {
+  controller: 'Controller',
+  service: 'Service',
+  repository: 'Repository',
+  external: 'External',
+  misc: 'Misc',
+}
+
+function classifyFunction(fn: FunctionNode): Layer {
+  const cls = fn.metadata.className ?? ''
+  if (/Controller(s)?$|Resource(s)?$|Resolver(s)?$/i.test(cls)) return 'controller'
+  if (/Repository|Repositories|Dao$|Repo$|Mapper$/i.test(cls)) return 'repository'
+  if (/Service(s)?$|UseCase|Manager$|Handler$|Workflow|Processor$/i.test(cls)) return 'service'
+  const decos = fn.metadata.decorators ?? []
+  if (decos.some(d => /^(Controller|Resource|Resolver|Get|Post|Put|Delete|Patch)/i.test(d))) return 'controller'
+  if (decos.some(d => /^(Repository|Entity)/i.test(d))) return 'repository'
+  if (decos.some(d => /^(Injectable|Service)/i.test(d))) return 'service'
+  return 'service' // default for functions
+}
+
+function classifyByCodeNode(codeNode: CodeNode | undefined): Layer | null {
+  if (!codeNode) return null
+  switch (codeNode.type) {
+    case 'endpoint':   return 'controller'
+    case 'middleware': return 'controller'
+    case 'dbProcess':  return 'repository'
+    case 'externalCall': return 'external'
+    case 'function':   return classifyFunction(codeNode as FunctionNode)
+    default: return null
+  }
+}
+
+function inferRegionFn(region: GaiaRegion | null, fns: FunctionNode[]): FunctionNode | null {
+  if (!region) return null
+  const rid = region.getAttribute('data-id') ?? ''
+  for (const f of fns) {
+    if (rid === f.id) return f
+    if (rid.startsWith(f.id + '-')) return f
+    const fHash = f.id.split(':')[1]
+    if (fHash && (rid.includes(`sr-${fHash}-`) || rid.includes(`e-${fHash}-`))) return f
+  }
+  return null
+}
+
+function laneFor(
+  gNode: GaiaNode,
+  codeNodeMap: Map<string, CodeNode>,
+  fns: FunctionNode[],
+): Layer {
+  const id = gNode.getAttribute('data-id') ?? ''
+  const direct = classifyByCodeNode(codeNodeMap.get(id))
+  if (direct) return direct
+  const fn = inferRegionFn(gNode.__parent as GaiaRegion | null, fns)
+  if (fn) return classifyFunction(fn)
+  return 'misc'
+}
+
+interface SwimlaneInfo {
+  used: Layer[]
+  top: number
+  left: number
+  width: number
+  bandH: number
+}
+
+function applySwimlanes(ctx: LayoutCtx, fns: FunctionNode[]): SwimlaneInfo | null {
+  if (ctx.allNodes.length === 0) return null
+
+  const layerOf = new Map<GaiaNode, Layer>()
+  ctx.allNodes.forEach(n => layerOf.set(n, laneFor(n, ctx.codeNodeMap, fns)))
+
+  const present = new Set(layerOf.values())
+  const used = LAYER_ORDER.filter(l => present.has(l))
+  if (used.length === 0) return null
+
+  // Bounding box of laid-out nodes
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+  ctx.allNodes.forEach(n => {
+    const hw = n.__bounds.w / 2, hh = n.__bounds.h / 2
+    if (n.__x - hw < minX) minX = n.__x - hw
+    if (n.__y - hh < minY) minY = n.__y - hh
+    if (n.__x + hw > maxX) maxX = n.__x + hw
+    if (n.__y + hh > maxY) maxY = n.__y + hh
+  })
+
+  const layoutH = Math.max(600, maxY - minY)
+  const bandH = layoutH / used.length
+  const top = minY
+
+  // Hide regions — their bboxes don't match scattered children anymore
+  ctx.allRegions.forEach(r => { (r as SVGElement).style.display = 'none' })
+
+  // Snap each node to its lane center; offset stacked nodes that share an X column
+  used.forEach((lane, i) => {
+    const cy = top + i * bandH + bandH / 2
+    const nodes = ctx.allNodes.filter(n => layerOf.get(n) === lane)
+    nodes.sort((a, b) => a.__x - b.__x)
+    let prevX = -Infinity
+    let stackIdx = 0
+    nodes.forEach(n => {
+      let y = cy
+      if (n.__x - prevX < 100) {
+        stackIdx++
+        const off = 28 * Math.ceil(stackIdx / 2) * (stackIdx % 2 === 0 ? -1 : 1)
+        y = cy + off
+      } else {
+        stackIdx = 0
+      }
+      n.setPosition(n.__x, y)
+      prevX = n.__x
+    })
+  })
+
+  // Recompute edges (path lengths + endpoints) after Y snapping
+  ctx.allEdges.forEach(e => e.update())
+
+  return { used, top, left: minX - 80, width: (maxX - minX) + 160, bandH }
+}
+
+function renderSwimlaneBands(layer: SVGGElement, info: SwimlaneInfo): void {
+  while (layer.firstChild) layer.removeChild(layer.firstChild)
+  const SVG_NS = 'http://www.w3.org/2000/svg'
+  info.used.forEach((lane, i) => {
+    const top = info.top + i * info.bandH
+    const g = document.createElementNS(SVG_NS, 'g')
+    g.setAttribute('class', `gn-lane gn-lane--${lane}`)
+    const rect = document.createElementNS(SVG_NS, 'rect')
+    rect.setAttribute('x', String(info.left))
+    rect.setAttribute('y', String(top))
+    rect.setAttribute('width', String(info.width))
+    rect.setAttribute('height', String(info.bandH))
+    rect.setAttribute('class', 'gn-lane__rect')
+    g.appendChild(rect)
+    const label = document.createElementNS(SVG_NS, 'text')
+    label.setAttribute('x', String(info.left + 16))
+    label.setAttribute('y', String(top + 24))
+    label.setAttribute('class', 'gn-lane__label')
+    label.textContent = LAYER_LABEL[lane]
+    g.appendChild(label)
+    layer.appendChild(g)
+  })
+}
+
+// ─────────────────────────────────────────────────────────────
 // REACT COMPONENT
 // ─────────────────────────────────────────────────────────────
 export function EndpointView() {
   const endpoint = useCurrentEndpoint()
-  const { selectNode, selectedNodeId, activeTopology, navigation, setExportReady } = useTopologyStore()
+  const { selectNode, selectedNodeId, activeTopology, activeTopologyId, navigation, setExportReady } = useTopologyStore()
 
   // Resolve the service that owns this endpoint (for function lookup)
   const svcFunctions: FunctionNode[] = React.useMemo(() => {
@@ -941,15 +1108,77 @@ export function EndpointView() {
   }, [activeTopology, navigation.endpointId])
   const svgRef = useRef<SVGSVGElement>(null)
   const zpRef = useRef<ZoomPanHandle | null>(null)
+  const allRegionsRef = useRef<GaiaRegion[] | null>(null)
   const [zoom, setZoom] = useState(1)
   const [detailInfo, setDetailInfo] = useState<NodeDetailInfo | null>(null)
+  const [docTarget, setDocTarget] = useState<DocTarget | null>(null)
+  const [snapshotsOpen, setSnapshotsOpen] = useState(false)
+  const [simulatorOpen, setSimulatorOpen] = useState(false)
+  const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null)
+  const [walkOpen, setWalkOpen] = useState(false)
+  const [walkResult, setWalkResult] = useState<WalkResult | null>(null)
+  const [walkActiveNodeId, setWalkActiveNodeId] = useState<string | null>(null)
   const [density, setDensity] = useState<Density>(() => {
     try { return (localStorage.getItem('gaia-density') as Density) || 'expanded' } catch { return 'expanded' }
   })
+  const [swimlanes, setSwimlanes] = useState<boolean>(() => {
+    try { return localStorage.getItem('gaia-swimlanes') === '1' } catch { return false }
+  })
+
+  // Per-endpoint collapsed-region IDs, persisted in localStorage so toggles
+  // survive density changes and tab revisits.
+  const [collapsedRegions, setCollapsedRegions] = useState<Set<string>>(new Set())
+  const collapsedRef = useRef<Set<string>>(collapsedRegions)
+  useEffect(() => { collapsedRef.current = collapsedRegions }, [collapsedRegions])
+
+  // Load persisted collapse state when the endpoint changes
+  useEffect(() => {
+    if (!endpoint) return
+    try {
+      const raw = localStorage.getItem(`gaia-collapsed:${endpoint.id}`)
+      setCollapsedRegions(raw ? new Set(JSON.parse(raw) as string[]) : new Set())
+    } catch {
+      setCollapsedRegions(new Set())
+    }
+  }, [endpoint?.id])
+
+  // Persist on change
+  useEffect(() => {
+    if (!endpoint) return
+    try {
+      localStorage.setItem(
+        `gaia-collapsed:${endpoint.id}`,
+        JSON.stringify([...collapsedRegions]),
+      )
+    } catch {}
+  }, [endpoint?.id, collapsedRegions])
 
   const handleDensity = useCallback((d: Density) => {
     setDensity(d)
     try { localStorage.setItem('gaia-density', d) } catch {}
+  }, [])
+
+  const handleSwimlanes = useCallback(() => {
+    setSwimlanes(prev => {
+      const next = !prev
+      try { localStorage.setItem('gaia-swimlanes', next ? '1' : '0') } catch {}
+      return next
+    })
+  }, [])
+
+  const handleCollapseAll = useCallback(() => {
+    const regions = allRegionsRef.current
+    if (!regions) return
+    regions.forEach(r => { if (!r.__collapsed) r.toggleCollapse() })
+    const ids = regions.map(r => r.getAttribute('data-id') ?? '').filter(Boolean)
+    setCollapsedRegions(new Set(ids))
+  }, [])
+
+  const handleExpandAll = useCallback(() => {
+    const regions = allRegionsRef.current
+    if (!regions) return
+    regions.forEach(r => { if (r.__collapsed) r.toggleCollapse() })
+    setCollapsedRegions(new Set())
   }, [])
 
   useEffect(() => {
@@ -967,9 +1196,12 @@ export function EndpointView() {
     bgRect.addEventListener('click', () => selectNode(null))
     svg.appendChild(bgRect)
 
+    const bgLayer     = document.createElementNS('http://www.w3.org/2000/svg', 'g')
     const regionLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g')
     const edgeLayer   = document.createElementNS('http://www.w3.org/2000/svg', 'g')
     const nodeLayer   = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+    bgLayer.setAttribute('class', 'gn-lane-bg')
+    svg.appendChild(bgLayer)
     svg.appendChild(regionLayer)
     svg.appendChild(edgeLayer)
     svg.appendChild(nodeLayer)
@@ -995,9 +1227,37 @@ export function EndpointView() {
       buildExpandedFlow(endpoint, ctx, W, H, svcFunctions)
     }
 
+    // ── Swimlanes (Fase 2 #5) — apply Y snapping after layout ──
+    if (swimlanes && density !== 'collapsed') {
+      const info = applySwimlanes(ctx, svcFunctions)
+      if (info) renderSwimlaneBands(bgLayer, info)
+    }
+
     // Drag
     ctx.allNodes.forEach(n => {
       enableDrag(n, svg, () => { ctx.allEdges.forEach(e => e.update()) })
+    })
+
+    // ── Per-region collapse persistence ──────────────────────
+    // Apply previously-collapsed state to freshly-built regions,
+    // and attach listeners that mirror DOM toggles into React state.
+    allRegionsRef.current = ctx.allRegions
+    ctx.allRegions.forEach(r => {
+      const rid = r.getAttribute('data-id') ?? ''
+      if (rid && collapsedRef.current.has(rid) && !r.__collapsed) {
+        r.toggleCollapse()
+      }
+      const onToggle = () => {
+        // Internal handler in createFunctionRegion ran first; r.__collapsed reflects new state.
+        setCollapsedRegions(prev => {
+          const next = new Set(prev)
+          if (r.__collapsed) next.add(rid)
+          else next.delete(rid)
+          return next
+        })
+      }
+      r.__chev.addEventListener('click', onToggle)
+      r.__label.addEventListener('click', onToggle)
     })
 
     // Re-measure edge path lengths after DOM layout for correct wave animation
@@ -1033,6 +1293,7 @@ export function EndpointView() {
         description: llm?.description,
         file: codeNode?.location.file,
         line: codeNode?.location.line,
+        topologyId: activeTopologyId ?? undefined,
         fields: codeNode ? extractFields(codeNode) : [{ key: 'type', value: kind }],
       })
     })
@@ -1068,9 +1329,13 @@ export function EndpointView() {
     }
     setExportReady(exportFn)
 
-    return () => { zp.destroy(); setExportReady(null) }
+    return () => {
+      zp.destroy()
+      setExportReady(null)
+      allRegionsRef.current = null
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [endpoint, density, svcFunctions])
+  }, [endpoint, density, swimlanes, svcFunctions])
 
   // Selection sync
   useEffect(() => {
@@ -1082,6 +1347,64 @@ export function EndpointView() {
       svg.querySelector(`[data-id="${selectedNodeId}"]`)?.classList.add('gn-node--selected')
     }
   }, [selectedNodeId])
+
+  // Simulation overlay (Fase 8) — paints touched/forced/escaped nodes
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    // Always clear previous overlay first
+    svg.querySelectorAll('.gn-sim-touched, .gn-sim-forced, .gn-sim-escape')
+       .forEach(n => n.classList.remove('gn-sim-touched', 'gn-sim-forced', 'gn-sim-escape'))
+    if (!simulationResult) return
+
+    const paint = (id: string, cls: string) => {
+      svg.querySelector(`[data-id="${id}"]`)?.classList.add(cls)
+    }
+    for (const e of simulationResult.externals) {
+      paint(e.nodeId, e.forcedFailure ? 'gn-sim-forced' : 'gn-sim-touched')
+    }
+    for (const d of simulationResult.dbOps) {
+      paint(d.nodeId, d.forcedFailure ? 'gn-sim-forced' : 'gn-sim-touched')
+    }
+    for (const t of simulationResult.throws) {
+      // Synthesized "forced" throws have ids like `<src>:forced` or `<ep>:mw:N:forced` —
+      // those don't correspond to real DOM nodes, so painting them is a no-op (safe).
+      paint(t.nodeId, t.caught ? 'gn-sim-touched' : 'gn-sim-escape')
+    }
+    for (const r of simulationResult.returns) {
+      paint(r.nodeId, 'gn-sim-touched')
+    }
+  }, [simulationResult])
+
+  // Walk-path overlay (Fase 8b) — paints visited nodes up to current step,
+  // highlights the active step, dims skipped branches.
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    svg.querySelectorAll('.gn-sim-visited, .gn-sim-active, .gn-sim-skipped')
+       .forEach(n => n.classList.remove('gn-sim-visited', 'gn-sim-active', 'gn-sim-skipped'))
+    if (!walkResult) return
+
+    const activeIdx = walkActiveNodeId ? walkResult.walkOrder.indexOf(walkActiveNodeId) : -1
+    const upTo = activeIdx >= 0 ? activeIdx : walkResult.walkOrder.length - 1
+
+    // The expanded flow renders some nodes with derived data-ids
+    // (`<id>-entry`, `<id>-exit`, `e-<hash>-<suffix>` for inlined function
+    // entries, etc.). Try the exact id first; if missing, fall back to a
+    // prefix match so functions/calls still light up.
+    function findEl(id: string): Element | null {
+      const exact = svg!.querySelector(`[data-id="${id}"]`)
+      if (exact) return exact
+      const escaped = id.replace(/"/g, '\\"')
+      return svg!.querySelector(`[data-id^="${escaped}-"], [data-id$="-${escaped}"], [data-id*="-${escaped.split(':')[1] ?? escaped}"]`)
+    }
+
+    for (let i = 0; i <= upTo; i++) {
+      const id = walkResult.walkOrder[i]
+      const el = findEl(id)
+      if (el) el.classList.add(i === activeIdx ? 'gn-sim-active' : 'gn-sim-visited')
+    }
+  }, [walkResult, walkActiveNodeId])
 
   const handleFit     = useCallback(() => { zpRef.current?.fitContent(80); setZoom(zpRef.current?.getScale() ?? 1) }, [])
   const handleZoomIn  = useCallback(() => { zpRef.current?.zoomIn();  setZoom(zpRef.current?.getScale() ?? 1) }, [])
@@ -1120,10 +1443,102 @@ export function EndpointView() {
             <span>{opt.label}</span>
           </button>
         ))}
+        <span className={styles.divider} aria-hidden="true" />
+        <button
+          className={styles.densityBtn}
+          onClick={handleCollapseAll}
+          title="Recolher todas as regiões"
+        >
+          <span>▸</span><span>collapse</span>
+        </button>
+        <button
+          className={styles.densityBtn}
+          onClick={handleExpandAll}
+          title="Expandir todas as regiões"
+        >
+          <span>▾</span><span>expand</span>
+        </button>
+        <span className={styles.divider} aria-hidden="true" />
+        <button
+          className={`${styles.densityBtn} ${swimlanes ? styles.densityBtnActive : ''}`}
+          onClick={handleSwimlanes}
+          title="Agrupar por camada (controller / service / repository / external)"
+        >
+          <span>≡</span><span>swimlane</span>
+        </button>
+        {activeTopologyId && endpoint && (
+          <>
+            <span className={styles.divider} aria-hidden="true" />
+            <button
+              className={styles.densityBtn}
+              onClick={() => setDocTarget({
+                kind: 'endpoint',
+                topologyId: activeTopologyId,
+                endpointId: endpoint.id,
+                title: `${endpoint.metadata.method} ${endpoint.metadata.path}`,
+              })}
+              title="Generate endpoint documentation via LLM"
+            >
+              <span>✨</span><span>generate doc</span>
+            </button>
+            <button
+              className={styles.densityBtn}
+              onClick={() => setSnapshotsOpen(true)}
+              title="View topology snapshots and diff between versions"
+            >
+              <span>↻</span><span>snapshots</span>
+            </button>
+            <button
+              className={`${styles.densityBtn} ${simulatorOpen ? styles.densityBtnActive : ''}`}
+              onClick={() => setSimulatorOpen(o => !o)}
+              title="Simulate this endpoint with optional injected failures"
+            >
+              <span>⚡</span><span>simulate</span>
+            </button>
+            <button
+              className={`${styles.densityBtn} ${walkOpen ? styles.densityBtnActive : ''}`}
+              onClick={() => setWalkOpen(o => !o)}
+              title="Generate input form, evaluate conditions deterministically, animate the path"
+            >
+              <span>→</span><span>walk path</span>
+            </button>
+          </>
+        )}
       </div>
 
       <ZoomControls zoom={zoom} onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onFit={handleFit} />
       {detailInfo && <NodeDetailPanel info={detailInfo} onClose={() => setDetailInfo(null)} />}
+      {docTarget && <DocModal target={docTarget} onClose={() => setDocTarget(null)} />}
+      {snapshotsOpen && activeTopologyId && (
+        <SnapshotsModal
+          topologyId={activeTopologyId}
+          topologyName={endpoint ? `${endpoint.metadata.method} ${endpoint.metadata.path}` : activeTopologyId}
+          onClose={() => setSnapshotsOpen(false)}
+        />
+      )}
+      {simulatorOpen && activeTopologyId && endpoint && (
+        <SimulatorPanel
+          topologyId={activeTopologyId}
+          endpointId={endpoint.id}
+          onResult={setSimulationResult}
+          onClose={() => {
+            setSimulatorOpen(false)
+            setSimulationResult(null)
+          }}
+        />
+      )}
+      {walkOpen && endpoint && (
+        <WalkPathPanel
+          endpoint={endpoint}
+          onWalk={setWalkResult}
+          onActiveNode={setWalkActiveNodeId}
+          onClose={() => {
+            setWalkOpen(false)
+            setWalkResult(null)
+            setWalkActiveNodeId(null)
+          }}
+        />
+      )}
     </div>
   )
 }

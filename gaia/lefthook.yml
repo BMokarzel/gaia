@@ -1,0 +1,19 @@
+pre-commit:
+  parallel: true
+  commands:
+    go-fmt:
+      glob: "*.go"
+      run: gofmt -l -w {staged_files}
+    go-vet:
+      glob: "*.go"
+      root: services/api
+      run: go vet ./...
+
+commit-msg:
+  commands:
+    conventional:
+      run: |
+        head -1 "{1}" | grep -qE '^(feat|fix|chore|docs|refactor|test|build|ci|perf|style)(\(.+\))?!?: .+' || {
+          echo "Commit message must follow Conventional Commits"
+          exit 1
+        }

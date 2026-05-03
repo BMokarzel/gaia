@@ -1,17 +1,22 @@
-import { Injectable, Inject, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { nanoid } from 'nanoid';
+import { existsSync, readFileSync, statSync } from 'fs';
+import { resolve as resolvePath, relative as relativePath, isAbsolute } from 'path';
 import type {
   ExternalCallNode, SystemTopology, PendingMergeEntry,
+  CodeNode, EndpointNode, FunctionNode, ServiceNode,
 } from '@topology/core';
-import { runCrossServiceMerge, enrichService } from '@topology/core';
+import { runCrossServiceMerge, enrichService, generateServiceDoc, generateEndpointDoc, computeTopologyDiff, generateMockRuntimeMetrics, simulateEndpoint } from '@topology/core';
+import type { TopologyDiff, RuntimeMetrics, SimulationResult, SimulationToggles } from '@topology/core';
 import { EXTRACTION_SERVICE } from '../../extraction/tokens';
 import { TOPOLOGY_STORAGE } from '../../storage/tokens';
 import type { IExtractionService } from '../../extraction/interfaces/extraction-service.interface';
 import type {
   ITopologyStorageRepository,
   StoredTopology,
+  SnapshotMeta,
 } from '../../storage/interfaces/topology-storage.interface';
-import type { ITopologyService, ExportSections } from './interfaces/topology-service.interface';
+import type { ITopologyService, ExportSections, EndpointFlowResult, SourceSnippet } from './interfaces/topology-service.interface';
 import type { AnalyzeRequestDto } from './dto/analyze-request.dto';
 import type { UpdateTopologyDto } from './dto/update-topology.dto';
 import type { ListTopologiesDto } from './dto/list-topologies.dto';
@@ -31,6 +36,10 @@ interface AnalysisSession {
   topology: SystemTopology;
   pendingMerges: PendingMergeEntry[];
   createdAt: number;
+  commitSha?: string;
+  analyzedAt: string;
+  /** When set, persistTopology will overwrite (re-analyze flow) */
+  overwrite?: boolean;
 }
 
 @Injectable()
@@ -51,23 +60,63 @@ export class TopologyService implements ITopologyService {
     const source = dto.source as SourceDescriptor;
     const repoName = this.deriveRepoName(source, dto.name);
 
-    // Duplicate check
+    // Duplicate check — strict on POST /analyze; callers should use POST /:id/reanalyze
     const existing = await this.storage.findById(repoName);
     if (existing) {
       throw new ConflictException(
-        `A topology for "${repoName}" already exists. Delete it first or use a different name.`,
+        `A topology for "${repoName}" already exists. Use POST /topologies/${repoName}/reanalyze, delete it first, or use a different name.`,
       );
     }
 
-    const topology = await this.extraction.extract(source, dto.options, dto.clonePolicy);
+    const result = await this.extraction.extract(source, dto.options, dto.clonePolicy);
     const name = dto.name ?? repoName;
+    return this.runMergeAndPersist({
+      repoName,
+      name,
+      source,
+      tags: dto.tags ?? [],
+      topology: result.topology,
+      commitSha: result.commitSha,
+      analyzedAt: result.analyzedAt,
+      overwrite: false,
+    });
+  }
 
-    // Collect all ExternalCallNodes from the extracted topology
+  async reanalyze(topologyId: string): Promise<AnalyzeResponseDto> {
+    const stored = await this.get(topologyId);
+    const result = await this.extraction.extract(stored.source);
+
+    return this.runMergeAndPersist({
+      repoName: stored.id,
+      name: stored.name,
+      source: stored.source,
+      tags: stored.tags,
+      topology: result.topology,
+      commitSha: result.commitSha,
+      analyzedAt: result.analyzedAt,
+      overwrite: true,
+    });
+  }
+
+  /** Shared pipeline used by analyze + reanalyze: cross-service merge → maybe pause for decisions → enrich → persist. */
+  private async runMergeAndPersist(input: {
+    repoName: string;
+    name: string;
+    source: SourceDescriptor;
+    tags: string[];
+    topology: SystemTopology;
+    commitSha?: string;
+    analyzedAt: string;
+    overwrite: boolean;
+  }): Promise<AnalyzeResponseDto> {
+    const { repoName, name, source, tags, topology, commitSha, analyzedAt, overwrite } = input;
+
     const externalCalls = collectExternalCalls(topology);
-
-    // Load existing topologies for cross-service merge (Direction 1)
     const [existingTopologies] = await this.storage.findAll({ limit: 1000 });
-    const allServices = existingTopologies.flatMap(t => t.topology.services);
+    // When re-analyzing, exclude the topology being replaced from merge-target candidates
+    const allServices = existingTopologies
+      .filter(t => !overwrite || t.id !== repoName)
+      .flatMap(t => t.topology.services);
 
     const { edges, pending } = await runCrossServiceMerge(
       allServices,
@@ -75,7 +124,6 @@ export class TopologyService implements ITopologyService {
       process.env.ANTHROPIC_API_KEY,
     );
 
-    // Attach resolved edges to topology
     topology.edges.push(...edges);
 
     if (pending.length > 0) {
@@ -84,12 +132,14 @@ export class TopologyService implements ITopologyService {
         repoName,
         name,
         source,
-        tags: dto.tags ?? [],
+        tags,
         topology,
         pendingMerges: pending,
         createdAt: Date.now(),
+        commitSha,
+        analyzedAt,
+        overwrite,
       });
-
       return {
         status: 'pending_merge_decisions',
         sessionId,
@@ -98,10 +148,11 @@ export class TopologyService implements ITopologyService {
       };
     }
 
-    // No pending merges — enrich and persist
     await this.runEnrichment(topology);
-    const stored = await this.persistTopology(repoName, name, source, dto.tags ?? [], topology);
-
+    const stored = await this.persistTopology(
+      repoName, name, source, tags, topology,
+      { commitSha, analyzedAt, overwrite },
+    );
     return {
       status: 'complete',
       topologyId: stored.id,
@@ -152,6 +203,11 @@ export class TopologyService implements ITopologyService {
       session.source,
       session.tags,
       session.topology,
+      {
+        commitSha: session.commitSha,
+        analyzedAt: session.analyzedAt,
+        overwrite: session.overwrite ?? false,
+      },
     );
 
     const allExternalCalls = collectExternalCalls(session.topology);
@@ -193,6 +249,106 @@ export class TopologyService implements ITopologyService {
     eco.databases = eco.databases.filter(d => !d.topologyFile.includes(id));
     eco.edges = eco.edges.filter(e => e.from !== id && e.to !== id);
     this.ecosystem.saveEcosystem(eco);
+  }
+
+  async getEndpointFlow(topologyId: string, endpointId: string): Promise<EndpointFlowResult> {
+    const stored = await this.get(topologyId);
+    const located = locateEndpoint(stored.topology, endpointId);
+    if (!located) {
+      throw new NotFoundException(
+        `Endpoint "${endpointId}" not found in topology "${topologyId}"`,
+      );
+    }
+    const { service, endpoint } = located;
+    const functions = collectReachableFunctions(endpoint, service);
+    return {
+      serviceId: service.id,
+      service: {
+        id: service.id,
+        name: service.name,
+        language: service.metadata.language,
+        framework: service.metadata.framework,
+      },
+      endpoint,
+      functions,
+    };
+  }
+
+  async getSourceSnippet(
+    topologyId: string,
+    relativeFile: string,
+    line: number,
+    contextLines = 12,
+  ): Promise<SourceSnippet> {
+    if (!relativeFile || typeof relativeFile !== 'string') {
+      throw new BadRequestException('file query param is required');
+    }
+    if (!Number.isFinite(line) || line < 1) {
+      throw new BadRequestException('line must be a positive integer');
+    }
+    const ctxLines = Math.min(Math.max(0, Math.floor(contextLines)), 100);
+
+    const stored = await this.get(topologyId);
+    const root = resolveSourceRoot(stored.source);
+    if (!root) {
+      throw new NotFoundException(
+        'Source preview not available — only local sources currently supported',
+      );
+    }
+
+    const safeAbs = resolveSafePath(root, relativeFile);
+    if (!safeAbs) {
+      throw new BadRequestException('Invalid file path (path traversal rejected)');
+    }
+    if (!existsSync(safeAbs)) {
+      throw new NotFoundException(`Source file "${relativeFile}" not found`);
+    }
+    const stat = statSync(safeAbs);
+    if (!stat.isFile()) {
+      throw new BadRequestException('Path does not point to a regular file');
+    }
+    if (stat.size > 5 * 1024 * 1024) {
+      throw new BadRequestException('File too large for snippet preview');
+    }
+
+    const content = readFileSync(safeAbs, 'utf-8');
+    const allLines = content.split(/\r?\n/);
+    const startLine = Math.max(1, line - ctxLines);
+    const endLine = Math.min(allLines.length, line + ctxLines);
+    const lines = allLines.slice(startLine - 1, endLine);
+
+    return {
+      file: relativeFile,
+      language: detectLanguage(relativeFile),
+      startLine,
+      endLine,
+      focusLine: line,
+      lines,
+    };
+  }
+
+  async getServiceDoc(topologyId: string, serviceId: string): Promise<{ markdown: string }> {
+    const stored = await this.get(topologyId);
+    const svc = stored.topology.services.find(s => s.id === serviceId);
+    if (!svc) {
+      throw new NotFoundException(
+        `Service "${serviceId}" not found in topology "${topologyId}"`,
+      );
+    }
+    const markdown = await generateServiceDoc(svc, stored.topology);
+    return { markdown };
+  }
+
+  async getEndpointDoc(topologyId: string, endpointId: string): Promise<{ markdown: string }> {
+    const stored = await this.get(topologyId);
+    const located = locateEndpoint(stored.topology, endpointId);
+    if (!located) {
+      throw new NotFoundException(
+        `Endpoint "${endpointId}" not found in topology "${topologyId}"`,
+      );
+    }
+    const markdown = await generateEndpointDoc(located.endpoint, located.service, stored.topology);
+    return { markdown };
   }
 
   async describe(dto: ExportDescribeDto): Promise<{ sections: ExportSections }> {
@@ -352,8 +508,20 @@ Write the following sections in Markdown:
     source: SourceDescriptor,
     tags: string[],
     topology: SystemTopology,
+    extra?: { commitSha?: string; analyzedAt?: string; overwrite?: boolean },
   ): Promise<StoredTopology> {
-    const stored = await this.storage.save(topology, { repoName, name, source, tags });
+    const stored = await this.storage.save(
+      topology,
+      {
+        repoName,
+        name,
+        source,
+        tags,
+        ...(extra?.commitSha ? { commitSha: extra.commitSha } : {}),
+        ...(extra?.analyzedAt ? { analyzedAt: extra.analyzedAt } : {}),
+      },
+      { overwrite: extra?.overwrite ?? false },
+    );
     this.updateEcosystem(stored);
     return stored;
   }
@@ -362,15 +530,36 @@ Write the following sections in Markdown:
     const eco = this.ecosystem.getEcosystem();
     const topologyFile = `topologies/${stored.id}.json`;
 
+    // Resolve owners from CODEOWNERS-derived ownership map (Fase 3).
+    // Index by ownerId for O(1) name/kind lookup, then collect per-service
+    // edges so dominant owner appears first.
+    const ownership = stored.topology.ownership;
+    const ownerById = new Map(
+      (ownership?.owners ?? []).map(o => [o.id, o] as const),
+    );
+    const ownersByService = new Map<string, { id: string; name: string; kind: 'team' | 'squad' | 'person' }[]>();
+    for (const edge of ownership?.edges ?? []) {
+      if (edge.targetKind !== 'service') continue;
+      const owner = ownerById.get(edge.ownerId);
+      if (!owner) continue;
+      const list = ownersByService.get(edge.targetId) ?? [];
+      if (!list.some(o => o.id === owner.id)) {
+        list.push({ id: owner.id, name: owner.name, kind: owner.metadata.kind });
+        ownersByService.set(edge.targetId, list);
+      }
+    }
+
     // Upsert service entries
     for (const svc of stored.topology.services) {
       const existing = eco.services.findIndex(s => s.id === stored.id);
+      const owners = ownersByService.get(svc.id);
       const entry = {
         id: stored.id,
         name: svc.name,
         language: svc.metadata.language ?? 'unknown',
         framework: svc.metadata.framework ?? 'unknown',
         team: svc.metadata.team,
+        ...(owners && owners.length > 0 ? { owners } : {}),
         repoUrl: svc.metadata.repository?.url,
         topologyFile,
         endpointCount: svc.endpoints.length,
@@ -441,6 +630,69 @@ Write the following sections in Markdown:
       if (session.createdAt < cutoff) this.sessions.delete(id);
     }
   }
+
+  // ── Snapshots & diff (Fase 6) ──────────────────────────────
+
+  async listSnapshots(topologyId: string): Promise<{ current: SnapshotMeta | null; history: SnapshotMeta[] }> {
+    const stored = await this.get(topologyId);
+    const history = await this.storage.listSnapshots(topologyId);
+    const currentSha = stored.commitSha ?? `ts-${(stored.analyzedAt ?? stored.updatedAt).replace(/[:.]/g, '-')}`;
+    const current: SnapshotMeta = {
+      sha: currentSha,
+      analyzedAt: stored.analyzedAt ?? stored.updatedAt,
+    };
+    return { current, history };
+  }
+
+  async diff(topologyId: string, fromSha: string, toSha: string): Promise<TopologyDiff> {
+    if (!fromSha || !toSha) {
+      throw new BadRequestException('Both `from` and `to` query params are required');
+    }
+    const fromSnap = await this.storage.getSnapshot(topologyId, fromSha);
+    if (!fromSnap) {
+      throw new NotFoundException(`Snapshot "${fromSha}" not found for topology "${topologyId}"`);
+    }
+    const toSnap = await this.storage.getSnapshot(topologyId, toSha);
+    if (!toSnap) {
+      throw new NotFoundException(`Snapshot "${toSha}" not found for topology "${topologyId}"`);
+    }
+    return computeTopologyDiff(fromSnap.topology, toSnap.topology, {
+      fromSha: fromSnap.commitSha ?? fromSha,
+      toSha: toSnap.commitSha ?? toSha,
+      fromAnalyzedAt: fromSnap.analyzedAt,
+      toAnalyzedAt: toSnap.analyzedAt,
+    });
+  }
+
+  async getRuntimeMetrics(
+    topologyId: string,
+    options: { windowMs?: number; seed?: number; chaos?: number } = {},
+  ): Promise<RuntimeMetrics> {
+    const stored = await this.get(topologyId);
+    return generateMockRuntimeMetrics(stored.topology, topologyId, {
+      windowMs: options.windowMs,
+      seed: options.seed,
+      chaos: options.chaos,
+    });
+  }
+
+  async simulateEndpoint(
+    topologyId: string,
+    endpointId: string,
+    options: { toggles?: SimulationToggles; maxFunctionDepth?: number } = {},
+  ): Promise<SimulationResult> {
+    const stored = await this.get(topologyId);
+    const located = locateEndpoint(stored.topology, endpointId);
+    if (!located) {
+      throw new NotFoundException(
+        `Endpoint "${endpointId}" not found in topology "${topologyId}"`,
+      );
+    }
+    return simulateEndpoint(located.endpoint, located.service, {
+      toggles: options.toggles,
+      maxFunctionDepth: options.maxFunctionDepth,
+    });
+  }
 }
 
 // ── Utility functions ──────────────────────────────────────
@@ -468,6 +720,86 @@ function buildExternalCallMap(topology: SystemTopology): Map<string, ExternalCal
   const map = new Map<string, ExternalCallNode>();
   for (const call of collectExternalCalls(topology)) map.set(call.id, call);
   return map;
+}
+
+function resolveSourceRoot(source: SourceDescriptor): string | null {
+  if (source.kind === 'local') return resolvePath(source.path);
+  // git/github sources require resolving the clone path; not yet wired up
+  return null;
+}
+
+function resolveSafePath(root: string, relFile: string): string | null {
+  // Reject absolute paths and paths that would escape the root
+  if (isAbsolute(relFile)) return null;
+  const abs = resolvePath(root, relFile);
+  const rel = relativePath(root, abs);
+  if (rel.startsWith('..') || isAbsolute(rel)) return null;
+  return abs;
+}
+
+function detectLanguage(file: string): string {
+  const ext = file.split('.').pop()?.toLowerCase() ?? '';
+  const map: Record<string, string> = {
+    ts: 'typescript', tsx: 'typescript', mts: 'typescript', cts: 'typescript',
+    js: 'javascript', jsx: 'javascript', mjs: 'javascript', cjs: 'javascript',
+    py: 'python', go: 'go', java: 'java', kt: 'kotlin', kts: 'kotlin',
+    cs: 'csharp', rs: 'rust', swift: 'swift', rb: 'ruby', php: 'php',
+    json: 'json', yaml: 'yaml', yml: 'yaml', md: 'markdown', sh: 'bash',
+  };
+  return map[ext] ?? 'plain';
+}
+
+function locateEndpoint(
+  topology: SystemTopology,
+  endpointId: string,
+): { service: ServiceNode; endpoint: EndpointNode } | undefined {
+  for (const service of topology.services) {
+    const endpoint = service.endpoints.find(e => e.id === endpointId);
+    if (endpoint) return { service, endpoint };
+  }
+  return undefined;
+}
+
+function collectReachableFunctions(
+  endpoint: EndpointNode,
+  service: ServiceNode,
+): FunctionNode[] {
+  const fnById = new Map<string, FunctionNode>();
+  for (const fn of service.functions) fnById.set(fn.id, fn);
+
+  const reached = new Set<string>();
+  const queue: string[] = [];
+
+  const enqueueCallsFromTree = (nodes: CodeNode[]): void => {
+    for (const n of nodes) {
+      if (n.type === 'call') {
+        const target = n.metadata.resolvedTo;
+        if (target && fnById.has(target) && !reached.has(target)) {
+          reached.add(target);
+          queue.push(target);
+        }
+      }
+      if (n.children?.length) enqueueCallsFromTree(n.children);
+    }
+  };
+
+  // Seed: walk the endpoint tree (and its handler function if linked)
+  enqueueCallsFromTree(endpoint.children);
+  const handlerFnId = endpoint.metadata.handlerFnId;
+  if (handlerFnId && fnById.has(handlerFnId) && !reached.has(handlerFnId)) {
+    reached.add(handlerFnId);
+    queue.push(handlerFnId);
+  }
+
+  // Transitive closure
+  while (queue.length > 0) {
+    const fnId = queue.shift()!;
+    const fn = fnById.get(fnId);
+    if (!fn) continue;
+    enqueueCallsFromTree(fn.children);
+  }
+
+  return Array.from(reached, id => fnById.get(id)!).filter(Boolean);
 }
 
 function buildProgress(

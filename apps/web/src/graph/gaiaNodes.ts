@@ -399,6 +399,47 @@ export function createReturnNode(id: string, status: 'ok' | 'err', code?: string
 }
 
 // ─────────────────────────────────────────────────────────────
+// THROW NODE — error-coded pill, distinct from `return` so the flow chart
+// reads correctly. Top line says "throw"; bottom line shows the
+// errorClass (full, soft-truncated) and httpStatus pill when available.
+// ─────────────────────────────────────────────────────────────
+export function createThrowNode(
+  id: string,
+  errorClass: string,
+  httpStatus?: number,
+): GaiaNode {
+  const g = wrapNode('throw', 'gn-node--status-err')
+  g.setAttribute('data-id', id)
+
+  // Soft-truncate but keep the suffix recognizable. 22 chars is enough for
+  // most real exception names; longer ones get an ellipsis.
+  const niceName = errorClass.length > 22 ? `${errorClass.slice(0, 21)}…` : errorClass
+  const subtitle = httpStatus != null ? `${niceName} · ${httpStatus}` : niceName
+
+  const mainW = measure('throw', '12px "JetBrains Mono"', 500).w
+  const subW = measure(subtitle, '10px "JetBrains Mono"', 500).w
+  const w = Math.max(80, Math.max(mainW, subW) + 24)
+  const h = 38
+
+  const inner = el('g', { class: 'gn-node__inner' })
+  inner.appendChild(el('rect', { class: 'gn-node__body', x: -w/2, y: -h/2, width: w, height: h, rx: 5 }))
+  inner.appendChild(el('rect', { class: 'gn-node__flash', x: -w/2+1, y: -h/2+1, width: w-2, height: h-2, rx: 4 }))
+
+  const t = el<SVGTextElement>('text', { class: 'gn-node__code', y: -7, style: 'fill: currentColor; font-size: 12px' })
+  t.textContent = 'throw'
+  inner.appendChild(t)
+
+  const c = el<SVGTextElement>('text', { class: 'gn-node__meta', y: 9 })
+  c.textContent = subtitle
+  inner.appendChild(c)
+
+  g.appendChild(inner)
+  g.__bounds = { w, h, shape: 'rect' }
+  g.__anchor = (tx, ty) => rectAnchor(g.__x, g.__y, w, h, tx, ty)
+  return g
+}
+
+// ─────────────────────────────────────────────────────────────
 // SUBTITLE — human name rendered inside the node card (rect nodes only)
 // Expands the card height by 14px and places subtitle in the new strip.
 // ─────────────────────────────────────────────────────────────

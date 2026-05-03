@@ -316,7 +316,8 @@ export type CodeNodeType =
   | "endpoint" | "function" | "call" | "event"
   | "dbProcess" | "process" | "flowControl"
   | "return" | "throw" | "data"
-  | "log" | "telemetry" | "externalCall";
+  | "log" | "telemetry" | "externalCall"
+  | "middleware";
 
 export interface SourceLocation {
   file: string;
@@ -344,7 +345,8 @@ export interface EndpointNode extends BaseCodeNode {
     method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS" | "HEAD";
     path: string;
     framework?: string;
-    middleware?: string[];
+    /** Middleware chain attached to this endpoint, in execution order. */
+    middleware?: MiddlewareDetail[];
     controller?: string;
     /** FunctionNode.id of the handler that implements this endpoint */
     handlerFnId?: string;
@@ -355,6 +357,17 @@ export interface EndpointNode extends BaseCodeNode {
       bodyType?: string;
       headers?: TypedField[];
       contentType?: string;
+      /**
+       * Resolved structural shape of the request body — produced by recursively
+       * expanding `bodyType` against the service's DataNodes. Lets the simulator
+       * and UI know the full DTO tree (nested objects, arrays, unions, enums)
+       * without re-reading source. Absent when bodyType is missing or unresolvable.
+       */
+      bodySchema?: ResolvedShape;
+      /** Resolved schema for query params, when query is a typed object. */
+      querySchema?: ResolvedShape;
+      /** Resolved schema for path params, when params is a typed object. */
+      paramsSchema?: ResolvedShape;
     };
     responses: EndpointResponse[];
     llm?: LLMEnrichment;
@@ -365,6 +378,41 @@ export interface TypedField {
   name: string;
   type: string;
   required: boolean;
+  defaultValue?: string;
+  description?: string;
+  validation?: string;
+}
+
+/**
+ * Recursive structural representation of a TypeScript type, expanded from
+ * project DataNodes (interfaces / type aliases / enums). Produced by
+ * `resolveSchema` — the simulator and UI traverse this tree to render input
+ * forms and to evaluate request bodies against branch conditions without an LLM.
+ *
+ * Closed subset:
+ *   - primitive: string/number/boolean/null/undefined/any/unknown/date
+ *   - object: a named or anonymous record of fields
+ *   - array: typed element shape
+ *   - union: alternative shapes
+ *   - enum: named set of string/number values
+ *   - literal: a single literal value (e.g. 'admin' in role unions)
+ *   - cycle: marker when an already-seen DTO name re-appears (avoids infinite recursion)
+ *   - unknown: fallback for unparseable / unresolvable type strings
+ */
+export type ResolvedShape =
+  | { kind: "primitive"; type: "string" | "number" | "boolean" | "null" | "undefined" | "any" | "unknown" | "date"; raw: string }
+  | { kind: "object"; name?: string; fields: ResolvedField[]; sourceNodeId?: string }
+  | { kind: "array"; element: ResolvedShape }
+  | { kind: "union"; options: ResolvedShape[] }
+  | { kind: "enum"; name: string; values: Array<string | number>; sourceNodeId?: string }
+  | { kind: "literal"; value: string | number | boolean }
+  | { kind: "cycle"; ref: string }
+  | { kind: "unknown"; raw: string };
+
+export interface ResolvedField {
+  name: string;
+  required: boolean;
+  shape: ResolvedShape;
   defaultValue?: string;
   description?: string;
   validation?: string;
@@ -469,6 +517,32 @@ export interface ProcessNode extends BaseCodeNode {
 
 // -- Flow Control --
 
+/**
+ * Structured AST of a branch condition. Produced by the TS walker so consumers
+ * (notably the simulator) can deterministically evaluate paths against an
+ * input scope without re-parsing source text. JSON-serializable.
+ *
+ * Subset only — covers the common branching shapes:
+ *   if (user)                        → Identifier
+ *   if (user.role === 'admin')       → Binary(===, Member(user, role), Literal('admin'))
+ *   if (a && b)                      → Logical(&&, Identifier(a), Identifier(b))
+ *   if (!isReady)                    → Unary(!, Identifier(isReady))
+ *   if (config.features.NEW)         → Member(Member(config, features), NEW)
+ *   if (Array.isArray(x))            → Call(Member(Array, isArray), [Identifier(x)])
+ *
+ * Anything outside this subset is recorded as `{ kind: 'unknown', text }`.
+ */
+export type ConditionExpr =
+  | { kind: "identifier"; name: string }
+  | { kind: "literal"; value: string | number | boolean | null; raw: string }
+  | { kind: "member"; object: ConditionExpr; property: string; computed?: boolean; optional?: boolean }
+  | { kind: "binary"; op: "===" | "!==" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/" | "%" | "in" | "instanceof"; left: ConditionExpr; right: ConditionExpr }
+  | { kind: "logical"; op: "&&" | "||" | "??"; left: ConditionExpr; right: ConditionExpr }
+  | { kind: "unary"; op: "!" | "-" | "+" | "typeof" | "void"; operand: ConditionExpr }
+  | { kind: "call"; callee: ConditionExpr; args: ConditionExpr[] }
+  | { kind: "template"; quasis: string[]; expressions: ConditionExpr[] }
+  | { kind: "unknown"; text: string };
+
 export interface FlowControlNode extends BaseCodeNode {
   type: "flowControl";
   metadata: {
@@ -478,7 +552,26 @@ export interface FlowControlNode extends BaseCodeNode {
       | "try" | "catch" | "finally"
       | "ternary" | "nullish_coalescing" | "optional_chain" | "label";
     condition?: string;
+    /**
+     * Structured AST of the condition (if parseable). Present alongside the
+     * raw text whenever the walker can build it — the simulator reads this
+     * field to evaluate branch choice deterministically against an input scope.
+     */
+    conditionAst?: ConditionExpr;
     branches?: { label: string; children: CodeNode[] }[];
+    /**
+     * Detected feature-flag gate. Populated when the branch condition matches
+     * a known flag pattern (process.env.X, config.features.X, flags.X, or an
+     * SDK call like `isFeatureEnabled('X')`). Lets the simulator surface the
+     * toggle in the UI and let the user flip it without inspecting code.
+     */
+    featureFlag?: {
+      name: string;
+      source: "env" | "config" | "sdk";
+      /** SDK provider when source === 'sdk' (e.g. 'unleash', 'launchdarkly'). */
+      provider?: string;
+      defaultValue?: string;
+    };
   };
 }
 
@@ -574,6 +667,19 @@ export interface DataNode extends BaseCodeNode {
     implements?: string[];
     /** For Java class DataNodes: the owning class name (for inner classes) */
     className?: string;
+    /**
+     * For local variable/constant DataNodes: classification of the RHS in
+     * `const x = …`. Lets the simulator decide how to evaluate references —
+     * literal values are inlined, awaited calls forward to the call's
+     * resolved shape, etc.
+     */
+    sourceKind?: "literal" | "identifier" | "member" | "call" | "await_call" | "object" | "array" | "unknown";
+    /**
+     * For local variable/constant DataNodes: id of the call/dbProcess/externalCall
+     * node that produced the value, when sourceKind ∈ {call, await_call}. The
+     * simulator follows this pointer to look up the call's response shape.
+     */
+    sourceNodeId?: string;
   };
 }
 
@@ -607,13 +713,45 @@ export interface ExternalCallNode extends BaseCodeNode {
   };
 }
 
+// -- Middleware --
+
+export type MiddlewareKind =
+  | "guard" | "interceptor" | "pipe" | "filter" | "middleware" | "decorator";
+
+export type MiddlewareFramework = "nest" | "express" | "koa" | "fastify";
+
+export interface MiddlewareDetail {
+  kind: MiddlewareKind;
+  framework: MiddlewareFramework;
+  /** Identifier as written in source — e.g. "AuthGuard", "ValidationPipe", "logger". */
+  name: string;
+  /** Execution order in the chain (0 = runs first). */
+  order: number;
+  /** Decorator/call site that introduced this middleware (e.g. "UseGuards", "router.use"). */
+  source?: string;
+}
+
+export interface MiddlewareNode extends BaseCodeNode {
+  type: "middleware";
+  metadata: {
+    kind: MiddlewareKind;
+    framework: MiddlewareFramework;
+    name: string;
+    order: number;
+    source?: string;
+    /** FunctionNode.id when the middleware impl resolves to an in-graph element. */
+    resolvedFnId?: string;
+  };
+}
+
 // -- Code node union --
 
 export type CodeNode =
   | EndpointNode | FunctionNode | CallNode | EventNode
   | DbProcessNode | ProcessNode | FlowControlNode
   | ReturnNode | ThrowNode | DataNode
-  | LogNode | TelemetryNode | ExternalCallNode;
+  | LogNode | TelemetryNode | ExternalCallNode
+  | MiddlewareNode;
 
 // ========================
 // LAYER 4 — FRONTEND
@@ -777,6 +915,49 @@ export interface Edge {
 // TOP-LEVEL OUTPUT
 // ========================
 
+// ========================
+// OWNERSHIP (Fase 3)
+// Quem cuida de quê: mapeia código → time/squad/pessoa via CODEOWNERS,
+// git blame ou config manual. Usado para filtros, PR bot e on-call routing.
+// ========================
+
+export interface OwnerNode {
+  /** Stable id, e.g. "team:platform" or "person:alice@example.com" */
+  id: string;
+  type: "owner";
+  /** Human-readable name */
+  name: string;
+  metadata: {
+    kind: "team" | "squad" | "person";
+    /** Original spec from CODEOWNERS, e.g. "@org/platform" or "alice@example.com" */
+    handle?: string;
+    email?: string;
+    /** Slack/Teams channel for on-call/escalations */
+    channel?: string;
+    /** Source from which this owner was discovered */
+    source: "codeowners" | "git-blame" | "manual" | "config";
+  };
+}
+
+export interface OwnershipEdge {
+  /** OwnerNode.id */
+  ownerId: string;
+  /** Target node id: ServiceNode.id, EndpointNode.id, etc. */
+  targetId: string;
+  targetKind: "service" | "endpoint" | "function" | "file";
+  kind: "owns" | "maintains" | "onCall";
+  /** CODEOWNERS pattern that matched, when source === 'codeowners' */
+  pattern?: string;
+  source: "codeowners" | "git-blame" | "manual" | "config";
+  /** 0–1 — for git-blame-derived edges, fraction of authored lines */
+  weight?: number;
+}
+
+export interface OwnershipMap {
+  owners: OwnerNode[];
+  edges: OwnershipEdge[];
+}
+
 export interface SystemTopology {
   schemaVersion: "3.0.0";
   analyzedAt: string;
@@ -793,6 +974,7 @@ export interface SystemTopology {
   screens: ScreenNode[];
   edges: Edge[];
   errorFlow: ErrorFlowMap;
+  ownership?: OwnershipMap;
   observability: {
     logs: LogNode[];
     telemetry: TelemetryNode[];
@@ -835,7 +1017,13 @@ export interface EcosystemServiceEntry {
   name: string;
   language: string;
   framework: string;
+  /** Manual override from service.metadata.team (legacy single-team). */
   team?: string;
+  /**
+   * Owners derived from ownership analysis (CODEOWNERS / git blame / config).
+   * First entry is the dominant owner — used for solid color in ownership mode.
+   */
+  owners?: { id: string; name: string; kind: "team" | "squad" | "person" }[];
   repoUrl?: string;
   /** Relative path: "topologies/auth-service.json" */
   topologyFile: string;

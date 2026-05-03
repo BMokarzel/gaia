@@ -31,6 +31,7 @@
 .gn-node--return   { color: var(--text-muted);    }
 .gn-node--return.gn-node--status-ok  { color: var(--accent-green); }
 .gn-node--return.gn-node--status-err { color: var(--accent-red);   }
+.gn-node--throw    { color: var(--accent-red);     }
 .gn-node--data    { color: var(--accent-blue);   }
 .gn-node--process { color: var(--accent-purple); }
 
@@ -66,6 +67,53 @@
 .gn-node__flash { transform-box: fill-box; transform-origin: center; }
 
 .gn-node--dimmed { opacity: 0.18; filter: grayscale(70%); }
+
+/* ─── Simulation overlay (Fase 8) ──────────────────────────── */
+/* Touched: visited during the simulated walk (no failure). */
+.gn-sim-touched .gn-node__body {
+  stroke-width: 2;
+  filter: drop-shadow(0 0 6px var(--accent-blue, #6dc4ff));
+}
+/* Forced: a toggle is making this node fail. */
+.gn-sim-forced .gn-node__body {
+  stroke: var(--accent-red, #ff5e7e);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 8px var(--accent-red, #ff5e7e))
+          drop-shadow(0 0 14px var(--accent-red, #ff5e7e));
+}
+/* Escape: a throw that propagates out to the client. */
+.gn-sim-escape .gn-node__body {
+  stroke: var(--accent-red, #ff5e7e);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 10px var(--accent-red, #ff5e7e));
+  animation: gn-sim-escape-pulse 1.4s ease-in-out infinite;
+}
+@keyframes gn-sim-escape-pulse {
+  0%, 100% { filter: drop-shadow(0 0 6px var(--accent-red, #ff5e7e)); }
+  50%      { filter: drop-shadow(0 0 14px var(--accent-red, #ff5e7e))
+                     drop-shadow(0 0 22px var(--accent-red, #ff5e7e)); }
+}
+
+/* ─── Walk path overlay (Fase 8b) ──────────────────────────── */
+/* Visited: passed earlier in the deterministic walk. */
+.gn-sim-visited .gn-node__body {
+  stroke: var(--accent-orange, #ff8c42);
+  stroke-width: 1.8;
+  filter: drop-shadow(0 0 4px var(--accent-orange, #ff8c42));
+}
+/* Active: the current step being inspected — pulses to draw the eye. */
+.gn-sim-active .gn-node__body {
+  stroke: var(--accent-orange, #ff8c42);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 10px var(--accent-orange, #ff8c42))
+          drop-shadow(0 0 18px var(--accent-orange, #ff8c42));
+  animation: gn-sim-active-pulse 1.2s ease-in-out infinite;
+}
+@keyframes gn-sim-active-pulse {
+  0%, 100% { filter: drop-shadow(0 0 8px  var(--accent-orange, #ff8c42)); }
+  50%      { filter: drop-shadow(0 0 16px var(--accent-orange, #ff8c42))
+                     drop-shadow(0 0 24px var(--accent-orange, #ff8c42)); }
+}
 
 .gn-node--error .gn-node__body { stroke: var(--accent-red) !important; }
 .gn-node--error { color: var(--accent-red); }
@@ -154,3 +202,28 @@
 
 /* Arrow marker scale tuning — defs set a tiny path; this just tones opacity */
 .gn-edge { marker-end: url(#gn-arrow); }
+
+/* ── Swimlane bands (Fase 2 #5) ────────────────────────────── */
+.gn-lane__rect {
+  fill: currentColor;
+  fill-opacity: 0.04;
+  stroke: currentColor;
+  stroke-opacity: 0.18;
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+.gn-lane__label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  fill: currentColor;
+  fill-opacity: 0.55;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+.gn-lane--controller { color: var(--accent-orange); }
+.gn-lane--service    { color: var(--accent-green); }
+.gn-lane--repository { color: var(--accent-blue); }
+.gn-lane--external   { color: var(--accent-purple); }
+.gn-lane--misc       { color: var(--text-muted); }

@@ -20,3 +20,40 @@
   padding-top: 66px;
   padding-left: 72px;
 }
+
+/* 2D/3D toggle for the Ecosystem screen */
+.ecoToggle {
+  position: absolute;
+  top: 78px;
+  left: 88px;
+  display: flex;
+  background: rgba(15, 15, 20, 0.78);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  padding: 3px;
+  z-index: 20;
+  gap: 2px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.ecoToggle button {
+  background: transparent;
+  color: #888;
+  border: none;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 150ms;
+}
+
+.ecoToggle button:hover { color: #ccc; }
+
+.ecoToggleActive {
+  background: rgba(74, 222, 128, 0.15) !important;
+  color: #4ade80 !important;
+}

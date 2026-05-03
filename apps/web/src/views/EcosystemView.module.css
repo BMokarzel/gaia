@@ -101,3 +101,79 @@
   color: var(--accent-green);
   animation: pulse 1s ease-in-out infinite;
 }
+
+/* ── Ownership toolbar (Fase 3 UI) ─────────────────────────── */
+.toolbar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+  z-index: 10;
+}
+
+.toolbar select {
+  background: var(--bg-canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 3px 6px;
+  cursor: pointer;
+}
+
+.toolbarBtn {
+  background: var(--bg-canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: color 100ms, border-color 100ms;
+}
+.toolbarBtn:hover { color: var(--text-primary); }
+.toolbarBtnActive {
+  color: var(--accent-orange);
+  border-color: var(--accent-orange);
+}
+
+.toolbarLabel {
+  color: var(--text-muted);
+}
+
+/* Owner legend (compact list of teams visible in current view) */
+.ownerLegend {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-secondary);
+  max-width: 220px;
+  z-index: 10;
+}
+.ownerLegend > div { display: flex; align-items: center; gap: 6px; }
+.ownerSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}

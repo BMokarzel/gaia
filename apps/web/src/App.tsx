@@ -1,18 +1,22 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTopologyStore } from '@/store/topologyStore'
 import { TopBar } from '@/shell/TopBar'
 import { LeftRail } from '@/shell/LeftRail'
 import { HomeView } from '@/views/HomeView'
 import { EcosystemView } from '@/views/EcosystemView'
+import { EcosystemView3D } from '@/views/EcosystemView3D'
 import { ServiceView } from '@/views/ServiceView'
 import { EndpointView } from '@/views/EndpointView'
+import { ChatPanel, ChatFab } from '@/detail/ChatPanel'
 import './styles/design-system.css'
 import './styles/graph-nodes.css'
 import styles from './App.module.css'
 
 export function App() {
-  const { navigation, theme, goHome, navigateToEcosystem } = useTopologyStore()
+  const { navigation, theme, goHome, navigateToEcosystem, activeTopologyId } = useTopologyStore()
   const { screen } = navigation
+  const [ecoMode, setEcoMode] = useState<'2d' | '3d'>('2d')
+  const [chatOpen, setChatOpen] = useState(false)
 
   // Apply theme on mount
   useEffect(() => {
@@ -45,10 +49,31 @@ export function App() {
       <LeftRail />
 
       <main className={`${styles.canvas} ${styles.canvasWithShell}`}>
-        {screen === 'ecosystem' && <EcosystemView />}
+        {screen === 'ecosystem' && (
+          <>
+            {ecoMode === '2d' ? <EcosystemView /> : <EcosystemView3D />}
+            <div className={styles.ecoToggle}>
+              <button
+                className={ecoMode === '2d' ? styles.ecoToggleActive : ''}
+                onClick={() => setEcoMode('2d')}
+              >2D</button>
+              <button
+                className={ecoMode === '3d' ? styles.ecoToggleActive : ''}
+                onClick={() => setEcoMode('3d')}
+              >3D</button>
+            </div>
+          </>
+        )}
         {screen === 'service'   && <ServiceView />}
         {screen === 'endpoint'  && <EndpointView />}
       </main>
+
+      {!chatOpen && <ChatFab onClick={() => setChatOpen(true)} />}
+      <ChatPanel
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        topologyId={activeTopologyId ?? undefined}
+      />
     </div>
   )
 }

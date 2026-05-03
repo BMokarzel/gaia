@@ -1,42 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { createHash } from 'crypto';
-import { spawnSync } from 'child_process';
 import { sanitizeForPrompt } from '../utils/prompt-sanitizer';
-
-// ── LLM caller abstraction ─────────────────────────────────
-// Uses Anthropic SDK when ANTHROPIC_API_KEY is set; otherwise
-// falls back to the `claude -p` CLI (already authenticated via OAuth).
-
-type LLMCaller = (prompt: string, model: string) => Promise<string>;
-
-function makeLLMCaller(apiKey?: string): LLMCaller {
-  const key = apiKey ?? process.env.ANTHROPIC_API_KEY;
-
-  if (key) {
-    const client = new Anthropic({ apiKey: key });
-    return async (prompt, model) => {
-      const res = await client.messages.create({
-        model,
-        max_tokens: 4096,
-        messages: [{ role: 'user', content: prompt }],
-      });
-      return res.content[0].type === 'text' ? res.content[0].text : '';
-    };
-  }
-
-  // Fallback: claude CLI subprocess (OAuth session)
-  return async (prompt, _model) => {
-    const result = spawnSync('claude', ['-p'], {
-      input: prompt,
-      encoding: 'utf-8',
-      maxBuffer: 1024 * 1024 * 4,
-      shell: true,
-    });
-    if (result.error) throw result.error;
-    if (result.status !== 0) throw new Error(result.stderr || 'claude CLI failed');
-    return result.stdout.trim();
-  };
-}
+import { makeLLMCaller, type LLMCaller } from './llm-caller';
 import type {
   ServiceNode, EndpointNode, FunctionNode, ColumnNode,
   TableNode, DatabaseNode, LLMEnrichment,

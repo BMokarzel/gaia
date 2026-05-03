@@ -1,5 +1,7 @@
-import React, { useRef, useState, useCallback } from 'react'
+import React, { useRef, useState, useCallback, useEffect } from 'react'
 import styles from './NodeDetail.module.css'
+import { topologyApi, type SourceSnippet } from '@/api/topology.api'
+import type { ServiceMetrics, EndpointMetrics } from '@/api/types'
 
 export interface NodeDetailInfo {
   id: string
@@ -10,6 +12,8 @@ export interface NodeDetailInfo {
   fields?: Array<{ key: string; value: string | number }>
   file?: string
   line?: number
+  /** Required to fetch source snippet from API */
+  topologyId?: string
 }
 
 interface Props {
@@ -34,6 +38,51 @@ const KIND_COLORS: Record<string, string> = {
 export function NodeDetailPanel({ info, onClose, actions }: Props) {
   const [pos, setPos] = useState({ x: 60, y: 120 })
   const dragRef = useRef<{ ox: number; oy: number } | null>(null)
+
+  // ── Source snippet (Fase 2 #2) ───────────────────────────────────
+  const [snippet, setSnippet] = useState<SourceSnippet | null>(null)
+  const [snippetError, setSnippetError] = useState<string | null>(null)
+  const [snippetLoading, setSnippetLoading] = useState(false)
+
+  useEffect(() => {
+    setSnippet(null)
+    setSnippetError(null)
+    if (!info.topologyId || !info.file || !info.line) return
+    let cancelled = false
+    setSnippetLoading(true)
+    topologyApi
+      .getSourceSnippet(info.topologyId, info.file, info.line, 8)
+      .then(s => { if (!cancelled) setSnippet(s) })
+      .catch(err => { if (!cancelled) setSnippetError(err?.message ?? 'failed') })
+      .finally(() => { if (!cancelled) setSnippetLoading(false) })
+    return () => { cancelled = true }
+  }, [info.topologyId, info.file, info.line])
+
+  // ── Runtime metrics (Fase 4) ─────────────────────────────────────
+  // Only meaningful for service/endpoint nodes; backed by the mock
+  // provider until a real OTel/Prometheus source is wired up.
+  const [runtime, setRuntime] = useState<ServiceMetrics | EndpointMetrics | null>(null)
+  const [runtimeLoading, setRuntimeLoading] = useState(false)
+
+  useEffect(() => {
+    setRuntime(null)
+    if (!info.topologyId) return
+    if (info.kind !== 'service' && info.kind !== 'endpoint') return
+    let cancelled = false
+    setRuntimeLoading(true)
+    topologyApi
+      .getRuntime(info.topologyId)
+      .then(rt => {
+        if (cancelled) return
+        const m = info.kind === 'service'
+          ? rt.services.find(s => s.serviceId === info.id)
+          : rt.endpoints.find(e => e.endpointId === info.id)
+        setRuntime(m ?? null)
+      })
+      .catch(() => { /* runtime is optional — ignore */ })
+      .finally(() => { if (!cancelled) setRuntimeLoading(false) })
+    return () => { cancelled = true }
+  }, [info.topologyId, info.id, info.kind])
 
   // Drag only from the handle — not from the whole header (prevents stealing close button clicks)
   const onHandlePointerDown = useCallback((e: React.PointerEvent) => {
@@ -93,6 +142,65 @@ export function NodeDetailPanel({ info, onClose, actions }: Props) {
             </div>
           ))}
         </div>
+        {(snippet || snippetLoading || snippetError) && (
+          <div className={styles.snippet}>
+            {snippetLoading && <span className={styles.snippetMuted}>loading source…</span>}
+            {snippetError && (
+              <span className={styles.snippetError}>source unavailable: {snippetError}</span>
+            )}
+            {snippet && (
+              <pre className={styles.snippetPre}>
+                {snippet.lines.map((ln, i) => {
+                  const lineNo = snippet.startLine + i
+                  const isFocus = lineNo === snippet.focusLine
+                  return (
+                    <div
+                      key={lineNo}
+                      className={`${styles.snippetLine} ${isFocus ? styles.snippetLineFocus : ''}`}
+                    >
+                      <span className={styles.snippetGutter}>{lineNo}</span>
+                      <span className={styles.snippetCode}>{ln || ' '}</span>
+                    </div>
+                  )
+                })}
+              </pre>
+            )}
+          </div>
+        )}
+        {(runtime || runtimeLoading) && (
+          <div className={styles.runtime}>
+            <div className={styles.runtimeHeader}>
+              <span>runtime <span className={styles.runtimeMockTag}>mock</span></span>
+            </div>
+            {runtimeLoading && !runtime && (
+              <span className={styles.snippetMuted}>loading metrics…</span>
+            )}
+            {runtime && (
+              <div className={styles.runtimeGrid}>
+                <RuntimeStat label="rps" value={runtime.rps.toFixed(2)} />
+                <RuntimeStat
+                  label="err"
+                  value={`${(runtime.errorRate * 100).toFixed(2)}%`}
+                  tone={
+                    runtime.errorRate >= 0.10 ? 'crit'
+                    : runtime.errorRate >= 0.02 ? 'warn'
+                    : 'ok'
+                  }
+                />
+                <RuntimeStat label="p50" value={`${runtime.p50LatencyMs.toFixed(0)}ms`} />
+                <RuntimeStat
+                  label="p95"
+                  value={`${runtime.p95LatencyMs.toFixed(0)}ms`}
+                  tone={
+                    runtime.p95LatencyMs >= 1500 ? 'crit'
+                    : runtime.p95LatencyMs >= 500 ? 'warn'
+                    : 'ok'
+                  }
+                />
+              </div>
+            )}
+          </div>
+        )}
         {actions && actions.length > 0 && (
           <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
             {actions.map(a => (
@@ -107,6 +215,18 @@ export function NodeDetailPanel({ info, onClose, actions }: Props) {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+function RuntimeStat({ label, value, tone }: { label: string; value: string; tone?: 'ok' | 'warn' | 'crit' }) {
+  const cls = tone === 'crit' ? styles.runtimeStatCrit
+    : tone === 'warn' ? styles.runtimeStatWarn
+    : styles.runtimeStatOk
+  return (
+    <div className={`${styles.runtimeStat} ${cls}`}>
+      <span className={styles.runtimeStatLabel}>{label}</span>
+      <span className={styles.runtimeStatValue}>{value}</span>
     </div>
   )
 }

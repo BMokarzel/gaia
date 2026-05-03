@@ -8,6 +8,8 @@ import { ExtractionModule } from './extraction/extraction.module';
 import { StorageModule } from './storage/storage.module';
 import { TopologyModule } from './modules/topology/topology.module';
 import { EcosystemModule } from './modules/ecosystem/ecosystem.module';
+import { WebhookModule } from './modules/webhook/webhook.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { EcosystemModule } from './modules/ecosystem/ecosystem.module';
     StorageModule,
     TopologyModule,
     EcosystemModule,
+    WebhookModule,
+    ChatModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
